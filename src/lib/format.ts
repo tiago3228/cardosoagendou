@@ -1,0 +1,74 @@
+/** Formatting + normalization helpers shared by client and server. Pure functions only. */
+
+export function formatBRL(cents: number): string {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
+}
+
+export function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, "0")}`;
+}
+
+/**
+ * Normalizes a Brazilian WhatsApp number typed in a friendly format
+ * (e.g. "55 (31) 975414498", "(31) 97541-4498", "31975414498")
+ * into E.164: "+5531975414498". Returns null when it cannot be a valid number.
+ */
+export function normalizeBrWhatsapp(input: string): string | null {
+  const digits = (input ?? "").replace(/\D+/g, "");
+  if (digits.length === 0) return null;
+
+  let national = digits;
+  if (national.startsWith("0")) national = national.replace(/^0+/, "");
+  if (national.startsWith("55") && national.length >= 12) national = national.slice(2);
+
+  // national must be DDD (2) + subscriber (8 or 9)
+  if (national.length !== 10 && national.length !== 11) return null;
+  const ddd = Number(national.slice(0, 2));
+  if (ddd < 11 || ddd > 99) return null;
+  if (national.length === 11 && national[2] !== "9") return null;
+
+  return `+55${national}`;
+}
+
+/** Renders an E.164 BR number as "55 (31) 97541-4498". */
+export function formatWhatsapp(e164: string | null | undefined): string {
+  if (!e164) return "";
+  const digits = e164.replace(/\D+/g, "");
+  if (!digits.startsWith("55") || digits.length < 12) return e164;
+  const national = digits.slice(2);
+  const ddd = national.slice(0, 2);
+  const rest = national.slice(2);
+  const split = rest.length === 9 ? 5 : 4;
+  return `55 (${ddd}) ${rest.slice(0, split)}-${rest.slice(split)}`;
+}
+
+export function whatsappLink(e164: string | null | undefined, message?: string): string {
+  const digits = (e164 ?? "").replace(/\D+/g, "");
+  const base = `https://wa.me/${digits}`;
+  return message ? `${base}?text=${encodeURIComponent(message)}` : base;
+}
+
+export function slugify(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+}
+
+export const WEEKDAY_LABELS = [
+  "Domingo",
+  "Segunda",
+  "Terça",
+  "Quarta",
+  "Quinta",
+  "Sexta",
+  "Sábado",
+] as const;
+
+export const WEEKDAY_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"] as const;
