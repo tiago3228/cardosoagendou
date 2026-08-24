@@ -1,6 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import { computeSlots, totalDuration, totalPriceCents, weekdayOf, type BusyInterval } from "./availability";
+import {
+  computeSlots,
+  localDateOf,
+  totalDuration,
+  totalPriceCents,
+  weekdayOf,
+  type BusyInterval,
+} from "./availability";
 
 export type Db = SupabaseClient<Database>;
 
