@@ -1,6 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { appointmentStatusSchema, manualAppointmentSchema, rescheduleSchema } from "./schemas";
+import {
+  appointmentStatusSchema,
+  availabilitySchema,
+  manualAppointmentSchema,
+  rescheduleSchema,
+} from "./schemas";
 
 /**
  * Moves an appointment through the status state machine.
