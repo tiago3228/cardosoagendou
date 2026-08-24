@@ -1,6 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import { computeSlots, totalDuration, totalPriceCents, weekdayOf, type BusyInterval } from "./availability";
+import {
+  computeSlots,
+  localDateOf,
+  totalDuration,
+  totalPriceCents,
+  weekdayOf,
+  type BusyInterval,
+} from "./availability";
 
 export type Db = SupabaseClient<Database>;
 
@@ -137,6 +144,17 @@ export async function availabilityForDay(
   now: Date,
 ): Promise<{ durationMinutes: number; priceCents: number; byProfessional: DaySlots[] }> {
   const selection = await resolveSelection(db, business.id, serviceIds);
+
+  // Booking window guard: never offer past days or days beyond max_advance_days.
+  const today = localDateOf(now, business.timezone);
+  const maxDate = localDateOf(
+    new Date(now.getTime() + business.max_advance_days * 86400000),
+    business.timezone,
+  );
+  if (date < today || date > maxDate) {
+    return { durationMinutes: selection.durationMinutes, priceCents: selection.priceCents, byProfessional: [] };
+  }
+
   const catalog = await loadPublicCatalog(db, business.id);
   const weekday = weekdayOf(date);
 
