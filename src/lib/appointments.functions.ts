@@ -216,10 +216,7 @@ export const createManualAppointment = createServerFn({ method: "POST" })
 /** Panel-side availability (uses the same engine as the public page). */
 export const getPanelAvailability = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => {
-    const { availabilitySchema } = require("./schemas") as typeof import("./schemas");
-    return availabilitySchema.parse(input);
-  })
+  .inputValidator((input: unknown) => availabilitySchema.parse(input))
   .handler(async ({ data, context }) => {
     const { loadBusinessBySlug, availabilityForDay } = await import("./booking.server");
     const business = await loadBusinessBySlug(context.supabase, data.slug);
