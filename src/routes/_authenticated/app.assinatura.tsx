@@ -70,16 +70,17 @@ function SubscriptionPage() {
     mutationFn: (input: { planCode: string; method: "PIX" | "CREDIT_CARD" }) =>
       startCheckout({ data: { ...input, interval } as never }),
     onSuccess: (result) => {
-      toast.success(
-        result.method === "PIX" ? "PIX gerado" : "Assinatura criada",
-        {
-          description:
-            result.method === "PIX"
-              ? "Use o código PIX abaixo para confirmar o pagamento."
-              : "Finalize o pagamento no link da fatura abaixo.",
-        },
-      );
       refresh();
+      if (result.checkoutUrl) {
+        toast.success("Redirecionando para o Mercado Pago", {
+          description: "Conclua a autorização da assinatura para liberar o acesso.",
+        });
+        window.location.href = result.checkoutUrl;
+        return;
+      }
+      toast.info("Assinatura registrada", {
+        description: "Aguardando a confirmação do pagamento pelo Mercado Pago.",
+      });
     },
     onError: fail,
   });
