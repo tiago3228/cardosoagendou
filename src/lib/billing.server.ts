@@ -84,6 +84,8 @@ export async function businessEntitlements(db: Db, businessId: string) {
     professional_limit: number | null;
     status: string | null;
     booking_state: string;
+    entitled?: boolean;
+    grace_expires_at?: string | null;
     accepts_bookings: boolean;
     features: Record<string, string | number | boolean | null>;
     current_period_end?: string | null;
