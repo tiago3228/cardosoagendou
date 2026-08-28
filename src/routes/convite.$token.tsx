@@ -65,7 +65,7 @@ function InvitePage() {
           </p>
           <Button
             className="mt-4 w-full"
-            onClick={() => navigate({ to: "/auth", search: { redirect: `/convite/${token}` } })}
+            onClick={() => navigate({ to: "/auth", search: { next: `/convite/${token}` } })}
           >
             Entrar para continuar
           </Button>
