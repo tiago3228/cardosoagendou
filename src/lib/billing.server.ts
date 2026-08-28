@@ -231,7 +231,7 @@ export async function applyBillingEvent(db: Db, event: NormalizedWebhookEvent) {
       await db
         .from("subscriptions")
         .update({
-          status: subscription.cancel_at_period_end ? "CANCELED" : "ACTIVE",
+          status: "ACTIVE",
           plan_id: targetPlanId,
           billing_interval: targetInterval,
           pending_plan_id: null,
