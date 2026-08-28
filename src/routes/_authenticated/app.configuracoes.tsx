@@ -7,6 +7,7 @@ import { panelQuery } from "./app";
 import { WEEKDAY_LABELS } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { WhatsappInput } from "@/components/ui/whatsapp-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 

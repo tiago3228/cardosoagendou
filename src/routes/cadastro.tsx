@@ -9,6 +9,7 @@ import { provisionSchema, signupSchema } from "@/lib/schemas";
 import { BUSINESS_TYPES, BUSINESS_TYPE_CONFIG } from "@/lib/business-types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { WhatsappInput } from "@/components/ui/whatsapp-input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 

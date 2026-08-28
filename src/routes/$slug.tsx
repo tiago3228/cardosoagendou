@@ -9,6 +9,7 @@ import { formatBRL, formatDuration, whatsappLink } from "@/lib/format";
 import { businessTypeConfig } from "@/lib/business-types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { WhatsappInput } from "@/components/ui/whatsapp-input";
 import { Label } from "@/components/ui/label";
 
 const businessQuery = (slug: string) =>
