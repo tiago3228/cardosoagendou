@@ -52,9 +52,12 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
     const { loadBusinessBySlug, resolveSelection, availabilityForDay } = await import("./booking.server");
     const { normalizeBrWhatsapp } = await import("./format");
     const { localDateOf } = await import("./availability");
+    const { assertAcceptsBookings } = await import("./billing.server");
 
     const business = await loadBusinessBySlug(supabaseAdmin, data.slug);
     if (!business) throw new Error("BUSINESS_NOT_FOUND");
+    // Blocked subscriptions cannot receive new bookings.
+    await assertAcceptsBookings(supabaseAdmin, business.id);
 
     const whatsapp = normalizeBrWhatsapp(data.whatsapp);
     if (!whatsapp) throw new Error("WHATSAPP_INVALID: WhatsApp inválido");
