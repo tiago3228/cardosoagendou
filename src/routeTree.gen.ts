@@ -22,6 +22,7 @@ import { Route as AuthenticatedAppConfiguracoesRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppProdutosRouteImport } from './routes/_authenticated/app.produtos'
 import { Route as AuthenticatedAppProfissionaisRouteImport } from './routes/_authenticated/app.profissionais'
 import { Route as AuthenticatedAppServicosRouteImport } from './routes/_authenticated/app.servicos'
+import { Route as ApiPublicWebhooksAsaasRouteImport } from './routes/api/public/webhooks/asaas'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -93,6 +94,11 @@ const AuthenticatedAppServicosRoute =
     path: '/servicos',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const ApiPublicWebhooksAsaasRoute = ApiPublicWebhooksAsaasRouteImport.update({
+  id: '/api/public/webhooks/asaas',
+  path: '/api/public/webhooks/asaas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/app/servicos': typeof AuthenticatedAppServicosRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/app/servicos': typeof AuthenticatedAppServicosRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -136,6 +144,7 @@ export interface FileRoutesById {
   '/_authenticated/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/_authenticated/app/servicos': typeof AuthenticatedAppServicosRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/app/profissionais'
     | '/app/servicos'
     | '/app/'
+    | '/api/public/webhooks/asaas'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/app/profissionais'
     | '/app/servicos'
     | '/app'
+    | '/api/public/webhooks/asaas'
   id:
     | '__root__'
     | '/'
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/profissionais'
     | '/_authenticated/app/servicos'
     | '/_authenticated/app/'
+    | '/api/public/webhooks/asaas'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -188,6 +200,7 @@ export interface RootRouteChildren {
   SlugRoute: typeof SlugRoute
   AuthRoute: typeof AuthRoute
   CadastroRoute: typeof CadastroRoute
+  ApiPublicWebhooksAsaasRoute: typeof ApiPublicWebhooksAsaasRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -283,6 +296,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppServicosRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/api/public/webhooks/asaas': {
+      id: '/api/public/webhooks/asaas'
+      path: '/api/public/webhooks/asaas'
+      fullPath: '/api/public/webhooks/asaas'
+      preLoaderRoute: typeof ApiPublicWebhooksAsaasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -326,6 +346,7 @@ const rootRouteChildren: RootRouteChildren = {
   SlugRoute: SlugRoute,
   AuthRoute: AuthRoute,
   CadastroRoute: CadastroRoute,
+  ApiPublicWebhooksAsaasRoute: ApiPublicWebhooksAsaasRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
