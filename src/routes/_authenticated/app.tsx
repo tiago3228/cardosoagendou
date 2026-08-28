@@ -69,6 +69,15 @@ function PanelLayout() {
               {item.label}
             </Link>
           ))}
+          {master.data?.isMaster ? (
+            <Link
+              to="/master/pagamentos"
+              activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
+              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+            >
+              Pagamentos PIX
+            </Link>
+          ) : null}
         </nav>
         <div className="mt-8 rounded-lg border border-sidebar-border p-3">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Plano</p>
