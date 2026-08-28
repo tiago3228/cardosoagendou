@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { WhatsappInput } from "@/components/ui/whatsapp-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useInstallApp } from "@/lib/use-install-app";
 
 export const Route = createFileRoute("/_authenticated/app/configuracoes")({
   component: SettingsPage,
