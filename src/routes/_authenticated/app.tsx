@@ -4,9 +4,16 @@ import { CalendarDays, CreditCard, LogOut, Package, Scissors, Settings, Users, U
 import { supabase } from "@/integrations/supabase/client";
 import { getMyPanel } from "@/lib/panel.functions";
 import { getMasterStatus } from "@/lib/manual-pix.functions";
+import { getMyEntitlements } from "@/lib/billing.functions";
 import { Button } from "@/components/ui/button";
 
 export const panelQuery = queryOptions({ queryKey: ["panel"], queryFn: () => getMyPanel() });
+
+/** Entitlements drive which modules the plan unlocks (enforced in the database too). */
+export const entitlementsQuery = queryOptions({
+  queryKey: ["entitlements"],
+  queryFn: () => getMyEntitlements(),
+});
 
 export const Route = createFileRoute("/_authenticated/app")({
   loader: ({ context }) => context.queryClient.ensureQueryData(panelQuery),
@@ -25,7 +32,7 @@ const NAV = [
   { to: "/app/servicos", label: "Serviços", icon: Scissors },
   { to: "/app/profissionais", label: "Equipe", icon: UserSquare },
   { to: "/app/clientes", label: "Clientes", icon: Users },
-  { to: "/app/produtos", label: "Produtos", icon: Package },
+  { to: "/app/produtos", label: "Produtos", icon: Package, feature: "inventory" },
   { to: "/app/assinatura", label: "Assinatura", icon: CreditCard },
   { to: "/app/configuracoes", label: "Ajustes", icon: Settings },
 ] as const;
@@ -34,6 +41,9 @@ function PanelLayout() {
   const { data } = useSuspenseQuery(panelQuery);
   const navigate = useNavigate();
   const master = useQuery({ queryKey: ["master-status"], queryFn: () => getMasterStatus() });
+  const entitlements = useQuery(entitlementsQuery);
+  const features = (entitlements.data?.features ?? {}) as Record<string, unknown>;
+  const nav = NAV.filter((item) => !("feature" in item) || features[item.feature] === true);
 
   if (!data.business) {
     return (
@@ -59,7 +69,7 @@ function PanelLayout() {
         <span className="font-display text-lg font-bold text-sidebar-foreground">Agendou</span>
         <p className="mt-1 truncate text-sm text-muted-foreground">{data.business.name}</p>
         <nav className="mt-6 space-y-1">
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <Link
               key={item.to}
               to={item.to}
@@ -78,6 +88,15 @@ function PanelLayout() {
               className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
             >
               Pagamentos PIX
+            </Link>
+          ) : null}
+          {master.data?.isMaster ? (
+            <Link
+              to="/master/planos"
+              activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
+              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+            >
+              Testar planos
             </Link>
           ) : null}
         </nav>
@@ -121,7 +140,7 @@ function PanelLayout() {
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-10 flex justify-between border-t border-border bg-card px-2 py-2 md:hidden">
-        {NAV.slice(0, 5).map((item) => (
+        {nav.slice(0, 5).map((item) => (
           <Link
             key={item.to}
             to={item.to}

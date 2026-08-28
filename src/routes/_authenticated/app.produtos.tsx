@@ -1,10 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, Minus, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { panelQuery } from "./app";
+import { panelQuery, entitlementsQuery } from "./app";
 import { formatBRL } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,10 @@ export const Route = createFileRoute("/_authenticated/app/produtos")({
 
 function ProductsPage() {
   const { data: panel } = useSuspenseQuery(panelQuery);
+  const { data: entitlements } = useSuspenseQuery(entitlementsQuery);
   const businessId = panel.business!.id;
+  const inventoryEnabled =
+    (entitlements.features as Record<string, unknown>)["inventory"] === true;
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ name: "", price: "", cost: "", stock: "0", min: "0" });
 
@@ -75,10 +78,26 @@ function ProductsPage() {
       }),
   });
 
+  if (!inventoryEnabled) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h1 className="font-display text-2xl font-bold text-foreground">Produtos e estoque</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Este módulo está disponível a partir do plano Médio. Faça upgrade da assinatura para
+          controlar produtos, entradas e saídas de estoque.
+        </p>
+        <Button asChild className="mt-4">
+          <Link to="/app/assinatura">Ver planos</Link>
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div>
       <h1 className="font-display text-2xl font-bold text-foreground">Produtos e estoque</h1>
       <p className="text-sm text-muted-foreground">Controle entradas, saídas e estoque mínimo.</p>
+
 
       <form
         className="mt-6 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2"

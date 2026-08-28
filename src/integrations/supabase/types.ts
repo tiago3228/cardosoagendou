@@ -1282,6 +1282,10 @@ export type Database = {
         Returns: string
       }
       business_entitlements: { Args: { _business_id: string }; Returns: Json }
+      business_has_feature: {
+        Args: { _business_id: string; _feature: string }
+        Returns: boolean
+      }
       business_professional_limit: {
         Args: { _business_id: string }
         Returns: number
@@ -1305,6 +1309,14 @@ export type Database = {
         Returns: boolean
       }
       is_master: { Args: { _user_id: string }; Returns: boolean }
+      master_set_test_plan: {
+        Args: {
+          _business_id: string
+          _interval?: Database["public"]["Enums"]["billing_interval"]
+          _plan_code: string
+        }
+        Returns: Json
+      }
       my_professional_id: { Args: { _business_id: string }; Returns: string }
       platform_setting_int: {
         Args: { _default: number; _key: string }
