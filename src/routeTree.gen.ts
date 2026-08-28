@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
+import { Route as AuthenticatedAppServicosRouteImport } from './routes/_authenticated/app.servicos'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -51,6 +52,12 @@ const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppServicosRoute =
+  AuthenticatedAppServicosRouteImport.update({
+    id: '/servicos',
+    path: '/servicos',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
+  '/app/servicos': typeof AuthenticatedAppServicosRoute
   '/app/': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRoutesByTo {
@@ -65,6 +73,7 @@ export interface FileRoutesByTo {
   '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
+  '/app/servicos': typeof AuthenticatedAppServicosRoute
   '/app': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRoutesById {
@@ -75,13 +84,15 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
+  '/_authenticated/app/servicos': typeof AuthenticatedAppServicosRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/$slug' | '/auth' | '/cadastro' | '/app' | '/app/'
+  fullPaths:
+    '/' | '/$slug' | '/auth' | '/cadastro' | '/app' | '/app/servicos' | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$slug' | '/auth' | '/cadastro' | '/app'
+  to: '/' | '/$slug' | '/auth' | '/cadastro' | '/app/servicos' | '/app'
   id:
     | '__root__'
     | '/'
@@ -90,6 +101,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/cadastro'
     | '/_authenticated/app'
+    | '/_authenticated/app/servicos'
     | '/_authenticated/app/'
   fileRoutesById: FileRoutesById
 }
@@ -152,14 +164,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/servicos': {
+      id: '/_authenticated/app/servicos'
+      path: '/servicos'
+      fullPath: '/app/servicos'
+      preLoaderRoute: typeof AuthenticatedAppServicosRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
   }
 }
 
 interface AuthenticatedAppRouteChildren {
+  AuthenticatedAppServicosRoute: typeof AuthenticatedAppServicosRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+  AuthenticatedAppServicosRoute: AuthenticatedAppServicosRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
 }
 
