@@ -78,10 +78,26 @@ function ProductsPage() {
       }),
   });
 
+  if (!inventoryEnabled) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h1 className="font-display text-2xl font-bold text-foreground">Produtos e estoque</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Este módulo está disponível a partir do plano Médio. Faça upgrade da assinatura para
+          controlar produtos, entradas e saídas de estoque.
+        </p>
+        <Button asChild className="mt-4">
+          <Link to="/app/assinatura">Ver planos</Link>
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div>
       <h1 className="font-display text-2xl font-bold text-foreground">Produtos e estoque</h1>
       <p className="text-sm text-muted-foreground">Controle entradas, saídas e estoque mínimo.</p>
+
 
       <form
         className="mt-6 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2"
