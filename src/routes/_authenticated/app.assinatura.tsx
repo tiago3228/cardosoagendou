@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Check } from "lucide-react";
+import { getMyEntitlements, getOpenCharge } from "@/lib/billing.functions";
 import {
   cancelSubscription,
   clearPendingPlanChange,
@@ -45,10 +46,17 @@ function SubscriptionPage() {
   const queryClient = useQueryClient();
   const [interval, setInterval] = useState<BillingInterval>("MONTHLY");
 
+  const fetchEntitlements = useServerFn(getMyEntitlements);
+  const fetchCharge = useServerFn(getOpenCharge);
+
   const data = useQuery({ queryKey: ["subscription"], queryFn: () => fetchSubscription() });
+  const entitlements = useQuery({ queryKey: ["entitlements"], queryFn: () => fetchEntitlements() });
+  const charge = useQuery({ queryKey: ["open-charge"], queryFn: () => fetchCharge() });
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["subscription"] });
     queryClient.invalidateQueries({ queryKey: ["panel"] });
+    queryClient.invalidateQueries({ queryKey: ["entitlements"] });
+    queryClient.invalidateQueries({ queryKey: ["open-charge"] });
   };
   const fail = (error: Error) =>
     toast.error("Não foi possível concluir", {
@@ -59,11 +67,15 @@ function SubscriptionPage() {
     mutationFn: (input: { planCode: string; method: "PIX" | "CREDIT_CARD" }) =>
       startCheckout({ data: { ...input, interval } as never }),
     onSuccess: (result) => {
-      if (result.pixCode) {
-        toast.success("PIX gerado", { description: result.pixCode });
-      } else {
-        toast.success("Checkout criado", { description: result.checkoutUrl });
-      }
+      toast.success(
+        result.method === "PIX" ? "PIX gerado" : "Assinatura criada",
+        {
+          description:
+            result.method === "PIX"
+              ? "Use o código PIX abaixo para confirmar o pagamento."
+              : "Finalize o pagamento no link da fatura abaixo.",
+        },
+      );
       refresh();
     },
     onError: fail,
@@ -114,6 +126,8 @@ function SubscriptionPage() {
   const subscription = data.data?.subscription;
   const plans = data.data?.plans ?? [];
   const currentPlanId = subscription?.plan_id;
+  const ent = entitlements.data;
+  const openCharge = charge.data;
 
   return (
     <div>
@@ -154,6 +168,71 @@ function SubscriptionPage() {
               </Button>
             ) : null}
           </div>
+        </div>
+      ) : null}
+
+      {ent && ent.booking_state !== "OPEN" ? (
+        <div
+          className={`mt-5 rounded-xl border p-4 text-sm ${
+            ent.booking_state === "BLOCKED"
+              ? "border-destructive/40 bg-destructive/10 text-foreground"
+              : "border-primary/40 bg-primary/10 text-foreground"
+          }`}
+          role="alert"
+        >
+          <p className="font-semibold">
+            {ent.booking_state === "BLOCKED"
+              ? "Sua agenda pública está bloqueada"
+              : "Pagamento pendente — período de tolerância"}
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            {ent.booking_state === "BLOCKED"
+              ? "Regularize o pagamento para voltar a receber novos agendamentos. Seus dados continuam salvos."
+              : `Sua agenda continua ativa por mais alguns dias (${ent.grace_period_days ?? 7} de tolerância). Pague a fatura para evitar o bloqueio.`}
+          </p>
+        </div>
+      ) : null}
+
+      {openCharge ? (
+        <div className="mt-5 rounded-xl border border-border bg-card p-5">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Fatura em aberto</p>
+          <p className="mt-1 text-lg font-semibold text-card-foreground">
+            {formatBRL(openCharge.amountCents ?? 0)}
+            {openCharge.dueDate ? (
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                vence em {new Date(`${openCharge.dueDate}T12:00:00Z`).toLocaleDateString("pt-BR")}
+              </span>
+            ) : null}
+          </p>
+          {openCharge.pixPayload ? (
+            <div className="mt-3">
+              <p className="text-sm text-muted-foreground">Código PIX (copia e cola)</p>
+              <code className="mt-1 block max-h-24 overflow-auto break-all rounded-lg bg-muted p-3 text-xs text-foreground">
+                {openCharge.pixPayload}
+              </code>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-2"
+                onClick={() => {
+                  void navigator.clipboard.writeText(openCharge.pixPayload!);
+                  toast.success("Código PIX copiado");
+                }}
+              >
+                Copiar código PIX
+              </Button>
+            </div>
+          ) : null}
+          {openCharge.invoiceUrl ? (
+            <a
+              className="mt-3 inline-flex text-sm font-medium text-primary underline-offset-4 hover:underline"
+              href={openCharge.invoiceUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Abrir fatura
+            </a>
+          ) : null}
         </div>
       ) : null}
 
