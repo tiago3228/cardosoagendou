@@ -115,6 +115,28 @@ function SettingsPage() {
         <div className="space-y-1.5">
           <Label>E-mail</Label>
           <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          <p className="text-xs text-muted-foreground">Nunca aparece na página pública.</p>
+        </div>
+        <div className="space-y-2 rounded-lg border border-border bg-muted/40 p-3 sm:col-span-2">
+          <p className="text-sm font-medium text-foreground">Visibilidade na página pública</p>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={form.show_whatsapp}
+              onChange={(e) => setForm({ ...form, show_whatsapp: e.target.checked })}
+            />
+            Mostrar WhatsApp para clientes
+          </label>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={form.show_address}
+              onChange={(e) => setForm({ ...form, show_address: e.target.checked })}
+            />
+            Mostrar endereço para clientes
+          </label>
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Endereço</Label>
