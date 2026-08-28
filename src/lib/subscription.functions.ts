@@ -165,7 +165,7 @@ export const schedulePlanChange = createServerFn({ method: "POST" })
     const current = await supabaseAdmin
       .from("subscriptions")
       .select(
-        "id, billing_interval, current_period_end, status, plans:plan_id (id, code, name, description, professional_limit, monthly_price_cents, annual_price_cents, annual_months_charged, trial_days, sort_order)",
+        "id, billing_interval, payment_method, current_period_end, status, plans:plan_id (id, code, name, description, professional_limit, monthly_price_cents, annual_price_cents, annual_months_charged, trial_days, sort_order)",
       )
       .eq("business_id", businessId)
       .maybeSingle();
