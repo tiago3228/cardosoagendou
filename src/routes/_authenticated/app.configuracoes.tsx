@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { WhatsappInput } from "@/components/ui/whatsapp-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useInstallApp } from "@/lib/use-install-app";
 
 export const Route = createFileRoute("/_authenticated/app/configuracoes")({
   component: SettingsPage,
@@ -228,6 +229,48 @@ function SettingsPage() {
           </div>
         ))}
       </div>
+
+      <InstallAppSection />
     </div>
   );
 }
+
+function InstallAppSection() {
+  const { canInstall, installed, install, manualHint } = useInstallApp();
+  const [hint, setHint] = useState(false);
+
+  return (
+    <div className="mt-8 rounded-xl border border-border bg-card p-5">
+      <h2 className="font-display text-lg font-bold text-foreground">Instalar Agendou Pro</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {installed
+          ? "O Agendou Pro já está instalado neste dispositivo."
+          : "Crie um atalho para abrir o Agendou Pro direto da tela inicial ou da área de trabalho."}
+      </p>
+      {installed ? null : (
+        <>
+          <Button
+            className="mt-4"
+            variant="outline"
+            onClick={async () => {
+              const outcome = await install();
+              if (outcome === "accepted") {
+                toast.success("Atalho criado! Abra o Agendou Pro pelo ícone do app.");
+                return;
+              }
+              setHint(true);
+            }}
+          >
+            Instalar Agendou Pro
+          </Button>
+          {hint || !canInstall ? (
+            <p className="mt-3 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+              {manualHint}
+            </p>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+}
+
