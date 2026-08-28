@@ -691,6 +691,7 @@ export type Database = {
           deleted_at: string | null
           description: string | null
           id: string
+          image_url: string | null
           min_stock: number
           name: string
           price_cents: number
@@ -706,6 +707,7 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           id?: string
+          image_url?: string | null
           min_stock?: number
           name: string
           price_cents?: number
@@ -721,6 +723,7 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           id?: string
+          image_url?: string | null
           min_stock?: number
           name?: string
           price_cents?: number
