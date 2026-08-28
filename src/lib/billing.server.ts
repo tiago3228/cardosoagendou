@@ -85,7 +85,7 @@ export async function businessEntitlements(db: Db, businessId: string) {
     status: string | null;
     booking_state: string;
     accepts_bookings: boolean;
-    features: Record<string, unknown>;
+    features: Record<string, string | number | boolean | null>;
     current_period_end?: string | null;
     trial_ends_at?: string | null;
     cancel_at_period_end?: boolean | null;
