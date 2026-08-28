@@ -1,45 +1,56 @@
 import type {
-  PaymentProvider,
-  CreateCustomerInput,
-  CreateCustomerResult,
-  CreateCheckoutInput,
-  CreateCheckoutResult,
-  ChangeSubscriptionInput,
   CancelSubscriptionInput,
+  CreateSubscriptionInput,
+  CreateSubscriptionResult,
+  EnsureCustomerInput,
+  EnsureCustomerResult,
   NormalizedWebhookEvent,
-  BillingInterval,
   PaymentMethod,
+  PaymentProvider,
+  SubscriptionChargeInfo,
+  UpdateSubscriptionInput,
+  WebhookEventType,
 } from "./PaymentProvider";
 
 /**
- * Development/test provider. Simulates gateway responses so the whole
- * subscription lifecycle can be exercised before a real gateway is contracted.
- * Never selected in production unless PAYMENT_PROVIDER=mock is explicit.
+ * Sandbox/test double. Only used when `billing.provider` is explicitly set to
+ * "mock" — production resolves a real gateway and refuses to fall back here.
  */
 export class MockPaymentProvider implements PaymentProvider {
   readonly name = "mock";
 
-  async createCustomer(input: CreateCustomerInput): Promise<CreateCustomerResult> {
-    return { providerCustomerId: `mock_cus_${input.businessId}` };
+  isConfigured(): boolean {
+    return true;
   }
 
-  async createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult> {
-    // Built with the URL API so it stays valid even when successUrl already
-    // carries its own query string.
-    const url = new URL(input.successUrl);
+  async ensureCustomer(input: EnsureCustomerInput): Promise<EnsureCustomerResult> {
+    return { providerCustomerId: input.existingCustomerId ?? `mock_cus_${input.businessId}` };
+  }
+
+  async createSubscription(input: CreateSubscriptionInput): Promise<CreateSubscriptionResult> {
+    const url = new URL(input.returnUrl);
     url.searchParams.set("mock_checkout", "1");
-    url.searchParams.set("plan", input.planCode);
-    url.searchParams.set("interval", input.interval);
-    url.searchParams.set("method", input.method);
-    const id = `mock_chk_${input.businessId}_${input.planCode}_${input.interval}`;
     return {
-      checkoutUrl: url.toString(),
-      providerCheckoutId: id,
-      ...(input.method === "PIX" ? { pixCode: `00020126MOCKPIX${input.amountCents}` } : {}),
+      providerSubscriptionId: `mock_sub_${input.businessId}_${input.planCode}`,
+      providerPaymentId: `mock_pay_${input.businessId}`,
+      invoiceUrl: url.toString(),
+      pixPayload: input.method === "PIX" ? `00020126MOCKPIX${input.amountCents}` : null,
+      dueDate: input.nextDueDate,
+      amountCents: input.amountCents,
     };
   }
 
-  async changeSubscription(_input: ChangeSubscriptionInput): Promise<{ ok: true }> {
+  async getSubscriptionCharge(providerSubscriptionId: string): Promise<SubscriptionChargeInfo | null> {
+    return {
+      providerPaymentId: `mock_pay_${providerSubscriptionId}`,
+      invoiceUrl: null,
+      pixPayload: null,
+      dueDate: null,
+      amountCents: null,
+    };
+  }
+
+  async updateSubscription(_input: UpdateSubscriptionInput): Promise<{ ok: true }> {
     return { ok: true };
   }
 
@@ -47,29 +58,35 @@ export class MockPaymentProvider implements PaymentProvider {
     return { ok: true };
   }
 
-  verifyWebhook(_rawBody: string, signature: string | null, secret: string | null): boolean {
-    // The mock accepts requests when no secret is configured; when one is set it
-    // must be echoed in the signature header, mirroring real providers.
-    if (!secret) return true;
-    return signature === secret;
+  verifyWebhook(headers: Headers): boolean {
+    const secret = process.env["ASAAS_WEBHOOK_TOKEN"] ?? "";
+    if (!secret) return false;
+    return headers.get("asaas-access-token") === secret;
   }
 
   parseWebhook(rawBody: string): NormalizedWebhookEvent {
     const body = JSON.parse(rawBody) as Record<string, unknown>;
-    const type = String(body["type"] ?? "unknown");
-    const allowed: NormalizedWebhookEvent["type"][] = [
+    const eventName = String(body["event"] ?? "UNKNOWN");
+    const allowed: WebhookEventType[] = [
+      "payment.pending",
       "payment.confirmed",
-      "payment.failed",
-      "subscription.renewed",
+      "payment.overdue",
+      "payment.refunded",
       "subscription.canceled",
     ];
+    const type = String(body["type"] ?? "");
     return {
-      externalId: String(body["id"] ?? `mock_${type}_${Date.now()}`),
-      type: (allowed as string[]).includes(type) ? (type as NormalizedWebhookEvent["type"]) : "unknown",
+      externalId: String(body["id"] ?? `mock_${eventName}_${Date.now()}`),
+      type: (allowed as string[]).includes(type) ? (type as WebhookEventType) : "unknown",
+      rawEventName: eventName,
+      providerSubscriptionId: (body["providerSubscriptionId"] as string | undefined) ?? null,
+      providerPaymentId: (body["providerPaymentId"] as string | undefined) ?? null,
       businessId: (body["businessId"] as string | undefined) ?? null,
-      planCode: (body["planCode"] as string | undefined) ?? null,
-      interval: (body["interval"] as BillingInterval | undefined) ?? null,
+      amountCents: (body["amountCents"] as number | undefined) ?? null,
       method: (body["method"] as PaymentMethod | undefined) ?? null,
+      paidAt: (body["paidAt"] as string | undefined) ?? null,
+      dueDate: (body["dueDate"] as string | undefined) ?? null,
+      invoiceUrl: null,
       raw: body,
     };
   }
