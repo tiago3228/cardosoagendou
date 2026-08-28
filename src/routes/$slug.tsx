@@ -353,15 +353,9 @@ function BookingPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="zap">WhatsApp</Label>
-                <Input
-                  id="zap"
-                  inputMode="tel"
-                  required
-                  placeholder="55 (31) 97541-4498"
-                  value={whatsapp}
-                  onChange={(e) => setWhatsapp(e.target.value)}
-                />
+                <WhatsappInput id="zap" required value={whatsapp} onChange={setWhatsapp} />
               </div>
+
               <div className="space-y-1.5">
                 <Label htmlFor="obs">Observações (opcional)</Label>
                 <Input id="obs" value={notes} onChange={(e) => setNotes(e.target.value)} />
