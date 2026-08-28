@@ -23,8 +23,9 @@ import { Route as AuthenticatedAppConfiguracoesRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppProdutosRouteImport } from './routes/_authenticated/app.produtos'
 import { Route as AuthenticatedAppProfissionaisRouteImport } from './routes/_authenticated/app.profissionais'
 import { Route as AuthenticatedAppServicosRouteImport } from './routes/_authenticated/app.servicos'
+import { Route as AuthenticatedMasterPagamentosRouteImport } from './routes/_authenticated/master.pagamentos'
 import { Route as ApiPublicCronBillingRouteImport } from './routes/api/public/cron/billing'
-import { Route as ApiPublicWebhooksAsaasRouteImport } from './routes/api/public/webhooks/asaas'
+import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public/webhooks/mercadopago'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -101,16 +102,23 @@ const AuthenticatedAppServicosRoute =
     path: '/servicos',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedMasterPagamentosRoute =
+  AuthenticatedMasterPagamentosRouteImport.update({
+    id: '/master/pagamentos',
+    path: '/master/pagamentos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicCronBillingRoute = ApiPublicCronBillingRouteImport.update({
   id: '/api/public/cron/billing',
   path: '/api/public/cron/billing',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicWebhooksAsaasRoute = ApiPublicWebhooksAsaasRouteImport.update({
-  id: '/api/public/webhooks/asaas',
-  path: '/api/public/webhooks/asaas',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const ApiPublicWebhooksMercadopagoRoute =
+  ApiPublicWebhooksMercadopagoRouteImport.update({
+    id: '/api/public/webhooks/mercadopago',
+    path: '/api/public/webhooks/mercadopago',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -125,9 +133,10 @@ export interface FileRoutesByFullPath {
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/app/servicos': typeof AuthenticatedAppServicosRoute
+  '/master/pagamentos': typeof AuthenticatedMasterPagamentosRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/api/public/cron/billing': typeof ApiPublicCronBillingRoute
-  '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
+  '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -141,9 +150,10 @@ export interface FileRoutesByTo {
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/app/servicos': typeof AuthenticatedAppServicosRoute
+  '/master/pagamentos': typeof AuthenticatedMasterPagamentosRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/api/public/cron/billing': typeof ApiPublicCronBillingRoute
-  '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
+  '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -160,9 +170,10 @@ export interface FileRoutesById {
   '/_authenticated/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/_authenticated/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/_authenticated/app/servicos': typeof AuthenticatedAppServicosRoute
+  '/_authenticated/master/pagamentos': typeof AuthenticatedMasterPagamentosRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/api/public/cron/billing': typeof ApiPublicCronBillingRoute
-  '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
+  '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -179,9 +190,10 @@ export interface FileRouteTypes {
     | '/app/produtos'
     | '/app/profissionais'
     | '/app/servicos'
+    | '/master/pagamentos'
     | '/app/'
     | '/api/public/cron/billing'
-    | '/api/public/webhooks/asaas'
+    | '/api/public/webhooks/mercadopago'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -195,9 +207,10 @@ export interface FileRouteTypes {
     | '/app/produtos'
     | '/app/profissionais'
     | '/app/servicos'
+    | '/master/pagamentos'
     | '/app'
     | '/api/public/cron/billing'
-    | '/api/public/webhooks/asaas'
+    | '/api/public/webhooks/mercadopago'
   id:
     | '__root__'
     | '/'
@@ -213,9 +226,10 @@ export interface FileRouteTypes {
     | '/_authenticated/app/produtos'
     | '/_authenticated/app/profissionais'
     | '/_authenticated/app/servicos'
+    | '/_authenticated/master/pagamentos'
     | '/_authenticated/app/'
     | '/api/public/cron/billing'
-    | '/api/public/webhooks/asaas'
+    | '/api/public/webhooks/mercadopago'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -226,7 +240,7 @@ export interface RootRouteChildren {
   CadastroRoute: typeof CadastroRoute
   ConviteTokenRoute: typeof ConviteTokenRoute
   ApiPublicCronBillingRoute: typeof ApiPublicCronBillingRoute
-  ApiPublicWebhooksAsaasRoute: typeof ApiPublicWebhooksAsaasRoute
+  ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -329,6 +343,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppServicosRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/master/pagamentos': {
+      id: '/_authenticated/master/pagamentos'
+      path: '/master/pagamentos'
+      fullPath: '/master/pagamentos'
+      preLoaderRoute: typeof AuthenticatedMasterPagamentosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/cron/billing': {
       id: '/api/public/cron/billing'
       path: '/api/public/cron/billing'
@@ -336,11 +357,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronBillingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/webhooks/asaas': {
-      id: '/api/public/webhooks/asaas'
-      path: '/api/public/webhooks/asaas'
-      fullPath: '/api/public/webhooks/asaas'
-      preLoaderRoute: typeof ApiPublicWebhooksAsaasRouteImport
+    '/api/public/webhooks/mercadopago': {
+      id: '/api/public/webhooks/mercadopago'
+      path: '/api/public/webhooks/mercadopago'
+      fullPath: '/api/public/webhooks/mercadopago'
+      preLoaderRoute: typeof ApiPublicWebhooksMercadopagoRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -371,10 +392,12 @@ const AuthenticatedAppRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
+  AuthenticatedMasterPagamentosRoute: typeof AuthenticatedMasterPagamentosRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
+  AuthenticatedMasterPagamentosRoute: AuthenticatedMasterPagamentosRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -388,7 +411,7 @@ const rootRouteChildren: RootRouteChildren = {
   CadastroRoute: CadastroRoute,
   ConviteTokenRoute: ConviteTokenRoute,
   ApiPublicCronBillingRoute: ApiPublicCronBillingRoute,
-  ApiPublicWebhooksAsaasRoute: ApiPublicWebhooksAsaasRoute,
+  ApiPublicWebhooksMercadopagoRoute: ApiPublicWebhooksMercadopagoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

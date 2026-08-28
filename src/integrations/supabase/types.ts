@@ -331,6 +331,106 @@ export type Database = {
           },
         ]
       }
+      manual_payment_requests: {
+        Row: {
+          admin_note: string | null
+          amount_cents: number
+          approved_at: string | null
+          billing_interval: Database["public"]["Enums"]["billing_interval"]
+          business_id: string
+          created_at: string
+          currency: string
+          customer_note: string | null
+          expires_at: string
+          id: string
+          payment_method: string
+          period_end: string | null
+          period_start: string | null
+          plan_id: string
+          proof_path: string | null
+          rejected_at: string | null
+          requested_at: string
+          requested_by: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount_cents: number
+          approved_at?: string | null
+          billing_interval?: Database["public"]["Enums"]["billing_interval"]
+          business_id: string
+          created_at?: string
+          currency?: string
+          customer_note?: string | null
+          expires_at?: string
+          id?: string
+          payment_method?: string
+          period_end?: string | null
+          period_start?: string | null
+          plan_id: string
+          proof_path?: string | null
+          rejected_at?: string | null
+          requested_at?: string
+          requested_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount_cents?: number
+          approved_at?: string | null
+          billing_interval?: Database["public"]["Enums"]["billing_interval"]
+          business_id?: string
+          created_at?: string
+          currency?: string
+          customer_note?: string | null
+          expires_at?: string
+          id?: string
+          payment_method?: string
+          period_end?: string | null
+          period_start?: string | null
+          plan_id?: string
+          proof_path?: string | null
+          rejected_at?: string | null
+          requested_at?: string
+          requested_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_payment_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_payment_requests_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_payment_requests_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           appointment_id: string | null
@@ -1169,6 +1269,10 @@ export type Database = {
         Args: { _full_name?: string; _token: string }
         Returns: Json
       }
+      approve_manual_payment_request: {
+        Args: { _admin_note?: string; _request_id: string }
+        Returns: Json
+      }
       business_accepts_bookings: {
         Args: { _business_id: string }
         Returns: boolean
@@ -1183,6 +1287,7 @@ export type Database = {
         Returns: number
       }
       can_add_professional: { Args: { _business_id: string }; Returns: boolean }
+      expire_manual_payment_requests: { Args: never; Returns: number }
       has_business_role: {
         Args: {
           _business_id: string
@@ -1216,6 +1321,10 @@ export type Database = {
       }
       public_catalog: { Args: { _slug: string }; Returns: Json }
       reconcile_subscriptions: { Args: never; Returns: Json }
+      reject_manual_payment_request: {
+        Args: { _admin_note?: string; _request_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "master" | "owner" | "professional"
