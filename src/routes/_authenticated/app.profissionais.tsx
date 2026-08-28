@@ -2,13 +2,19 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Mail, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery } from "./app";
 import { WEEKDAY_SHORT } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  inviteProfessional,
+  listProfessionalInvites,
+  revokeProfessionalInvite,
+} from "@/lib/team.functions";
 
 export const Route = createFileRoute("/_authenticated/app/profissionais")({
   component: ProfessionalsPage,
@@ -21,12 +27,47 @@ function ProfessionalsPage() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ name: "", commission: "0" });
 
+  const sendInvite = useServerFn(inviteProfessional);
+  const fetchInvites = useServerFn(listProfessionalInvites);
+  const revokeInvite = useServerFn(revokeProfessionalInvite);
+  const [inviteEmail, setInviteEmail] = useState<Record<string, string>>({});
+
+  const invites = useQuery({ queryKey: ["professional-invites", businessId], queryFn: () => fetchInvites() });
+
+  const invite = useMutation({
+    mutationFn: (input: { professionalId: string; email: string }) => sendInvite({ data: input }),
+    onSuccess: (result) => {
+      setInviteEmail({});
+      toast.success(`Convite criado para ${result.professionalName}`, {
+        description: "Envie o link de ativação para o profissional.",
+        action: {
+          label: "Copiar link",
+          onClick: () => void navigator.clipboard.writeText(result.inviteUrl),
+        },
+      });
+      queryClient.invalidateQueries({ queryKey: ["professional-invites", businessId] });
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível convidar", {
+        description: error.message.replace(/^[A-Z_]+:\s*/, ""),
+      }),
+  });
+
+  const revoke = useMutation({
+    mutationFn: (inviteId: string) => revokeInvite({ data: { inviteId } }),
+    onSuccess: () => {
+      toast.success("Convite revogado");
+      queryClient.invalidateQueries({ queryKey: ["professional-invites", businessId] });
+    },
+    onError: (error: Error) => toast.error("Erro ao revogar", { description: error.message }),
+  });
+
   const professionals = useQuery({
     queryKey: ["professionals", businessId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("professionals")
-        .select("id, name, commission_percent, active")
+        .select("id, name, commission_percent, active, user_id")
         .eq("business_id", businessId)
         .is("deleted_at", null)
         .order("name");
@@ -221,10 +262,81 @@ function ProfessionalsPage() {
               })}
             </div>
 
+            <ProfessionalAccess
+              hasAccess={Boolean(professional.user_id)}
+              pendingInvite={(invites.data ?? []).find(
+                (i) => i.professional_id === professional.id && i.status === "PENDING",
+              )}
+              email={inviteEmail[professional.id] ?? ""}
+              onEmailChange={(value) => setInviteEmail((prev) => ({ ...prev, [professional.id]: value }))}
+              onInvite={() =>
+                invite.mutate({
+                  professionalId: professional.id,
+                  email: (inviteEmail[professional.id] ?? "").trim(),
+                })
+              }
+              onRevoke={(inviteId) => revoke.mutate(inviteId)}
+              busy={invite.isPending || revoke.isPending}
+            />
+
             <ProfessionalHours professionalId={professional.id} businessId={businessId} />
           </article>
         ))}
       </div>
+    </div>
+  );
+}
+
+function ProfessionalAccess({
+  hasAccess,
+  pendingInvite,
+  email,
+  onEmailChange,
+  onInvite,
+  onRevoke,
+  busy,
+}: {
+  hasAccess: boolean;
+  pendingInvite?: { id: string; email: string; expires_at: string } | undefined;
+  email: string;
+  onEmailChange: (value: string) => void;
+  onInvite: () => void;
+  onRevoke: (inviteId: string) => void;
+  busy: boolean;
+}) {
+  return (
+    <div className="mt-4 rounded-lg border border-border bg-muted/40 p-3">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">Acesso ao painel</p>
+      {hasAccess ? (
+        <p className="mt-1 text-sm text-card-foreground">
+          Este profissional já entra no painel e vê apenas a própria agenda.
+        </p>
+      ) : pendingInvite ? (
+        <div className="mt-1 flex flex-wrap items-center gap-3">
+          <p className="text-sm text-muted-foreground">
+            Convite pendente para {pendingInvite.email} · expira em{" "}
+            {new Date(pendingInvite.expires_at).toLocaleDateString("pt-BR")}
+          </p>
+          <Button size="sm" variant="ghost" disabled={busy} onClick={() => onRevoke(pendingInvite.id)}>
+            Revogar
+          </Button>
+        </div>
+      ) : (
+        <div className="mt-2 flex flex-wrap items-end gap-2">
+          <div className="min-w-[220px] flex-1 space-y-1.5">
+            <Label>E-mail do profissional</Label>
+            <Input
+              type="email"
+              value={email}
+              placeholder="nome@email.com"
+              onChange={(e) => onEmailChange(e.target.value)}
+            />
+          </div>
+          <Button size="sm" variant="outline" disabled={busy || email.trim().length < 5} onClick={onInvite}>
+            <Mail className="size-4" aria-hidden /> Convidar
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
