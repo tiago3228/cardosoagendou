@@ -189,6 +189,27 @@ export const schedulePlanChange = createServerFn({ method: "POST" })
       }
     }
 
+    // Mirror the new value/cycle at the gateway so the NEXT charge is correct,
+    // while the paid period keeps running on the current plan.
+    const gatewaySubscriptionId = await supabaseAdmin
+      .from("subscriptions")
+      .select("provider, provider_subscription_id")
+      .eq("business_id", businessId)
+      .maybeSingle();
+    if (gatewaySubscriptionId.data?.provider_subscription_id) {
+      const { resolveProvider } = await import("./billing.server");
+      const { planPriceCents } = await import("./plans");
+      const provider = await resolveProvider(supabaseAdmin, gatewaySubscriptionId.data.provider);
+      await provider.updateSubscription({
+        providerSubscriptionId: gatewaySubscriptionId.data.provider_subscription_id,
+        amountCents: planPriceCents(nextPlan, data.interval),
+        interval: data.interval,
+        method: (current.data as { payment_method?: "PIX" | "CREDIT_CARD" | null }).payment_method ?? "PIX",
+        // Only future charges change — never rewrite the current paid period.
+        updatePendingPayments: false,
+      });
+    }
+
     await supabaseAdmin
       .from("subscriptions")
       .update({
@@ -218,7 +239,7 @@ export const cancelSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { requireOwnedBusinessId, logAudit } = await import("./subscription.server");
-    const { getPaymentProvider } = await import("./payments");
+    const { resolveProvider } = await import("./billing.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const businessId = await requireOwnedBusinessId(context.supabase, context.userId);
@@ -229,11 +250,11 @@ export const cancelSubscription = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!current.data) throw new Error("SUBSCRIPTION_NOT_FOUND");
 
+    // Stop future charges at the gateway; access stays until the period ends.
     if (current.data.provider_subscription_id) {
-      const provider = getPaymentProvider(current.data.provider);
+      const provider = await resolveProvider(supabaseAdmin, current.data.provider);
       await provider.cancelSubscription({
         providerSubscriptionId: current.data.provider_subscription_id,
-        atPeriodEnd: true,
       });
     }
 
