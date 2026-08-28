@@ -1,11 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { provisionBusiness } from "@/lib/signup.functions";
-import { signupSchema } from "@/lib/schemas";
+import { provisionSchema, signupSchema } from "@/lib/schemas";
 import { BUSINESS_TYPES, BUSINESS_TYPE_CONFIG } from "@/lib/business-types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
