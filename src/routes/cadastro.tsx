@@ -182,13 +182,10 @@ function SignupPage() {
             <Input value={form.ownerName} onChange={(e) => set("ownerName", e.target.value)} />
           </Field>
 
-          <Field label="WhatsApp" error={errors["whatsapp"]} hint="Ex.: 55 (31) 97541-4498">
-            <Input
-              inputMode="tel"
-              value={form.whatsapp}
-              onChange={(e) => set("whatsapp", e.target.value)}
-            />
+          <Field label="WhatsApp" error={errors["whatsapp"]} hint="Ex.: (31) 99999-9999">
+            <WhatsappInput value={form.whatsapp} onChange={(v) => set("whatsapp", v)} />
           </Field>
+
 
           {signedIn ? null : (
             <>
