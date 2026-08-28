@@ -23,6 +23,7 @@ import { Route as AuthenticatedAppConfiguracoesRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppProdutosRouteImport } from './routes/_authenticated/app.produtos'
 import { Route as AuthenticatedAppProfissionaisRouteImport } from './routes/_authenticated/app.profissionais'
 import { Route as AuthenticatedAppServicosRouteImport } from './routes/_authenticated/app.servicos'
+import { Route as AuthenticatedMasterPagamentosRouteImport } from './routes/_authenticated/master.pagamentos'
 import { Route as ApiPublicCronBillingRouteImport } from './routes/api/public/cron/billing'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public/webhooks/mercadopago'
 
@@ -101,6 +102,12 @@ const AuthenticatedAppServicosRoute =
     path: '/servicos',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedMasterPagamentosRoute =
+  AuthenticatedMasterPagamentosRouteImport.update({
+    id: '/master/pagamentos',
+    path: '/master/pagamentos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicCronBillingRoute = ApiPublicCronBillingRouteImport.update({
   id: '/api/public/cron/billing',
   path: '/api/public/cron/billing',
@@ -126,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/app/servicos': typeof AuthenticatedAppServicosRoute
+  '/master/pagamentos': typeof AuthenticatedMasterPagamentosRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/api/public/cron/billing': typeof ApiPublicCronBillingRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
@@ -142,6 +150,7 @@ export interface FileRoutesByTo {
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/app/servicos': typeof AuthenticatedAppServicosRoute
+  '/master/pagamentos': typeof AuthenticatedMasterPagamentosRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/api/public/cron/billing': typeof ApiPublicCronBillingRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
@@ -161,6 +170,7 @@ export interface FileRoutesById {
   '/_authenticated/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/_authenticated/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/_authenticated/app/servicos': typeof AuthenticatedAppServicosRoute
+  '/_authenticated/master/pagamentos': typeof AuthenticatedMasterPagamentosRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/api/public/cron/billing': typeof ApiPublicCronBillingRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
@@ -180,6 +190,7 @@ export interface FileRouteTypes {
     | '/app/produtos'
     | '/app/profissionais'
     | '/app/servicos'
+    | '/master/pagamentos'
     | '/app/'
     | '/api/public/cron/billing'
     | '/api/public/webhooks/mercadopago'
@@ -196,6 +207,7 @@ export interface FileRouteTypes {
     | '/app/produtos'
     | '/app/profissionais'
     | '/app/servicos'
+    | '/master/pagamentos'
     | '/app'
     | '/api/public/cron/billing'
     | '/api/public/webhooks/mercadopago'
@@ -214,6 +226,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/produtos'
     | '/_authenticated/app/profissionais'
     | '/_authenticated/app/servicos'
+    | '/_authenticated/master/pagamentos'
     | '/_authenticated/app/'
     | '/api/public/cron/billing'
     | '/api/public/webhooks/mercadopago'
@@ -330,6 +343,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppServicosRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/master/pagamentos': {
+      id: '/_authenticated/master/pagamentos'
+      path: '/master/pagamentos'
+      fullPath: '/master/pagamentos'
+      preLoaderRoute: typeof AuthenticatedMasterPagamentosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/cron/billing': {
       id: '/api/public/cron/billing'
       path: '/api/public/cron/billing'
@@ -372,10 +392,12 @@ const AuthenticatedAppRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
+  AuthenticatedMasterPagamentosRoute: typeof AuthenticatedMasterPagamentosRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
+  AuthenticatedMasterPagamentosRoute: AuthenticatedMasterPagamentosRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
