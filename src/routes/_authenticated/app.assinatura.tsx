@@ -46,6 +46,8 @@ function SubscriptionPage() {
   const clearPending = useServerFn(clearPendingPlanChange);
   const queryClient = useQueryClient();
   const [interval, setInterval] = useState<BillingInterval>("MONTHLY");
+  const [selected, setSelected] = useState<{ code: string; name: string } | null>(null);
+  const [pixOpen, setPixOpen] = useState(false);
 
   const fetchEntitlements = useServerFn(getMyEntitlements);
   const fetchCharge = useServerFn(getOpenCharge);
