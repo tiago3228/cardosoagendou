@@ -144,10 +144,19 @@ function SignupPage() {
           Cadastre seu negócio
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          14 dias grátis, sem cartão de crédito. Já tem conta?{" "}
-          <Link to="/auth" className="font-medium text-primary underline-offset-4 hover:underline">
-            Entrar
-          </Link>
+          {signedIn ? (
+            <>
+              Você já está logado como {form.email || "sua conta"}. Complete os dados do negócio para
+              acessar o painel.
+            </>
+          ) : (
+            <>
+              14 dias grátis, sem cartão de crédito. Já tem conta?{" "}
+              <Link to="/auth" className="font-medium text-primary underline-offset-4 hover:underline">
+                Entrar
+              </Link>
+            </>
+          )}
         </p>
 
         <form onSubmit={submit} className="mt-8 space-y-4">
