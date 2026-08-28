@@ -1,11 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { provisionBusiness } from "@/lib/signup.functions";
-import { signupSchema } from "@/lib/schemas";
+import { provisionSchema, signupSchema } from "@/lib/schemas";
 import { BUSINESS_TYPES, BUSINESS_TYPE_CONFIG } from "@/lib/business-types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,13 +42,30 @@ function SignupPage() {
     businessType: "BARBERSHOP",
   });
 
+  // Quem já está logado (ex.: conta master sem negócio) só precisa dos dados do negócio.
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void supabase.auth.getSession().then(({ data }) => {
+      if (!alive) return;
+      setSignedIn(Boolean(data.session));
+      const email = data.session?.user.email;
+      const name = (data.session?.user.user_metadata as { full_name?: string } | undefined)?.full_name;
+      if (email) setForm((prev) => ({ ...prev, email, ownerName: prev.ownerName || (name ?? "") }));
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   function set(key: keyof typeof form, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    const parsed = signupSchema.safeParse(form);
+    const schema = signedIn ? provisionSchema : signupSchema;
+    const parsed = schema.safeParse(form);
     if (!parsed.success) {
       const next: Record<string, string> = {};
       for (const issue of parsed.error.issues) next[String(issue.path[0])] = issue.message;
@@ -58,27 +75,41 @@ function SignupPage() {
     setErrors({});
     setBusy(true);
     try {
-      const signUp = await supabase.auth.signUp({
-        email: parsed.data.email,
-        password: parsed.data.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth`,
-          data: { full_name: parsed.data.ownerName },
-        },
-      });
-      if (signUp.error) throw new Error(signUp.error.message);
-
-      if (!signUp.data.session) {
-        const signIn = await supabase.auth.signInWithPassword({
-          email: parsed.data.email,
-          password: parsed.data.password,
+      if (!signedIn) {
+        const signUp = await supabase.auth.signUp({
+          email: form.email,
+          password: form.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth`,
+            data: { full_name: parsed.data.ownerName },
+          },
         });
-        if (signIn.error) {
-          toast.success("Conta criada", {
-            description: "Confirme seu e-mail para acessar o painel.",
+
+        // E-mail já cadastrado: entra na conta existente e segue criando o negócio.
+        if (signUp.error) {
+          const already = /already registered|already exists|User already/i.test(signUp.error.message);
+          if (!already) throw new Error(signUp.error.message);
+          const signIn = await supabase.auth.signInWithPassword({
+            email: form.email,
+            password: form.password,
           });
-          navigate({ to: "/auth" });
-          return;
+          if (signIn.error) {
+            throw new Error(
+              "Este e-mail já tem conta no Agendou. Entre com sua senha para continuar o cadastro do negócio.",
+            );
+          }
+        } else if (!signUp.data.session) {
+          const signIn = await supabase.auth.signInWithPassword({
+            email: form.email,
+            password: form.password,
+          });
+          if (signIn.error) {
+            toast.success("Conta criada", {
+              description: "Confirme seu e-mail para acessar o painel.",
+            });
+            navigate({ to: "/auth" });
+            return;
+          }
         }
       }
 
@@ -113,10 +144,19 @@ function SignupPage() {
           Cadastre seu negócio
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          14 dias grátis, sem cartão de crédito. Já tem conta?{" "}
-          <Link to="/auth" className="font-medium text-primary underline-offset-4 hover:underline">
-            Entrar
-          </Link>
+          {signedIn ? (
+            <>
+              Você já está logado como {form.email || "sua conta"}. Complete os dados do negócio para
+              acessar o painel.
+            </>
+          ) : (
+            <>
+              14 dias grátis, sem cartão de crédito. Já tem conta?{" "}
+              <Link to="/auth" className="font-medium text-primary underline-offset-4 hover:underline">
+                Entrar
+              </Link>
+            </>
+          )}
         </p>
 
         <form onSubmit={submit} className="mt-8 space-y-4">
@@ -150,17 +190,21 @@ function SignupPage() {
             />
           </Field>
 
-          <Field label="E-mail" error={errors["email"]}>
-            <Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} />
-          </Field>
+          {signedIn ? null : (
+            <>
+              <Field label="E-mail" error={errors["email"]}>
+                <Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} />
+              </Field>
 
-          <Field label="Senha" error={errors["password"]} hint="Mínimo de 8 caracteres">
-            <PasswordInput
-              autoComplete="new-password"
-              value={form.password}
-              onChange={(e) => set("password", e.target.value)}
-            />
-          </Field>
+              <Field label="Senha" error={errors["password"]} hint="Mínimo de 8 caracteres">
+                <PasswordInput
+                  autoComplete="new-password"
+                  value={form.password}
+                  onChange={(e) => set("password", e.target.value)}
+                />
+              </Field>
+            </>
+          )}
 
           <Button type="submit" className="w-full" disabled={busy}>
             {busy ? "Criando..." : "Criar meu negócio"}
