@@ -190,17 +190,21 @@ function SignupPage() {
             />
           </Field>
 
-          <Field label="E-mail" error={errors["email"]}>
-            <Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} />
-          </Field>
+          {signedIn ? null : (
+            <>
+              <Field label="E-mail" error={errors["email"]}>
+                <Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} />
+              </Field>
 
-          <Field label="Senha" error={errors["password"]} hint="Mínimo de 8 caracteres">
-            <PasswordInput
-              autoComplete="new-password"
-              value={form.password}
-              onChange={(e) => set("password", e.target.value)}
-            />
-          </Field>
+              <Field label="Senha" error={errors["password"]} hint="Mínimo de 8 caracteres">
+                <PasswordInput
+                  autoComplete="new-password"
+                  value={form.password}
+                  onChange={(e) => set("password", e.target.value)}
+                />
+              </Field>
+            </>
+          )}
 
           <Button type="submit" className="w-full" disabled={busy}>
             {busy ? "Criando..." : "Criar meu negócio"}
