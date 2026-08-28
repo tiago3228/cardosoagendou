@@ -318,27 +318,19 @@ export async function applyBillingEvent(db: Db, event: NormalizedWebhookEvent) {
 }
 
 /**
- * Periodic reconciliation (cron): expires grace periods that ran out and
- * suspends businesses whose paid period ended without a new payment.
+ * Periodic reconciliation. The whole transition set lives in the database
+ * function `reconcile_subscriptions()` (also scheduled daily by the database
+ * itself), so the HTTP cron endpoint and the internal scheduler can never
+ * drift apart: expired trials/periods → PAST_DUE, expired grace → SUSPENDED,
+ * cancellations → CANCELED at period end. Every change is audited.
  */
 export async function reconcileSubscriptions(db: Db) {
-  const now = new Date().toISOString();
-  const expiredGrace = await db
-    .from("subscriptions")
-    .update({ status: "SUSPENDED" })
-    .eq("status", "PAST_DUE")
-    .lt("grace_expires_at", now)
-    .select("id, business_id");
-
-  const lapsed = await db
-    .from("subscriptions")
-    .update({ status: "PAST_DUE", grace_expires_at: new Date(Date.now() + (await graceDays(db)) * 86400000).toISOString() })
-    .in("status", ["TRIALING", "ACTIVE"])
-    .lt("current_period_end", now)
-    .select("id, business_id");
-
+  const { data, error } = await db.rpc("reconcile_subscriptions");
+  if (error) throw new Error(error.message);
+  const result = (data ?? {}) as { lapsed?: number; suspended?: number; canceled?: number };
   return {
-    suspended: expiredGrace.data?.length ?? 0,
-    pastDue: lapsed.data?.length ?? 0,
+    pastDue: result.lapsed ?? 0,
+    suspended: result.suspended ?? 0,
+    canceled: result.canceled ?? 0,
   };
 }
