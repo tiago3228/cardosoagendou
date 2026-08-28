@@ -168,7 +168,7 @@ export const reviewPixRequest = createServerFn({ method: "POST" })
     const fn = data.action === "APPROVE" ? "approve_manual_payment_request" : "reject_manual_payment_request";
     const { data: result, error } = await context.supabase.rpc(fn, {
       _request_id: data.requestId,
-      _admin_note: data.adminNote ?? null,
+      ...(data.adminNote ? { _admin_note: data.adminNote } : {}),
     });
     if (error) throw new Error(error.message);
     return result as { already: boolean; status: string; period_start?: string; period_end?: string };
