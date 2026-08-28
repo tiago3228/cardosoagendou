@@ -45,7 +45,7 @@ function SubscriptionPage() {
   const queryClient = useQueryClient();
   const [interval, setInterval] = useState<BillingInterval>("MONTHLY");
 
-  const data = useQuery({ queryKey: ["subscription"], queryFn: () => fetchSubscription({ data: {} }) });
+  const data = useQuery({ queryKey: ["subscription"], queryFn: () => fetchSubscription() });
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["subscription"] });
     queryClient.invalidateQueries({ queryKey: ["panel"] });
@@ -83,7 +83,7 @@ function SubscriptionPage() {
   });
 
   const cancelMutation = useMutation({
-    mutationFn: () => cancel({ data: {} }),
+    mutationFn: () => cancel(),
     onSuccess: (result) => {
       toast.success("Assinatura cancelada", {
         description: `Acesso liberado até ${new Date(result.activeUntil).toLocaleDateString("pt-BR")}.`,
@@ -94,7 +94,7 @@ function SubscriptionPage() {
   });
 
   const reactivateMutation = useMutation({
-    mutationFn: () => reactivate({ data: {} }),
+    mutationFn: () => reactivate(),
     onSuccess: () => {
       toast.success("Assinatura reativada");
       refresh();
@@ -103,7 +103,7 @@ function SubscriptionPage() {
   });
 
   const clearMutation = useMutation({
-    mutationFn: () => clearPending({ data: {} }),
+    mutationFn: () => clearPending(),
     onSuccess: () => {
       toast.success("Mudança de plano cancelada");
       refresh();
