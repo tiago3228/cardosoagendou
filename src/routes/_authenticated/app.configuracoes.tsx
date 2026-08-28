@@ -25,6 +25,8 @@ function SettingsPage() {
     email: business.email ?? "",
     address: business.address ?? "",
     booking_policy: business.booking_policy ?? "",
+    show_address: business.show_address,
+    show_whatsapp: business.show_whatsapp,
     slot_interval_minutes: String(business.slot_interval_minutes),
     min_notice_minutes: String(business.min_notice_minutes),
     max_advance_days: String(business.max_advance_days),
