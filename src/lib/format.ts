@@ -33,17 +33,35 @@ export function normalizeBrWhatsapp(input: string): string | null {
   return `+55${national}`;
 }
 
-/** Renders an E.164 BR number as "55 (31) 97541-4498". */
+/**
+ * Extracts the national digits (DDD + number, max 11) from any input,
+ * dropping an optional 55 country code / leading zeros.
+ */
+export function brPhoneDigits(input: string | null | undefined): string {
+  let digits = (input ?? "").replace(/\D+/g, "").replace(/^0+/, "");
+  if (digits.length > 11 && digits.startsWith("55")) digits = digits.slice(2);
+  return digits.slice(0, 11);
+}
+
+/** Masks national digits as "(31) 99999-9999" (or "(31) 9999-9999" for 8-digit numbers). */
+export function maskBrPhone(input: string | null | undefined): string {
+  const d = brPhoneDigits(input);
+  if (d.length === 0) return "";
+  if (d.length <= 2) return `(${d}`;
+  const ddd = d.slice(0, 2);
+  const rest = d.slice(2);
+  if (rest.length <= 4) return `(${ddd}) ${rest}`;
+  const split = rest.length > 8 ? 5 : 4;
+  return `(${ddd}) ${rest.slice(0, split)}-${rest.slice(split)}`;
+}
+
+/** Renders an E.164 BR number as "(31) 99999-9999". */
 export function formatWhatsapp(e164: string | null | undefined): string {
   if (!e164) return "";
-  const digits = e164.replace(/\D+/g, "");
-  if (!digits.startsWith("55") || digits.length < 12) return e164;
-  const national = digits.slice(2);
-  const ddd = national.slice(0, 2);
-  const rest = national.slice(2);
-  const split = rest.length === 9 ? 5 : 4;
-  return `55 (${ddd}) ${rest.slice(0, split)}-${rest.slice(split)}`;
+  const masked = maskBrPhone(e164);
+  return masked || e164;
 }
+
 
 export function whatsappLink(e164: string | null | undefined, message?: string): string {
   const digits = (e164 ?? "").replace(/\D+/g, "");
