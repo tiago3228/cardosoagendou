@@ -98,3 +98,10 @@ export const pixReviewSchema = z.object({
   action: z.enum(["APPROVE", "REJECT"]),
   adminNote: z.string().trim().max(500).optional(),
 });
+
+/** Master-only plan test switching. */
+export const masterTestPlanSchema = z.object({
+  businessId: z.string().uuid(),
+  planCode: z.enum(["BASIC", "MEDIUM", "UNLIMITED"]),
+  interval: z.enum(["MONTHLY", "ANNUAL"]).default("MONTHLY"),
+});
