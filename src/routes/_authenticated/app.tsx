@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMyPanel } from "@/lib/panel.functions";
 import { Button } from "@/components/ui/button";
 
-export const panelQuery = queryOptions({ queryKey: ["panel"], queryFn: () => getMyPanel({ data: {} }) });
+export const panelQuery = queryOptions({ queryKey: ["panel"], queryFn: () => getMyPanel() });
 
 export const Route = createFileRoute("/_authenticated/app")({
   loader: ({ context }) => context.queryClient.ensureQueryData(panelQuery),

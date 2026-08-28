@@ -16,6 +16,12 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
+import { Route as AuthenticatedAppAssinaturaRouteImport } from './routes/_authenticated/app.assinatura'
+import { Route as AuthenticatedAppClientesRouteImport } from './routes/_authenticated/app.clientes'
+import { Route as AuthenticatedAppConfiguracoesRouteImport } from './routes/_authenticated/app.configuracoes'
+import { Route as AuthenticatedAppProdutosRouteImport } from './routes/_authenticated/app.produtos'
+import { Route as AuthenticatedAppProfissionaisRouteImport } from './routes/_authenticated/app.profissionais'
+import { Route as AuthenticatedAppServicosRouteImport } from './routes/_authenticated/app.servicos'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -51,6 +57,42 @@ const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppAssinaturaRoute =
+  AuthenticatedAppAssinaturaRouteImport.update({
+    id: '/assinatura',
+    path: '/assinatura',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppClientesRoute =
+  AuthenticatedAppClientesRouteImport.update({
+    id: '/clientes',
+    path: '/clientes',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppConfiguracoesRoute =
+  AuthenticatedAppConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppProdutosRoute =
+  AuthenticatedAppProdutosRouteImport.update({
+    id: '/produtos',
+    path: '/produtos',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppProfissionaisRoute =
+  AuthenticatedAppProfissionaisRouteImport.update({
+    id: '/profissionais',
+    path: '/profissionais',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppServicosRoute =
+  AuthenticatedAppServicosRouteImport.update({
+    id: '/servicos',
+    path: '/servicos',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -58,6 +100,12 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
+  '/app/assinatura': typeof AuthenticatedAppAssinaturaRoute
+  '/app/clientes': typeof AuthenticatedAppClientesRoute
+  '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
+  '/app/produtos': typeof AuthenticatedAppProdutosRoute
+  '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
+  '/app/servicos': typeof AuthenticatedAppServicosRoute
   '/app/': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRoutesByTo {
@@ -65,6 +113,12 @@ export interface FileRoutesByTo {
   '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
+  '/app/assinatura': typeof AuthenticatedAppAssinaturaRoute
+  '/app/clientes': typeof AuthenticatedAppClientesRoute
+  '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
+  '/app/produtos': typeof AuthenticatedAppProdutosRoute
+  '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
+  '/app/servicos': typeof AuthenticatedAppServicosRoute
   '/app': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRoutesById {
@@ -75,13 +129,42 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
+  '/_authenticated/app/assinatura': typeof AuthenticatedAppAssinaturaRoute
+  '/_authenticated/app/clientes': typeof AuthenticatedAppClientesRoute
+  '/_authenticated/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
+  '/_authenticated/app/produtos': typeof AuthenticatedAppProdutosRoute
+  '/_authenticated/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
+  '/_authenticated/app/servicos': typeof AuthenticatedAppServicosRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/$slug' | '/auth' | '/cadastro' | '/app' | '/app/'
+  fullPaths:
+    | '/'
+    | '/$slug'
+    | '/auth'
+    | '/cadastro'
+    | '/app'
+    | '/app/assinatura'
+    | '/app/clientes'
+    | '/app/configuracoes'
+    | '/app/produtos'
+    | '/app/profissionais'
+    | '/app/servicos'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$slug' | '/auth' | '/cadastro' | '/app'
+  to:
+    | '/'
+    | '/$slug'
+    | '/auth'
+    | '/cadastro'
+    | '/app/assinatura'
+    | '/app/clientes'
+    | '/app/configuracoes'
+    | '/app/produtos'
+    | '/app/profissionais'
+    | '/app/servicos'
+    | '/app'
   id:
     | '__root__'
     | '/'
@@ -90,6 +173,12 @@ export interface FileRouteTypes {
     | '/auth'
     | '/cadastro'
     | '/_authenticated/app'
+    | '/_authenticated/app/assinatura'
+    | '/_authenticated/app/clientes'
+    | '/_authenticated/app/configuracoes'
+    | '/_authenticated/app/produtos'
+    | '/_authenticated/app/profissionais'
+    | '/_authenticated/app/servicos'
     | '/_authenticated/app/'
   fileRoutesById: FileRoutesById
 }
@@ -152,14 +241,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/assinatura': {
+      id: '/_authenticated/app/assinatura'
+      path: '/assinatura'
+      fullPath: '/app/assinatura'
+      preLoaderRoute: typeof AuthenticatedAppAssinaturaRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/clientes': {
+      id: '/_authenticated/app/clientes'
+      path: '/clientes'
+      fullPath: '/app/clientes'
+      preLoaderRoute: typeof AuthenticatedAppClientesRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/configuracoes': {
+      id: '/_authenticated/app/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/app/configuracoes'
+      preLoaderRoute: typeof AuthenticatedAppConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/produtos': {
+      id: '/_authenticated/app/produtos'
+      path: '/produtos'
+      fullPath: '/app/produtos'
+      preLoaderRoute: typeof AuthenticatedAppProdutosRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/profissionais': {
+      id: '/_authenticated/app/profissionais'
+      path: '/profissionais'
+      fullPath: '/app/profissionais'
+      preLoaderRoute: typeof AuthenticatedAppProfissionaisRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/servicos': {
+      id: '/_authenticated/app/servicos'
+      path: '/servicos'
+      fullPath: '/app/servicos'
+      preLoaderRoute: typeof AuthenticatedAppServicosRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
   }
 }
 
 interface AuthenticatedAppRouteChildren {
+  AuthenticatedAppAssinaturaRoute: typeof AuthenticatedAppAssinaturaRoute
+  AuthenticatedAppClientesRoute: typeof AuthenticatedAppClientesRoute
+  AuthenticatedAppConfiguracoesRoute: typeof AuthenticatedAppConfiguracoesRoute
+  AuthenticatedAppProdutosRoute: typeof AuthenticatedAppProdutosRoute
+  AuthenticatedAppProfissionaisRoute: typeof AuthenticatedAppProfissionaisRoute
+  AuthenticatedAppServicosRoute: typeof AuthenticatedAppServicosRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+  AuthenticatedAppAssinaturaRoute: AuthenticatedAppAssinaturaRoute,
+  AuthenticatedAppClientesRoute: AuthenticatedAppClientesRoute,
+  AuthenticatedAppConfiguracoesRoute: AuthenticatedAppConfiguracoesRoute,
+  AuthenticatedAppProdutosRoute: AuthenticatedAppProdutosRoute,
+  AuthenticatedAppProfissionaisRoute: AuthenticatedAppProfissionaisRoute,
+  AuthenticatedAppServicosRoute: AuthenticatedAppServicosRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
 }
 

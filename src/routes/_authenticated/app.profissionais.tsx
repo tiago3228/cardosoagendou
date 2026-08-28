@@ -1,0 +1,311 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Plus } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { panelQuery } from "./app";
+import { WEEKDAY_SHORT } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+export const Route = createFileRoute("/_authenticated/app/profissionais")({
+  component: ProfessionalsPage,
+});
+
+function ProfessionalsPage() {
+  const { data: panel } = useSuspenseQuery(panelQuery);
+  const businessId = panel.business!.id;
+  const plan = panel.subscription?.plans as { professional_limit?: number | null; name?: string } | null;
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState({ name: "", commission: "0" });
+
+  const professionals = useQuery({
+    queryKey: ["professionals", businessId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("professionals")
+        .select("id, name, commission_percent, active")
+        .eq("business_id", businessId)
+        .is("deleted_at", null)
+        .order("name");
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  });
+
+  const services = useQuery({
+    queryKey: ["services", businessId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("services")
+        .select("id, name")
+        .eq("business_id", businessId)
+        .is("deleted_at", null)
+        .order("name");
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  });
+
+  const links = useQuery({
+    queryKey: ["professional-services", businessId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("professional_services")
+        .select("professional_id, service_id")
+        .eq("business_id", businessId);
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  });
+
+  const create = useMutation({
+    mutationFn: async () => {
+      if (!form.name.trim()) throw new Error("Informe o nome");
+      const professional = await supabase
+        .from("professionals")
+        .insert({
+          business_id: businessId,
+          name: form.name.trim(),
+          commission_percent: Number(form.commission.replace(",", ".")) || 0,
+        })
+        .select("id")
+        .single();
+      if (professional.error) throw new Error(professional.error.message);
+      const { error } = await supabase.from("professional_hours").insert(
+        [1, 2, 3, 4, 5].map((weekday) => ({
+          professional_id: professional.data.id,
+          business_id: businessId,
+          weekday,
+          starts_at: "09:00",
+          ends_at: "19:00",
+          enabled: true,
+        })),
+      );
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      setForm({ name: "", commission: "0" });
+      toast.success("Profissional adicionado");
+      queryClient.invalidateQueries({ queryKey: ["professionals", businessId] });
+      queryClient.invalidateQueries({ queryKey: ["panel"] });
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível adicionar", {
+        description: error.message.includes("PLAN_LIMIT_REACHED")
+          ? `Seu plano ${plan?.name ?? ""} permite ${plan?.professional_limit} profissionais ativos. Faça upgrade para adicionar mais.`
+          : error.message,
+      }),
+  });
+
+  const toggleService = useMutation({
+    mutationFn: async (input: { professionalId: string; serviceId: string; linked: boolean }) => {
+      if (input.linked) {
+        const { error } = await supabase
+          .from("professional_services")
+          .delete()
+          .eq("professional_id", input.professionalId)
+          .eq("service_id", input.serviceId);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await supabase.from("professional_services").insert({
+          professional_id: input.professionalId,
+          service_id: input.serviceId,
+          business_id: businessId,
+        });
+        if (error) throw new Error(error.message);
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["professional-services", businessId] }),
+    onError: (error: Error) => toast.error("Erro ao vincular serviço", { description: error.message }),
+  });
+
+  const setActive = useMutation({
+    mutationFn: async (input: { id: string; active: boolean }) => {
+      const { error } = await supabase
+        .from("professionals")
+        .update({ active: input.active })
+        .eq("id", input.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["professionals", businessId] });
+      queryClient.invalidateQueries({ queryKey: ["panel"] });
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível alterar", {
+        description: error.message.includes("PLAN_LIMIT_REACHED")
+          ? "Limite de profissionais do plano atingido."
+          : error.message,
+      }),
+  });
+
+  return (
+    <div>
+      <h1 className="font-display text-2xl font-bold text-foreground">Equipe</h1>
+      <p className="text-sm text-muted-foreground">
+        {panel.usage?.activeProfessionals} ativo(s)
+        {plan?.professional_limit ? ` de ${plan.professional_limit} do plano ${plan.name}` : " · plano ilimitado"}
+      </p>
+
+      <form
+        className="mt-6 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          create.mutate();
+        }}
+      >
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label>Nome</Label>
+          <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Comissão (%)</Label>
+          <Input
+            inputMode="decimal"
+            value={form.commission}
+            onChange={(e) => setForm({ ...form, commission: e.target.value })}
+          />
+        </div>
+        <div className="sm:col-span-3">
+          <Button type="submit" disabled={create.isPending}>
+            <Plus className="size-4" aria-hidden /> Adicionar profissional
+          </Button>
+        </div>
+      </form>
+
+      <div className="mt-6 space-y-3">
+        {(professionals.data ?? []).map((professional) => (
+          <article key={professional.id} className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="font-medium text-card-foreground">{professional.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  Comissão de {Number(professional.commission_percent)}%
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setActive.mutate({ id: professional.id, active: !professional.active })}
+              >
+                {professional.active ? "Ativo" : "Inativo"}
+              </Button>
+            </div>
+
+            <p className="mt-4 text-xs uppercase tracking-wide text-muted-foreground">
+              Serviços que realiza
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {(services.data ?? []).map((service) => {
+                const linked = (links.data ?? []).some(
+                  (l) => l.professional_id === professional.id && l.service_id === service.id,
+                );
+                return (
+                  <button
+                    key={service.id}
+                    onClick={() =>
+                      toggleService.mutate({
+                        professionalId: professional.id,
+                        serviceId: service.id,
+                        linked,
+                      })
+                    }
+                    className={`rounded-full border px-3 py-1.5 text-sm transition ${linked ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"}`}
+                  >
+                    {service.name}
+                  </button>
+                );
+              })}
+            </div>
+
+            <ProfessionalHours professionalId={professional.id} businessId={businessId} />
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProfessionalHours({ professionalId, businessId }: { professionalId: string; businessId: string }) {
+  const queryClient = useQueryClient();
+  const hours = useQuery({
+    queryKey: ["professional-hours", professionalId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("professional_hours")
+        .select("id, weekday, starts_at, ends_at, enabled")
+        .eq("professional_id", professionalId)
+        .order("weekday");
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  });
+
+  const upsert = useMutation({
+    mutationFn: async (input: { weekday: number; enabled: boolean; starts_at: string; ends_at: string }) => {
+      const existing = (hours.data ?? []).find((h) => h.weekday === input.weekday);
+      if (existing) {
+        const { error } = await supabase
+          .from("professional_hours")
+          .update({ enabled: input.enabled, starts_at: input.starts_at, ends_at: input.ends_at })
+          .eq("id", existing.id);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await supabase.from("professional_hours").insert({
+          professional_id: professionalId,
+          business_id: businessId,
+          weekday: input.weekday,
+          starts_at: input.starts_at,
+          ends_at: input.ends_at,
+          enabled: input.enabled,
+        });
+        if (error) throw new Error(error.message);
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["professional-hours", professionalId] }),
+  });
+
+  return (
+    <div className="mt-4">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">Horários de trabalho</p>
+      <div className="mt-2 space-y-2">
+        {[0, 1, 2, 3, 4, 5, 6].map((weekday) => {
+          const row = (hours.data ?? []).find((h) => h.weekday === weekday);
+          const starts = (row?.starts_at ?? "09:00").slice(0, 5);
+          const ends = (row?.ends_at ?? "19:00").slice(0, 5);
+          const enabled = row?.enabled ?? false;
+          return (
+            <div key={weekday} className="flex items-center gap-2 text-sm">
+              <button
+                onClick={() => upsert.mutate({ weekday, enabled: !enabled, starts_at: starts, ends_at: ends })}
+                className={`w-14 rounded-md border px-2 py-1 ${enabled ? "border-primary bg-primary/10" : "border-border text-muted-foreground"}`}
+              >
+                {WEEKDAY_SHORT[weekday]}
+              </button>
+              <input
+                type="time"
+                value={starts}
+                onChange={(e) =>
+                  upsert.mutate({ weekday, enabled, starts_at: e.target.value, ends_at: ends })
+                }
+                className="h-8 rounded-md border border-input bg-background px-2"
+              />
+              <span className="text-muted-foreground">até</span>
+              <input
+                type="time"
+                value={ends}
+                onChange={(e) =>
+                  upsert.mutate({ weekday, enabled, starts_at: starts, ends_at: e.target.value })
+                }
+                className="h-8 rounded-md border border-input bg-background px-2"
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
