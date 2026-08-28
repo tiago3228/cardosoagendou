@@ -42,13 +42,30 @@ function SignupPage() {
     businessType: "BARBERSHOP",
   });
 
+  // Quem já está logado (ex.: conta master sem negócio) só precisa dos dados do negócio.
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void supabase.auth.getSession().then(({ data }) => {
+      if (!alive) return;
+      setSignedIn(Boolean(data.session));
+      const email = data.session?.user.email;
+      const name = (data.session?.user.user_metadata as { full_name?: string } | undefined)?.full_name;
+      if (email) setForm((prev) => ({ ...prev, email, ownerName: prev.ownerName || (name ?? "") }));
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   function set(key: keyof typeof form, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    const parsed = signupSchema.safeParse(form);
+    const schema = signedIn ? provisionSchema : signupSchema;
+    const parsed = schema.safeParse(form);
     if (!parsed.success) {
       const next: Record<string, string> = {};
       for (const issue of parsed.error.issues) next[String(issue.path[0])] = issue.message;
@@ -58,27 +75,41 @@ function SignupPage() {
     setErrors({});
     setBusy(true);
     try {
-      const signUp = await supabase.auth.signUp({
-        email: parsed.data.email,
-        password: parsed.data.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth`,
-          data: { full_name: parsed.data.ownerName },
-        },
-      });
-      if (signUp.error) throw new Error(signUp.error.message);
-
-      if (!signUp.data.session) {
-        const signIn = await supabase.auth.signInWithPassword({
-          email: parsed.data.email,
-          password: parsed.data.password,
+      if (!signedIn) {
+        const signUp = await supabase.auth.signUp({
+          email: form.email,
+          password: form.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth`,
+            data: { full_name: parsed.data.ownerName },
+          },
         });
-        if (signIn.error) {
-          toast.success("Conta criada", {
-            description: "Confirme seu e-mail para acessar o painel.",
+
+        // E-mail já cadastrado: entra na conta existente e segue criando o negócio.
+        if (signUp.error) {
+          const already = /already registered|already exists|User already/i.test(signUp.error.message);
+          if (!already) throw new Error(signUp.error.message);
+          const signIn = await supabase.auth.signInWithPassword({
+            email: form.email,
+            password: form.password,
           });
-          navigate({ to: "/auth" });
-          return;
+          if (signIn.error) {
+            throw new Error(
+              "Este e-mail já tem conta no Agendou. Entre com sua senha para continuar o cadastro do negócio.",
+            );
+          }
+        } else if (!signUp.data.session) {
+          const signIn = await supabase.auth.signInWithPassword({
+            email: form.email,
+            password: form.password,
+          });
+          if (signIn.error) {
+            toast.success("Conta criada", {
+              description: "Confirme seu e-mail para acessar o painel.",
+            });
+            navigate({ to: "/auth" });
+            return;
+          }
         }
       }
 
