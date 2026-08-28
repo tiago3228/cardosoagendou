@@ -11,10 +11,20 @@ export const getMyEntitlements = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { requireMemberBusinessId } = await import("./subscription.server");
     const { businessEntitlements } = await import("./billing.server");
-    const businessId = await requireMemberBusinessId(context.supabase, context.userId);
+
+    let businessId: string;
+    try {
+      businessId = await requireMemberBusinessId(context.supabase, context.userId);
+    } catch {
+      // Usuário autenticado ainda sem negócio vinculado (ex.: cadastro incompleto).
+      // O painel já mostra o estado "Nenhum negócio vinculado"; não é um erro fatal.
+      return null;
+    }
+
     const entitlements = await businessEntitlements(context.supabase, businessId);
     return { businessId, ...entitlements };
   });
+
 
 /** Re-fetches the open charge (PIX code / invoice link) for the current subscription. */
 export const getOpenCharge = createServerFn({ method: "POST" })
