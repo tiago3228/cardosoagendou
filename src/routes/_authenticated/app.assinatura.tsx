@@ -280,31 +280,76 @@ function SubscriptionPage() {
                     <Check className="size-4" aria-hidden /> Plano atual
                   </p>
                 ) : (
-                  <Button className="w-full" onClick={() => change.mutate(plan.code)}>
-                    Escolher {plan.name}
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    size="sm"
+                    onClick={() => change.mutate(plan.code)}
+                  >
+                    Agendar troca para {plan.name}
                   </Button>
                 )}
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => checkout.mutate({ planCode: plan.code, method: "PIX" })}
-                  >
-                    Pagar PIX
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => checkout.mutate({ planCode: plan.code, method: "CREDIT_CARD" })}
-                  >
-                    Cartão
-                  </Button>
-                </div>
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    setSelected({ code: plan.code, name: plan.name });
+                    setPixOpen(false);
+                  }}
+                >
+                  Assinar {plan.name}
+                </Button>
               </div>
             </article>
           );
         })}
       </div>
+
+      {selected ? (
+        <div className="mt-6 rounded-2xl border border-border bg-card p-5">
+          <h2 className="font-display text-lg font-bold text-card-foreground">
+            Escolha a forma de pagamento
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Plano {selected.name} · {interval === "ANNUAL" ? "anual" : "mensal"}
+          </p>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="rounded-xl border border-border p-4">
+              <p className="font-semibold text-card-foreground">Mercado Pago</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Assinatura automática · pagamento recorrente
+              </p>
+              <Button
+                className="mt-4 w-full"
+                disabled={checkout.isPending}
+                onClick={() => checkout.mutate({ planCode: selected.code, method: "CREDIT_CARD" })}
+              >
+                Assinar com Mercado Pago
+              </Button>
+            </div>
+
+            <div className="rounded-xl border border-border p-4">
+              <p className="font-semibold text-card-foreground">PIX direto</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Pagamento manual · faça o PIX e aguarde a confirmação da nossa equipe.
+              </p>
+              <Button
+                variant="outline"
+                className="mt-4 w-full"
+                onClick={() => setPixOpen(true)}
+              >
+                Assinar via PIX
+              </Button>
+            </div>
+          </div>
+
+          {pixOpen ? (
+            <div className="mt-5 border-t border-border pt-5">
+              <PixCheckout planCode={selected.code} interval={interval} />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
