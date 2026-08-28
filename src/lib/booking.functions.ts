@@ -7,20 +7,18 @@ export const getPublicBusiness = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ slug: z.string().min(1).max(60) }).parse(input))
   .handler(async ({ data }) => {
     const { publicDb } = await import("./supabase-public.server");
-    const { loadBusinessBySlug, loadPublicCatalog } = await import("./booking.server");
+    const { loadPublicBusinessBySlug, loadPublicCatalogBySlug } = await import("./booking.server");
     const db = publicDb();
-    const business = await loadBusinessBySlug(db, data.slug);
-    if (!business) return null;
+    const found = await loadPublicBusinessBySlug(db, data.slug);
+    if (!found) return null;
+    const { accepts_bookings: acceptsBookings, ...business } = found;
 
     // Entitlement gate: a blocked/suspended business shows the page but no slots.
-    const { data: acceptsBookings } = await db.rpc("business_accepts_bookings", {
-      _business_id: business.id,
-    });
     if (acceptsBookings !== true) {
       return { business, services: [], professionals: [], links: [], businessHours: [], professionalHours: [], acceptsBookings: false as const };
     }
 
-    const catalog = await loadPublicCatalog(db, business.id);
+    const catalog = await loadPublicCatalogBySlug(db, data.slug);
     return { business, ...catalog, acceptsBookings: true as const };
   });
 

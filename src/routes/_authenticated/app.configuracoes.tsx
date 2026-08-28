@@ -25,6 +25,8 @@ function SettingsPage() {
     email: business.email ?? "",
     address: business.address ?? "",
     booking_policy: business.booking_policy ?? "",
+    show_address: business.show_address,
+    show_whatsapp: business.show_whatsapp,
     slot_interval_minutes: String(business.slot_interval_minutes),
     min_notice_minutes: String(business.min_notice_minutes),
     max_advance_days: String(business.max_advance_days),
@@ -41,6 +43,8 @@ function SettingsPage() {
           email: form.email.trim() || null,
           address: form.address.trim() || null,
           booking_policy: form.booking_policy.trim() || null,
+          show_address: form.show_address,
+          show_whatsapp: form.show_whatsapp,
           slot_interval_minutes: Number(form.slot_interval_minutes) || 15,
           min_notice_minutes: Number(form.min_notice_minutes) || 0,
           max_advance_days: Number(form.max_advance_days) || 30,
@@ -111,6 +115,28 @@ function SettingsPage() {
         <div className="space-y-1.5">
           <Label>E-mail</Label>
           <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          <p className="text-xs text-muted-foreground">Nunca aparece na página pública.</p>
+        </div>
+        <div className="space-y-2 rounded-lg border border-border bg-muted/40 p-3 sm:col-span-2">
+          <p className="text-sm font-medium text-foreground">Visibilidade na página pública</p>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={form.show_whatsapp}
+              onChange={(e) => setForm({ ...form, show_whatsapp: e.target.checked })}
+            />
+            Mostrar WhatsApp para clientes
+          </label>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={form.show_address}
+              onChange={(e) => setForm({ ...form, show_address: e.target.checked })}
+            />
+            Mostrar endereço para clientes
+          </label>
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Endereço</Label>

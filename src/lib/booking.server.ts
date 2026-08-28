@@ -41,6 +41,42 @@ export async function loadBusinessBySlug(db: Db, slug: string): Promise<BookingB
   return (data as BookingBusiness | null) ?? null;
 }
 
+/**
+ * PUBLIC path (anon key): the booking page never reads tables directly.
+ * `public_business` / `public_catalog` are the only anon-reachable surface and
+ * they project public columns only (email is never exposed; address/WhatsApp
+ * honour the business visibility toggles).
+ */
+export async function loadPublicBusinessBySlug(
+  db: Db,
+  slug: string,
+): Promise<(BookingBusiness & { accepts_bookings: boolean }) | null> {
+  const { data } = await db.rpc("public_business", { _slug: slug });
+  return (data as (BookingBusiness & { accepts_bookings: boolean }) | null) ?? null;
+}
+
+export interface PublicCatalog {
+  services: { id: string; name: string; description: string | null; category: string | null; price_cents: number; duration_minutes: number; image_url: string | null }[];
+  professionals: { id: string; name: string; photo_url: string | null; bio: string | null }[];
+  links: { professional_id: string; service_id: string }[];
+  businessHours: { weekday: number; opens_at: string; closes_at: string; closed: boolean }[];
+  professionalHours: { professional_id: string; weekday: number; starts_at: string; ends_at: string; enabled: boolean }[];
+}
+
+export async function loadPublicCatalogBySlug(db: Db, slug: string): Promise<PublicCatalog> {
+  const { data } = await db.rpc("public_catalog", { _slug: slug });
+  const catalog = (data as PublicCatalog | null) ?? null;
+  return (
+    catalog ?? {
+      services: [],
+      professionals: [],
+      links: [],
+      businessHours: [],
+      professionalHours: [],
+    }
+  );
+}
+
 export async function loadPublicCatalog(db: Db, businessId: string) {
   const [services, professionals, links, businessHours, professionalHours] = await Promise.all([
     db

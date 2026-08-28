@@ -84,6 +84,8 @@ export async function businessEntitlements(db: Db, businessId: string) {
     professional_limit: number | null;
     status: string | null;
     booking_state: string;
+    entitled?: boolean;
+    grace_expires_at?: string | null;
     accepts_bookings: boolean;
     features: Record<string, string | number | boolean | null>;
     current_period_end?: string | null;
@@ -133,12 +135,25 @@ export async function recordEventOnce(
   return true;
 }
 
-export async function markEventProcessed(db: Db, provider: string, externalId: string) {
+export async function markEventProcessed(
+  db: Db,
+  provider: string,
+  externalId: string,
+  result?: string,
+) {
   await db
     .from("payment_events")
-    .update({ processed_at: new Date().toISOString() })
+    .update({ processed_at: new Date().toISOString(), result: result ?? "OK" })
     .eq("provider", provider)
     .eq("external_id", externalId);
+}
+
+/**
+ * Removes the de-duplication row when processing failed, so the gateway's
+ * retry is treated as a NEW event instead of being swallowed as a duplicate.
+ */
+export async function discardEvent(db: Db, provider: string, externalId: string) {
+  await db.from("payment_events").delete().eq("provider", provider).eq("external_id", externalId);
 }
 
 async function upsertPayment(
@@ -216,7 +231,7 @@ export async function applyBillingEvent(db: Db, event: NormalizedWebhookEvent) {
       await db
         .from("subscriptions")
         .update({
-          status: subscription.cancel_at_period_end ? "CANCELED" : "ACTIVE",
+          status: "ACTIVE",
           plan_id: targetPlanId,
           billing_interval: targetInterval,
           pending_plan_id: null,
@@ -272,18 +287,24 @@ export async function applyBillingEvent(db: Db, event: NormalizedWebhookEvent) {
     }
 
     case "subscription.canceled": {
+      // The gateway stopped future charges. Access is kept until the paid
+      // period ends; the daily reconciliation flips the status at that moment.
+      const periodOver = new Date(subscription.current_period_end).getTime() <= Date.now();
       await db
         .from("subscriptions")
         .update({
-          status: "CANCELED",
+          status: periodOver ? "CANCELED" : subscription.status,
           cancel_at_period_end: true,
-          canceled_at: new Date().toISOString(),
+          canceled_at: subscription.canceled_at ?? new Date().toISOString(),
           pending_plan_id: null,
           pending_billing_interval: null,
         })
         .eq("id", subscription.id);
-      await audit(db, subscription.business_id, "billing.subscription_canceled", {});
-      return { handled: true as const, state: "CANCELED" };
+      await audit(db, subscription.business_id, "billing.subscription_canceled", {
+        effective_at: subscription.current_period_end,
+        immediate: periodOver,
+      });
+      return { handled: true as const, state: periodOver ? "CANCELED" : subscription.status };
     }
 
     case "payment.pending": {
@@ -297,27 +318,19 @@ export async function applyBillingEvent(db: Db, event: NormalizedWebhookEvent) {
 }
 
 /**
- * Periodic reconciliation (cron): expires grace periods that ran out and
- * suspends businesses whose paid period ended without a new payment.
+ * Periodic reconciliation. The whole transition set lives in the database
+ * function `reconcile_subscriptions()` (also scheduled daily by the database
+ * itself), so the HTTP cron endpoint and the internal scheduler can never
+ * drift apart: expired trials/periods → PAST_DUE, expired grace → SUSPENDED,
+ * cancellations → CANCELED at period end. Every change is audited.
  */
 export async function reconcileSubscriptions(db: Db) {
-  const now = new Date().toISOString();
-  const expiredGrace = await db
-    .from("subscriptions")
-    .update({ status: "SUSPENDED" })
-    .eq("status", "PAST_DUE")
-    .lt("grace_expires_at", now)
-    .select("id, business_id");
-
-  const lapsed = await db
-    .from("subscriptions")
-    .update({ status: "PAST_DUE", grace_expires_at: new Date(Date.now() + (await graceDays(db)) * 86400000).toISOString() })
-    .in("status", ["TRIALING", "ACTIVE"])
-    .lt("current_period_end", now)
-    .select("id, business_id");
-
+  const { data, error } = await db.rpc("reconcile_subscriptions");
+  if (error) throw new Error(error.message);
+  const result = (data ?? {}) as { lapsed?: number; suspended?: number; canceled?: number };
   return {
-    suspended: expiredGrace.data?.length ?? 0,
-    pastDue: lapsed.data?.length ?? 0,
+    pastDue: result.lapsed ?? 0,
+    suspended: result.suspended ?? 0,
+    canceled: result.canceled ?? 0,
   };
 }

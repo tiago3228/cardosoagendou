@@ -236,6 +236,8 @@ export type Database = {
           max_advance_days: number
           min_notice_minutes: number
           name: string
+          show_address: boolean
+          show_whatsapp: boolean
           slot_interval_minutes: number
           slug: string
           timezone: string
@@ -256,6 +258,8 @@ export type Database = {
           max_advance_days?: number
           min_notice_minutes?: number
           name: string
+          show_address?: boolean
+          show_whatsapp?: boolean
           slot_interval_minutes?: number
           slug: string
           timezone?: string
@@ -276,6 +280,8 @@ export type Database = {
           max_advance_days?: number
           min_notice_minutes?: number
           name?: string
+          show_address?: boolean
+          show_whatsapp?: boolean
           slot_interval_minutes?: number
           slug?: string
           timezone?: string
@@ -1199,6 +1205,17 @@ export type Database = {
         Args: { _default: number; _key: string }
         Returns: number
       }
+      public_business: { Args: { _slug: string }; Returns: Json }
+      public_busy: {
+        Args: { _from: string; _slug: string; _to: string }
+        Returns: {
+          ends_at: string
+          professional_id: string
+          starts_at: string
+        }[]
+      }
+      public_catalog: { Args: { _slug: string }; Returns: Json }
+      reconcile_subscriptions: { Args: never; Returns: Json }
     }
     Enums: {
       app_role: "master" | "owner" | "professional"
