@@ -9,6 +9,7 @@ import { provisionSchema, signupSchema } from "@/lib/schemas";
 import { BUSINESS_TYPES, BUSINESS_TYPE_CONFIG } from "@/lib/business-types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { WhatsappInput } from "@/components/ui/whatsapp-input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 
@@ -182,13 +183,10 @@ function SignupPage() {
             <Input value={form.ownerName} onChange={(e) => set("ownerName", e.target.value)} />
           </Field>
 
-          <Field label="WhatsApp" error={errors["whatsapp"]} hint="Ex.: 55 (31) 97541-4498">
-            <Input
-              inputMode="tel"
-              value={form.whatsapp}
-              onChange={(e) => set("whatsapp", e.target.value)}
-            />
+          <Field label="WhatsApp" error={errors["whatsapp"]} hint="Ex.: (31) 99999-9999">
+            <WhatsappInput value={form.whatsapp} onChange={(v) => set("whatsapp", v)} />
           </Field>
+
 
           {signedIn ? null : (
             <>

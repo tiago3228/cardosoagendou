@@ -7,6 +7,7 @@ import { panelQuery } from "./app";
 import { WEEKDAY_LABELS } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { WhatsappInput } from "@/components/ui/whatsapp-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -110,8 +111,9 @@ function SettingsPage() {
         </div>
         <div className="space-y-1.5">
           <Label>WhatsApp</Label>
-          <Input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} />
+          <WhatsappInput value={form.whatsapp} onChange={(v) => setForm({ ...form, whatsapp: v })} />
         </div>
+
         <div className="space-y-1.5">
           <Label>E-mail</Label>
           <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />

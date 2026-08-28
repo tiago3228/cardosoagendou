@@ -7,7 +7,7 @@ export const whatsappSchema = z
   .min(8, "Informe seu WhatsApp")
   .max(30)
   .refine((v) => normalizeBrWhatsapp(v) !== null, {
-    message: "WhatsApp inválido. Use o formato 55 (31) 97541-4498",
+    message: "WhatsApp inválido. Use o formato (31) 99999-9999",
   });
 
 export const signupSchema = z.object({
