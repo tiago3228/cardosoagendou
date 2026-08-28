@@ -43,6 +43,8 @@ function SettingsPage() {
           email: form.email.trim() || null,
           address: form.address.trim() || null,
           booking_policy: form.booking_policy.trim() || null,
+          show_address: form.show_address,
+          show_whatsapp: form.show_whatsapp,
           slot_interval_minutes: Number(form.slot_interval_minutes) || 15,
           min_notice_minutes: Number(form.min_notice_minutes) || 0,
           max_advance_days: Number(form.max_advance_days) || 30,
