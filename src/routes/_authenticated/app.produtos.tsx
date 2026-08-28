@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, Minus, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { panelQuery } from "./app";
+import { panelQuery, entitlementsQuery } from "./app";
 import { formatBRL } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,10 @@ export const Route = createFileRoute("/_authenticated/app/produtos")({
 
 function ProductsPage() {
   const { data: panel } = useSuspenseQuery(panelQuery);
+  const { data: entitlements } = useSuspenseQuery(entitlementsQuery);
   const businessId = panel.business!.id;
+  const inventoryEnabled =
+    (entitlements.features as Record<string, unknown>)["inventory"] === true;
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ name: "", price: "", cost: "", stock: "0", min: "0" });
 

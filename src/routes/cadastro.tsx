@@ -9,6 +9,7 @@ import { signupSchema } from "@/lib/schemas";
 import { BUSINESS_TYPES, BUSINESS_TYPE_CONFIG } from "@/lib/business-types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/cadastro")({
@@ -154,8 +155,8 @@ function SignupPage() {
           </Field>
 
           <Field label="Senha" error={errors["password"]} hint="Mínimo de 8 caracteres">
-            <Input
-              type="password"
+            <PasswordInput
+              autoComplete="new-password"
               value={form.password}
               onChange={(e) => set("password", e.target.value)}
             />
