@@ -49,10 +49,7 @@ export interface SubscriptionRow {
 }
 
 const SUBSCRIPTION_COLUMNS =
-  "id, business_id, plan_id, status, billing_interval, payment_method, current_period_start, current_period_end, trial_ends_at, cancel_at_password_end, cancel_at_period_end, canceled_at, pending_plan_id, pending_billing_interval, provider, provider_customer_id, provider_subscription_id, amount_cents, grace_expires_at"
-    .split(", ")
-    .filter((c) => c !== "cancel_at_password_end")
-    .join(", ");
+  "id, business_id, plan_id, status, billing_interval, payment_method, current_period_start, current_period_end, trial_ends_at, cancel_at_period_end, canceled_at, pending_plan_id, pending_billing_interval, provider, provider_customer_id, provider_subscription_id, amount_cents, grace_expires_at";
 
 export async function loadSubscriptionByBusiness(db: Db, businessId: string) {
   const { data } = await db
