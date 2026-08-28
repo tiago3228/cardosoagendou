@@ -19,7 +19,7 @@ function ProductsPage() {
   const { data: entitlements } = useSuspenseQuery(entitlementsQuery);
   const businessId = panel.business!.id;
   const inventoryEnabled =
-    (entitlements.features as Record<string, unknown>)["inventory"] === true;
+    ((entitlements?.features ?? {}) as Record<string, unknown>)["inventory"] === true;
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ name: "", price: "", cost: "", stock: "0", min: "0" });
 
