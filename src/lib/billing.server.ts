@@ -287,18 +287,24 @@ export async function applyBillingEvent(db: Db, event: NormalizedWebhookEvent) {
     }
 
     case "subscription.canceled": {
+      // The gateway stopped future charges. Access is kept until the paid
+      // period ends; the daily reconciliation flips the status at that moment.
+      const periodOver = new Date(subscription.current_period_end).getTime() <= Date.now();
       await db
         .from("subscriptions")
         .update({
-          status: "CANCELED",
+          status: periodOver ? "CANCELED" : subscription.status,
           cancel_at_period_end: true,
-          canceled_at: new Date().toISOString(),
+          canceled_at: subscription.canceled_at ?? new Date().toISOString(),
           pending_plan_id: null,
           pending_billing_interval: null,
         })
         .eq("id", subscription.id);
-      await audit(db, subscription.business_id, "billing.subscription_canceled", {});
-      return { handled: true as const, state: "CANCELED" };
+      await audit(db, subscription.business_id, "billing.subscription_canceled", {
+        effective_at: subscription.current_period_end,
+        immediate: periodOver,
+      });
+      return { handled: true as const, state: periodOver ? "CANCELED" : subscription.status };
     }
 
     case "payment.pending": {
