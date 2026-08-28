@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Mail, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { panelQuery } from "./app";
+import { panelQuery, entitlementsQuery } from "./app";
 import { WEEKDAY_SHORT } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,9 @@ export const Route = createFileRoute("/_authenticated/app/profissionais")({
 
 function ProfessionalsPage() {
   const { data: panel } = useSuspenseQuery(panelQuery);
+  const { data: entitlements } = useSuspenseQuery(entitlementsQuery);
+  const commissionsEnabled =
+    (entitlements.features as Record<string, unknown>)["commissions"] === true;
   const businessId = panel.business!.id;
   const plan = panel.subscription?.plans as { professional_limit?: number | null; name?: string } | null;
   const queryClient = useQueryClient();
@@ -206,9 +209,15 @@ function ProfessionalsPage() {
           <Label>Comissão (%)</Label>
           <Input
             inputMode="decimal"
-            value={form.commission}
+            disabled={!commissionsEnabled}
+            value={commissionsEnabled ? form.commission : "0"}
             onChange={(e) => setForm({ ...form, commission: e.target.value })}
           />
+          {!commissionsEnabled ? (
+            <p className="text-xs text-muted-foreground">
+              Comissões disponíveis no plano Ilimitado.
+            </p>
+          ) : null}
         </div>
         <div className="sm:col-span-3">
           <Button type="submit" disabled={create.isPending}>
