@@ -17,6 +17,7 @@ import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppClientesRouteImport } from './routes/_authenticated/app.clientes'
+import { Route as AuthenticatedAppProdutosRouteImport } from './routes/_authenticated/app.produtos'
 import { Route as AuthenticatedAppProfissionaisRouteImport } from './routes/_authenticated/app.profissionais'
 import { Route as AuthenticatedAppServicosRouteImport } from './routes/_authenticated/app.servicos'
 
@@ -60,6 +61,12 @@ const AuthenticatedAppClientesRoute =
     path: '/clientes',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppProdutosRoute =
+  AuthenticatedAppProdutosRouteImport.update({
+    id: '/produtos',
+    path: '/produtos',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppProfissionaisRoute =
   AuthenticatedAppProfissionaisRouteImport.update({
     id: '/profissionais',
@@ -80,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/cadastro': typeof CadastroRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/app/clientes': typeof AuthenticatedAppClientesRoute
+  '/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/app/servicos': typeof AuthenticatedAppServicosRoute
   '/app/': typeof AuthenticatedAppIndexRoute
@@ -90,6 +98,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
   '/app/clientes': typeof AuthenticatedAppClientesRoute
+  '/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/app/servicos': typeof AuthenticatedAppServicosRoute
   '/app': typeof AuthenticatedAppIndexRoute
@@ -103,6 +112,7 @@ export interface FileRoutesById {
   '/cadastro': typeof CadastroRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/app/clientes': typeof AuthenticatedAppClientesRoute
+  '/_authenticated/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/_authenticated/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/_authenticated/app/servicos': typeof AuthenticatedAppServicosRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/app'
     | '/app/clientes'
+    | '/app/produtos'
     | '/app/profissionais'
     | '/app/servicos'
     | '/app/'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/cadastro'
     | '/app/clientes'
+    | '/app/produtos'
     | '/app/profissionais'
     | '/app/servicos'
     | '/app'
@@ -138,6 +150,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/_authenticated/app'
     | '/_authenticated/app/clientes'
+    | '/_authenticated/app/produtos'
     | '/_authenticated/app/profissionais'
     | '/_authenticated/app/servicos'
     | '/_authenticated/app/'
@@ -209,6 +222,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppClientesRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/produtos': {
+      id: '/_authenticated/app/produtos'
+      path: '/produtos'
+      fullPath: '/app/produtos'
+      preLoaderRoute: typeof AuthenticatedAppProdutosRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/profissionais': {
       id: '/_authenticated/app/profissionais'
       path: '/profissionais'
@@ -228,6 +248,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppClientesRoute: typeof AuthenticatedAppClientesRoute
+  AuthenticatedAppProdutosRoute: typeof AuthenticatedAppProdutosRoute
   AuthenticatedAppProfissionaisRoute: typeof AuthenticatedAppProfissionaisRoute
   AuthenticatedAppServicosRoute: typeof AuthenticatedAppServicosRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
@@ -235,6 +256,7 @@ interface AuthenticatedAppRouteChildren {
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppClientesRoute: AuthenticatedAppClientesRoute,
+  AuthenticatedAppProdutosRoute: AuthenticatedAppProdutosRoute,
   AuthenticatedAppProfissionaisRoute: AuthenticatedAppProfissionaisRoute,
   AuthenticatedAppServicosRoute: AuthenticatedAppServicosRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
