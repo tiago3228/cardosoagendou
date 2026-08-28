@@ -23,6 +23,7 @@ import {
 } from "@/lib/plans";
 import { formatBRL } from "@/lib/format";
 import { Button } from "@/components/ui/button";
+import { PixCheckout } from "@/components/billing/PixCheckout";
 
 export const Route = createFileRoute("/_authenticated/app/assinatura")({
   component: SubscriptionPage,
