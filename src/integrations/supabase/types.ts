@@ -389,6 +389,7 @@ export type Database = {
           payload: Json
           processed_at: string | null
           provider: string
+          result: string | null
         }
         Insert: {
           business_id?: string | null
@@ -399,6 +400,7 @@ export type Database = {
           payload?: Json
           processed_at?: string | null
           provider: string
+          result?: string | null
         }
         Update: {
           business_id?: string | null
@@ -409,6 +411,7 @@ export type Database = {
           payload?: Json
           processed_at?: string | null
           provider?: string
+          result?: string | null
         }
         Relationships: [
           {
@@ -416,6 +419,81 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount_cents: number
+          business_id: string
+          created_at: string
+          currency: string
+          description: string | null
+          due_at: string | null
+          id: string
+          invoice_url: string | null
+          paid_at: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"] | null
+          pix_payload: string | null
+          provider: string
+          provider_event_id: string | null
+          provider_payment_id: string
+          status: string
+          subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          business_id: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          invoice_url?: string | null
+          paid_at?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          pix_payload?: string | null
+          provider: string
+          provider_event_id?: string | null
+          provider_payment_id: string
+          status: string
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          business_id?: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          invoice_url?: string | null
+          paid_at?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          pix_payload?: string | null
+          provider?: string
+          provider_event_id?: string | null
+          provider_payment_id?: string
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
             referencedColumns: ["id"]
           },
         ]
@@ -428,10 +506,12 @@ export type Database = {
           code: string
           created_at: string
           description: string | null
+          features: Json
           id: string
           monthly_price_cents: number
           name: string
           professional_limit: number | null
+          provider_price_ref: string | null
           sort_order: number
           trial_days: number
           updated_at: string
@@ -443,10 +523,12 @@ export type Database = {
           code: string
           created_at?: string
           description?: string | null
+          features?: Json
           id?: string
           monthly_price_cents: number
           name: string
           professional_limit?: number | null
+          provider_price_ref?: string | null
           sort_order?: number
           trial_days?: number
           updated_at?: string
@@ -458,13 +540,39 @@ export type Database = {
           code?: string
           created_at?: string
           description?: string | null
+          features?: Json
           id?: string
           monthly_price_cents?: number
           name?: string
           professional_limit?: number | null
+          provider_price_ref?: string | null
           sort_order?: number
           trial_days?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          key?: string
+          updated_at?: string
+          value?: Json
         }
         Relationships: []
       }
@@ -562,6 +670,66 @@ export type Database = {
           },
           {
             foreignKeyName: "professional_hours_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      professional_invites: {
+        Row: {
+          accepted_at: string | null
+          accepted_user_id: string | null
+          business_id: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          professional_id: string
+          status: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_user_id?: string | null
+          business_id: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          professional_id: string
+          status?: string
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_user_id?: string | null
+          business_id?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          professional_id?: string
+          status?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_invites_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_invites_professional_id_fkey"
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professionals"
@@ -789,14 +957,18 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          amount_cents: number | null
           billing_interval: Database["public"]["Enums"]["billing_interval"]
           business_id: string
           cancel_at_period_end: boolean
           canceled_at: string | null
           created_at: string
+          currency: string
           current_period_end: string
           current_period_start: string
+          grace_expires_at: string | null
           id: string
+          last_payment_at: string | null
           payment_method: Database["public"]["Enums"]["payment_method"] | null
           pending_billing_interval:
             | Database["public"]["Enums"]["billing_interval"]
@@ -805,20 +977,26 @@ export type Database = {
           plan_id: string
           provider: string
           provider_customer_id: string | null
+          provider_price_ref: string | null
           provider_subscription_id: string | null
           status: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at: string | null
+          trial_started_at: string | null
           updated_at: string
         }
         Insert: {
+          amount_cents?: number | null
           billing_interval?: Database["public"]["Enums"]["billing_interval"]
           business_id: string
           cancel_at_period_end?: boolean
           canceled_at?: string | null
           created_at?: string
+          currency?: string
           current_period_end?: string
           current_period_start?: string
+          grace_expires_at?: string | null
           id?: string
+          last_payment_at?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
           pending_billing_interval?:
             | Database["public"]["Enums"]["billing_interval"]
@@ -827,20 +1005,26 @@ export type Database = {
           plan_id: string
           provider?: string
           provider_customer_id?: string | null
+          provider_price_ref?: string | null
           provider_subscription_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at?: string | null
+          trial_started_at?: string | null
           updated_at?: string
         }
         Update: {
+          amount_cents?: number | null
           billing_interval?: Database["public"]["Enums"]["billing_interval"]
           business_id?: string
           cancel_at_period_end?: boolean
           canceled_at?: string | null
           created_at?: string
+          currency?: string
           current_period_end?: string
           current_period_start?: string
+          grace_expires_at?: string | null
           id?: string
+          last_payment_at?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
           pending_billing_interval?:
             | Database["public"]["Enums"]["billing_interval"]
@@ -849,9 +1033,11 @@ export type Database = {
           plan_id?: string
           provider?: string
           provider_customer_id?: string | null
+          provider_price_ref?: string | null
           provider_subscription_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at?: string | null
+          trial_started_at?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -973,10 +1159,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_professional_invite: {
+        Args: { _full_name?: string; _token: string }
+        Returns: Json
+      }
+      business_accepts_bookings: {
+        Args: { _business_id: string }
+        Returns: boolean
+      }
+      business_booking_state: {
+        Args: { _business_id: string }
+        Returns: string
+      }
+      business_entitlements: { Args: { _business_id: string }; Returns: Json }
       business_professional_limit: {
         Args: { _business_id: string }
         Returns: number
       }
+      can_add_professional: { Args: { _business_id: string }; Returns: boolean }
       has_business_role: {
         Args: {
           _business_id: string
@@ -989,8 +1189,16 @@ export type Database = {
         Args: { _business_id: string; _user_id: string }
         Returns: boolean
       }
+      is_business_owner: {
+        Args: { _business_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_master: { Args: { _user_id: string }; Returns: boolean }
       my_professional_id: { Args: { _business_id: string }; Returns: string }
+      platform_setting_int: {
+        Args: { _default: number; _key: string }
+        Returns: number
+      }
     }
     Enums: {
       app_role: "master" | "owner" | "professional"
