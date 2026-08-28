@@ -35,42 +35,79 @@ export const getMySubscription = createServerFn({ method: "POST" })
     };
   });
 
-/** Starts a PIX or credit-card checkout through the configured provider. */
+/**
+ * Starts (or replaces) the real recurring subscription at the gateway with PIX
+ * or credit card. The subscription only becomes ACTIVE when the gateway
+ * confirms the first payment through the webhook — never here.
+ */
 export const createSubscriptionCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => checkoutSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { requireOwnedBusinessId, loadPlanByCode, logAudit } = await import("./subscription.server");
-    const { getPaymentProvider } = await import("./payments");
+    const { resolveProvider, loadSubscriptionByBusiness, dueDateString } = await import("./billing.server");
     const { planPriceCents } = await import("./plans");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const businessId = await requireOwnedBusinessId(context.supabase, context.userId);
     const plan = await loadPlanByCode(context.supabase, data.planCode);
+    const amountCents = planPriceCents(plan, data.interval);
+
     const business = await supabaseAdmin
       .from("businesses")
       .select("id, name, email, whatsapp")
       .eq("id", businessId)
       .single();
+    const current = await loadSubscriptionByBusiness(supabaseAdmin, businessId);
+    if (!current) throw new Error("SUBSCRIPTION_NOT_FOUND");
 
-    const provider = getPaymentProvider(process.env["PAYMENT_PROVIDER"] ?? "mock");
-    const customer = await provider.createCustomer({
+    const provider = await resolveProvider(supabaseAdmin, null);
+    if (!provider.isConfigured()) {
+      throw new Error(
+        "PAYMENT_PROVIDER_NOT_CONFIGURED: pagamentos indisponíveis no momento. Tente novamente em instantes.",
+      );
+    }
+
+    const email = business.data?.email;
+    if (!email) {
+      throw new Error("BUSINESS_EMAIL_REQUIRED: cadastre um e-mail de cobrança em Ajustes antes de assinar");
+    }
+
+    const customer = await provider.ensureCustomer({
       businessId,
       name: business.data?.name ?? "Negócio",
-      email: business.data?.email ?? `${businessId}@example.invalid`,
+      email,
       whatsapp: business.data?.whatsapp ?? null,
+      existingCustomerId: current.provider_customer_id,
     });
 
+    // Replace any previous gateway subscription so the business is never
+    // charged twice for the same account.
+    if (current.provider_subscription_id) {
+      try {
+        await provider.cancelSubscription({
+          providerSubscriptionId: current.provider_subscription_id,
+        });
+      } catch (error) {
+        console.error("[billing] failed to cancel previous subscription", error);
+      }
+    }
+
     const origin = process.env["APP_ORIGIN"] ?? "";
-    const checkout = await provider.createCheckout({
+    const created = await provider.createSubscription({
       businessId,
       providerCustomerId: customer.providerCustomerId,
       planCode: plan.code,
+      planName: plan.name,
       interval: data.interval,
-      amountCents: planPriceCents(plan, data.interval),
+      amountCents,
       method: data.method,
-      successUrl: `${origin}/app/assinatura?checkout=success`,
-      cancelUrl: `${origin}/app/assinatura?checkout=canceled`,
+      // Trials keep their remaining days: first charge lands when the trial ends.
+      nextDueDate:
+        current.status === "TRIALING" && current.trial_ends_at && new Date(current.trial_ends_at) > new Date()
+          ? dueDateString(new Date(current.trial_ends_at))
+          : dueDateString(new Date()),
+      returnUrl: `${origin}/app/assinatura?checkout=done`,
     });
 
     await supabaseAdmin
@@ -78,7 +115,14 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
       .update({
         provider: provider.name,
         provider_customer_id: customer.providerCustomerId,
+        provider_subscription_id: created.providerSubscriptionId,
         payment_method: data.method,
+        pending_plan_id: plan.id === current.plan_id && data.interval === current.billing_interval ? null : plan.id,
+        pending_billing_interval:
+          plan.id === current.plan_id && data.interval === current.billing_interval ? null : data.interval,
+        amount_cents: amountCents,
+        cancel_at_period_end: false,
+        canceled_at: null,
       })
       .eq("business_id", businessId);
 
@@ -86,13 +130,17 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
       plan: plan.code,
       interval: data.interval,
       method: data.method,
+      provider: provider.name,
+      provider_subscription_id: created.providerSubscriptionId,
     });
 
     return {
-      checkoutUrl: checkout.checkoutUrl,
-      providerCheckoutId: checkout.providerCheckoutId,
-      pixCode: checkout.pixCode ?? null,
-      amountCents: planPriceCents(plan, data.interval),
+      providerSubscriptionId: created.providerSubscriptionId,
+      invoiceUrl: created.invoiceUrl,
+      pixCode: created.pixPayload,
+      dueDate: created.dueDate,
+      amountCents,
+      method: data.method,
     };
   });
 
@@ -117,7 +165,7 @@ export const schedulePlanChange = createServerFn({ method: "POST" })
     const current = await supabaseAdmin
       .from("subscriptions")
       .select(
-        "id, billing_interval, current_period_end, status, plans:plan_id (id, code, name, description, professional_limit, monthly_price_cents, annual_price_cents, annual_months_charged, trial_days, sort_order)",
+        "id, billing_interval, payment_method, current_period_end, status, plans:plan_id (id, code, name, description, professional_limit, monthly_price_cents, annual_price_cents, annual_months_charged, trial_days, sort_order)",
       )
       .eq("business_id", businessId)
       .maybeSingle();
@@ -139,6 +187,27 @@ export const schedulePlanChange = createServerFn({ method: "POST" })
           `DOWNGRADE_BLOCKED: você tem ${used} profissionais ativos e o plano ${nextPlan.name} permite ${nextPlan.professional_limit}. Desative profissionais antes de mudar de plano.`,
         );
       }
+    }
+
+    // Mirror the new value/cycle at the gateway so the NEXT charge is correct,
+    // while the paid period keeps running on the current plan.
+    const gatewaySubscriptionId = await supabaseAdmin
+      .from("subscriptions")
+      .select("provider, provider_subscription_id")
+      .eq("business_id", businessId)
+      .maybeSingle();
+    if (gatewaySubscriptionId.data?.provider_subscription_id) {
+      const { resolveProvider } = await import("./billing.server");
+      const { planPriceCents } = await import("./plans");
+      const provider = await resolveProvider(supabaseAdmin, gatewaySubscriptionId.data.provider);
+      await provider.updateSubscription({
+        providerSubscriptionId: gatewaySubscriptionId.data.provider_subscription_id,
+        amountCents: planPriceCents(nextPlan, data.interval),
+        interval: data.interval,
+        method: (current.data as { payment_method?: "PIX" | "CREDIT_CARD" | null }).payment_method ?? "PIX",
+        // Only future charges change — never rewrite the current paid period.
+        updatePendingPayments: false,
+      });
     }
 
     await supabaseAdmin
@@ -170,7 +239,7 @@ export const cancelSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { requireOwnedBusinessId, logAudit } = await import("./subscription.server");
-    const { getPaymentProvider } = await import("./payments");
+    const { resolveProvider } = await import("./billing.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const businessId = await requireOwnedBusinessId(context.supabase, context.userId);
@@ -181,11 +250,11 @@ export const cancelSubscription = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!current.data) throw new Error("SUBSCRIPTION_NOT_FOUND");
 
+    // Stop future charges at the gateway; access stays until the period ends.
     if (current.data.provider_subscription_id) {
-      const provider = getPaymentProvider(current.data.provider);
+      const provider = await resolveProvider(supabaseAdmin, current.data.provider);
       await provider.cancelSubscription({
         providerSubscriptionId: current.data.provider_subscription_id,
-        atPeriodEnd: true,
       });
     }
 

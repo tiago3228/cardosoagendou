@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppAssinaturaRouteImport } from './routes/_authenticated/app.assinatura'
 import { Route as AuthenticatedAppClientesRouteImport } from './routes/_authenticated/app.clientes'
@@ -22,6 +23,8 @@ import { Route as AuthenticatedAppConfiguracoesRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppProdutosRouteImport } from './routes/_authenticated/app.produtos'
 import { Route as AuthenticatedAppProfissionaisRouteImport } from './routes/_authenticated/app.profissionais'
 import { Route as AuthenticatedAppServicosRouteImport } from './routes/_authenticated/app.servicos'
+import { Route as ApiPublicCronBillingRouteImport } from './routes/api/public/cron/billing'
+import { Route as ApiPublicWebhooksAsaasRouteImport } from './routes/api/public/webhooks/asaas'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -51,6 +54,11 @@ const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   id: '/app',
   path: '/app',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ConviteTokenRoute = ConviteTokenRouteImport.update({
+  id: '/convite/$token',
+  path: '/convite/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   id: '/',
@@ -93,6 +101,16 @@ const AuthenticatedAppServicosRoute =
     path: '/servicos',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const ApiPublicCronBillingRoute = ApiPublicCronBillingRouteImport.update({
+  id: '/api/public/cron/billing',
+  path: '/api/public/cron/billing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWebhooksAsaasRoute = ApiPublicWebhooksAsaasRouteImport.update({
+  id: '/api/public/webhooks/asaas',
+  path: '/api/public/webhooks/asaas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -100,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
+  '/convite/$token': typeof ConviteTokenRoute
   '/app/assinatura': typeof AuthenticatedAppAssinaturaRoute
   '/app/clientes': typeof AuthenticatedAppClientesRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
@@ -107,12 +126,15 @@ export interface FileRoutesByFullPath {
   '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/app/servicos': typeof AuthenticatedAppServicosRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/api/public/cron/billing': typeof ApiPublicCronBillingRoute
+  '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
+  '/convite/$token': typeof ConviteTokenRoute
   '/app/assinatura': typeof AuthenticatedAppAssinaturaRoute
   '/app/clientes': typeof AuthenticatedAppClientesRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
@@ -120,6 +142,8 @@ export interface FileRoutesByTo {
   '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/app/servicos': typeof AuthenticatedAppServicosRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/api/public/cron/billing': typeof ApiPublicCronBillingRoute
+  '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -129,6 +153,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
+  '/convite/$token': typeof ConviteTokenRoute
   '/_authenticated/app/assinatura': typeof AuthenticatedAppAssinaturaRoute
   '/_authenticated/app/clientes': typeof AuthenticatedAppClientesRoute
   '/_authenticated/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
@@ -136,6 +161,8 @@ export interface FileRoutesById {
   '/_authenticated/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/_authenticated/app/servicos': typeof AuthenticatedAppServicosRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/api/public/cron/billing': typeof ApiPublicCronBillingRoute
+  '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -145,6 +172,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/cadastro'
     | '/app'
+    | '/convite/$token'
     | '/app/assinatura'
     | '/app/clientes'
     | '/app/configuracoes'
@@ -152,12 +180,15 @@ export interface FileRouteTypes {
     | '/app/profissionais'
     | '/app/servicos'
     | '/app/'
+    | '/api/public/cron/billing'
+    | '/api/public/webhooks/asaas'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/$slug'
     | '/auth'
     | '/cadastro'
+    | '/convite/$token'
     | '/app/assinatura'
     | '/app/clientes'
     | '/app/configuracoes'
@@ -165,6 +196,8 @@ export interface FileRouteTypes {
     | '/app/profissionais'
     | '/app/servicos'
     | '/app'
+    | '/api/public/cron/billing'
+    | '/api/public/webhooks/asaas'
   id:
     | '__root__'
     | '/'
@@ -173,6 +206,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/cadastro'
     | '/_authenticated/app'
+    | '/convite/$token'
     | '/_authenticated/app/assinatura'
     | '/_authenticated/app/clientes'
     | '/_authenticated/app/configuracoes'
@@ -180,6 +214,8 @@ export interface FileRouteTypes {
     | '/_authenticated/app/profissionais'
     | '/_authenticated/app/servicos'
     | '/_authenticated/app/'
+    | '/api/public/cron/billing'
+    | '/api/public/webhooks/asaas'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -188,6 +224,9 @@ export interface RootRouteChildren {
   SlugRoute: typeof SlugRoute
   AuthRoute: typeof AuthRoute
   CadastroRoute: typeof CadastroRoute
+  ConviteTokenRoute: typeof ConviteTokenRoute
+  ApiPublicCronBillingRoute: typeof ApiPublicCronBillingRoute
+  ApiPublicWebhooksAsaasRoute: typeof ApiPublicWebhooksAsaasRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -233,6 +272,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app'
       preLoaderRoute: typeof AuthenticatedAppRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/convite/$token': {
+      id: '/convite/$token'
+      path: '/convite/$token'
+      fullPath: '/convite/$token'
+      preLoaderRoute: typeof ConviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/': {
       id: '/_authenticated/app/'
@@ -283,6 +329,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppServicosRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/api/public/cron/billing': {
+      id: '/api/public/cron/billing'
+      path: '/api/public/cron/billing'
+      fullPath: '/api/public/cron/billing'
+      preLoaderRoute: typeof ApiPublicCronBillingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/asaas': {
+      id: '/api/public/webhooks/asaas'
+      path: '/api/public/webhooks/asaas'
+      fullPath: '/api/public/webhooks/asaas'
+      preLoaderRoute: typeof ApiPublicWebhooksAsaasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -326,6 +386,9 @@ const rootRouteChildren: RootRouteChildren = {
   SlugRoute: SlugRoute,
   AuthRoute: AuthRoute,
   CadastroRoute: CadastroRoute,
+  ConviteTokenRoute: ConviteTokenRoute,
+  ApiPublicCronBillingRoute: ApiPublicCronBillingRoute,
+  ApiPublicWebhooksAsaasRoute: ApiPublicWebhooksAsaasRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

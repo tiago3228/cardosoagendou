@@ -1,78 +1,105 @@
 /**
- * Payment provider abstraction.
+ * Payment provider abstraction for RECURRING subscriptions.
  *
  * The application never talks to a gateway directly: it depends on this
- * interface only, so Asaas / Mercado Pago / Stripe / Pagar.me can be plugged
- * in later without touching subscription logic, routes or the UI.
+ * interface only, so Asaas / Mercado Pago / Stripe / Pagar.me can be swapped
+ * without touching subscription logic, routes or the UI.
  */
 
 export type PaymentMethod = "PIX" | "CREDIT_CARD";
 export type BillingInterval = "MONTHLY" | "ANNUAL";
 
-export interface CreateCustomerInput {
+export interface EnsureCustomerInput {
   businessId: string;
   name: string;
   email: string;
   whatsapp?: string | null;
+  /** Optional CPF/CNPJ — some gateways require it for credit card. */
+  taxId?: string | null;
+  /** Existing gateway customer id, when the business already has one. */
+  existingCustomerId?: string | null;
 }
-export interface CreateCustomerResult {
+export interface EnsureCustomerResult {
   providerCustomerId: string;
 }
 
-export interface CreateCheckoutInput {
+export interface CreateSubscriptionInput {
   businessId: string;
   providerCustomerId: string;
   planCode: string;
+  planName: string;
   interval: BillingInterval;
   amountCents: number;
   method: PaymentMethod;
-  successUrl: string;
-  cancelUrl: string;
-}
-export interface CreateCheckoutResult {
-  checkoutUrl: string;
-  providerCheckoutId: string;
-  /** PIX copy-and-paste payload when the method is PIX. */
-  pixCode?: string;
+  /** First charge date, YYYY-MM-DD in the gateway's timezone. */
+  nextDueDate: string;
+  /** Where the gateway should send the customer back to. */
+  returnUrl: string;
 }
 
-export interface ChangeSubscriptionInput {
+export interface SubscriptionChargeInfo {
+  providerPaymentId: string | null;
+  /** Hosted invoice / checkout page for card + boleto + pix. */
+  invoiceUrl: string | null;
+  /** PIX copy-and-paste payload, when the method is PIX. */
+  pixPayload: string | null;
+  dueDate: string | null;
+  amountCents: number | null;
+}
+
+export interface CreateSubscriptionResult extends SubscriptionChargeInfo {
   providerSubscriptionId: string;
-  planCode: string;
-  interval: BillingInterval;
+}
+
+export interface UpdateSubscriptionInput {
+  providerSubscriptionId: string;
   amountCents: number;
-  /** Plan changes take effect on the next billing cycle by default. */
-  applyAt: "NEXT_CYCLE" | "IMMEDIATELY";
+  interval: BillingInterval;
+  method: PaymentMethod;
+  /** Rewrite already-created unpaid charges with the new value/method. */
+  updatePendingPayments: boolean;
 }
 
 export interface CancelSubscriptionInput {
   providerSubscriptionId: string;
-  atPeriodEnd: boolean;
 }
 
+export type WebhookEventType =
+  | "payment.pending"
+  | "payment.confirmed"
+  | "payment.overdue"
+  | "payment.refunded"
+  | "subscription.canceled"
+  | "unknown";
+
 export interface NormalizedWebhookEvent {
-  /** Stable id used for idempotency. */
+  /** Stable gateway event id, used for idempotency. */
   externalId: string;
-  type:
-    | "payment.confirmed"
-    | "payment.failed"
-    | "subscription.renewed"
-    | "subscription.canceled"
-    | "unknown";
-  businessId?: string | null;
-  planCode?: string | null;
-  interval?: BillingInterval | null;
-  method?: PaymentMethod | null;
+  type: WebhookEventType;
+  rawEventName: string;
+  providerSubscriptionId: string | null;
+  providerPaymentId: string | null;
+  /** businessId echoed back through externalReference, when present. */
+  businessId: string | null;
+  amountCents: number | null;
+  method: PaymentMethod | null;
+  paidAt: string | null;
+  dueDate: string | null;
+  invoiceUrl: string | null;
   raw: unknown;
 }
 
 export interface PaymentProvider {
   readonly name: string;
-  createCustomer(input: CreateCustomerInput): Promise<CreateCustomerResult>;
-  createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult>;
-  changeSubscription(input: ChangeSubscriptionInput): Promise<{ ok: true }>;
+  /** True when the adapter has the credentials it needs to reach the gateway. */
+  isConfigured(): boolean;
+  ensureCustomer(input: EnsureCustomerInput): Promise<EnsureCustomerResult>;
+  createSubscription(input: CreateSubscriptionInput): Promise<CreateSubscriptionResult>;
+  /** First (or current) open charge of a subscription — used to show PIX/invoice again. */
+  getSubscriptionCharge(providerSubscriptionId: string): Promise<SubscriptionChargeInfo | null>;
+  updateSubscription(input: UpdateSubscriptionInput): Promise<{ ok: true }>;
   cancelSubscription(input: CancelSubscriptionInput): Promise<{ ok: true }>;
-  /** Verifies the webhook signature over the RAW body. */
-  verifyWebhook(rawBody: string, signature: string | null, secret: string | null): boolean;
+  /** Verifies the webhook request. `headers` is the raw incoming header map. */
+  verifyWebhook(headers: Headers, rawBody: string): boolean;
   parseWebhook(rawBody: string): NormalizedWebhookEvent;
 }

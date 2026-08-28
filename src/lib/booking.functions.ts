@@ -11,8 +11,17 @@ export const getPublicBusiness = createServerFn({ method: "GET" })
     const db = publicDb();
     const business = await loadBusinessBySlug(db, data.slug);
     if (!business) return null;
+
+    // Entitlement gate: a blocked/suspended business shows the page but no slots.
+    const { data: acceptsBookings } = await db.rpc("business_accepts_bookings", {
+      _business_id: business.id,
+    });
+    if (acceptsBookings !== true) {
+      return { business, services: [], professionals: [], links: [], businessHours: [], professionalHours: [], acceptsBookings: false as const };
+    }
+
     const catalog = await loadPublicCatalog(db, business.id);
-    return { business, ...catalog };
+    return { business, ...catalog, acceptsBookings: true as const };
   });
 
 /** Time slots for a day, computed from the SUM of the selected services' durations. */
@@ -21,8 +30,10 @@ export const getAvailability = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { loadBusinessBySlug, availabilityForDay } = await import("./booking.server");
+    const { assertAcceptsBookings } = await import("./billing.server");
     const business = await loadBusinessBySlug(supabaseAdmin, data.slug);
     if (!business) throw new Error("BUSINESS_NOT_FOUND");
+    await assertAcceptsBookings(supabaseAdmin, business.id);
     return availabilityForDay(
       supabaseAdmin,
       business,
