@@ -135,12 +135,25 @@ export async function recordEventOnce(
   return true;
 }
 
-export async function markEventProcessed(db: Db, provider: string, externalId: string) {
+export async function markEventProcessed(
+  db: Db,
+  provider: string,
+  externalId: string,
+  result?: string,
+) {
   await db
     .from("payment_events")
-    .update({ processed_at: new Date().toISOString() })
+    .update({ processed_at: new Date().toISOString(), result: result ?? "OK" })
     .eq("provider", provider)
     .eq("external_id", externalId);
+}
+
+/**
+ * Removes the de-duplication row when processing failed, so the gateway's
+ * retry is treated as a NEW event instead of being swallowed as a duplicate.
+ */
+export async function discardEvent(db: Db, provider: string, externalId: string) {
+  await db.from("payment_events").delete().eq("provider", provider).eq("external_id", externalId);
 }
 
 async function upsertPayment(
