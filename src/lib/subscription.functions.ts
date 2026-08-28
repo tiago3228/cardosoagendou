@@ -93,7 +93,7 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
       }
     }
 
-    const origin = process.env["APP_ORIGIN"] ?? "";
+    const origin = process.env["APP_ORIGIN"] ?? "https://cardosoagendou.lovable.app";
     const created = await provider.createSubscription({
       businessId,
       providerCustomerId: customer.providerCustomerId,
@@ -126,16 +126,27 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
       })
       .eq("business_id", businessId);
 
-    await logAudit(supabaseAdmin, businessId, context.userId, "subscription.checkout_started", "subscription", businessId, {
-      plan: plan.code,
-      interval: data.interval,
-      method: data.method,
-      provider: provider.name,
-      provider_subscription_id: created.providerSubscriptionId,
-    });
+    await logAudit(
+      supabaseAdmin,
+      businessId,
+      context.userId,
+      "MERCADOPAGO_SUBSCRIPTION_CREATED",
+      "subscription",
+      businessId,
+      {
+        plan: plan.code,
+        interval: data.interval,
+        method: data.method,
+        provider: provider.name,
+        provider_subscription_id: created.providerSubscriptionId,
+      },
+    );
 
     return {
       providerSubscriptionId: created.providerSubscriptionId,
+      // Mercado Pago approval/checkout URL — access is only granted after the
+      // webhook confirms the authorization/payment.
+      checkoutUrl: created.invoiceUrl,
       invoiceUrl: created.invoiceUrl,
       pixCode: created.pixPayload,
       dueDate: created.dueDate,

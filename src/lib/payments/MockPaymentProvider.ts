@@ -59,9 +59,9 @@ export class MockPaymentProvider implements PaymentProvider {
   }
 
   verifyWebhook(headers: Headers): boolean {
-    const secret = process.env["ASAAS_WEBHOOK_TOKEN"] ?? "";
+    const secret = process.env["MERCADOPAGO_WEBHOOK_SECRET"] ?? "";
     if (!secret) return false;
-    return headers.get("asaas-access-token") === secret;
+    return headers.get("x-mock-token") === secret;
   }
 
   parseWebhook(rawBody: string): NormalizedWebhookEvent {

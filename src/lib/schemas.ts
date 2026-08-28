@@ -83,3 +83,18 @@ export const STATUS_TRANSITIONS: Record<string, string[]> = {
 export function canTransition(from: string, to: string): boolean {
   return (STATUS_TRANSITIONS[from] ?? []).includes(to);
 }
+
+/** Manual PIX (paid directly to the SaaS owner, approved by the Master). */
+export const pixQuoteSchema = planChangeSchema;
+
+export const manualPixRequestSchema = planChangeSchema.extend({
+  customerNote: z.string().trim().max(500).optional(),
+  /** Storage path inside the private "pix-proofs" bucket. */
+  proofPath: z.string().trim().max(300).optional(),
+});
+
+export const pixReviewSchema = z.object({
+  requestId: z.string().uuid(),
+  action: z.enum(["APPROVE", "REJECT"]),
+  adminNote: z.string().trim().max(500).optional(),
+});

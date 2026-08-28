@@ -102,4 +102,10 @@ export interface PaymentProvider {
   /** Verifies the webhook request. `headers` is the raw incoming header map. */
   verifyWebhook(headers: Headers, rawBody: string): boolean;
   parseWebhook(rawBody: string): NormalizedWebhookEvent;
+  /**
+   * Optional authoritative resolution: gateways that only notify "resource X
+   * changed" must re-read the resource from their API instead of trusting the
+   * payload. When present, the webhook route prefers this over parseWebhook.
+   */
+  resolveWebhook?(rawBody: string): Promise<NormalizedWebhookEvent>;
 }
