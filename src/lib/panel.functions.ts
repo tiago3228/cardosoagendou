@@ -12,7 +12,14 @@ export const getMyPanel = createServerFn({ method: "POST" })
 
     const businessId = roles.data?.find((r) => r.business_id)?.business_id ?? null;
     if (!businessId) {
-      return { business: null, role: null, subscription: null, usage: null };
+      return {
+        business: null,
+        role: null,
+        ownerName: null,
+        subscription: null,
+        usage: null,
+        publicOrigin: null,
+      };
     }
 
     const [business, subscription, professionals, profile] = await Promise.all([
@@ -39,12 +46,21 @@ export const getMyPanel = createServerFn({ method: "POST" })
       context.supabase.from("profiles").select("full_name").eq("id", context.userId).maybeSingle(),
     ]);
 
+    // Official public domain for the booking link (never the preview/sandbox host).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const origin = await supabaseAdmin
+      .from("platform_settings")
+      .select("value")
+      .eq("key", "app.public_origin")
+      .maybeSingle();
+
     return {
       business: business.data ?? null,
       role: roles.data?.find((r) => r.business_id === businessId)?.role ?? null,
       ownerName: profile.data?.full_name ?? null,
       subscription: subscription.data ?? null,
       usage: { activeProfessionals: professionals.count ?? 0 },
+      publicOrigin: typeof origin.data?.value === "string" ? origin.data.value : null,
     };
   });
 

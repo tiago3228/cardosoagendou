@@ -2,11 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery } from "./app";
 import { formatBRL, formatDuration } from "@/lib/format";
 import { businessTypeConfig } from "@/lib/business-types";
+import { BackButton } from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,12 +16,21 @@ export const Route = createFileRoute("/_authenticated/app/servicos")({
   component: ServicesPage,
 });
 
+interface EditForm {
+  id: string;
+  name: string;
+  category: string;
+  price: string;
+  duration: string;
+}
+
 function ServicesPage() {
   const { data: panel } = useSuspenseQuery(panelQuery);
   const businessId = panel.business!.id;
   const config = businessTypeConfig(panel.business!.business_type);
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ name: "", category: "", price: "", duration: "30" });
+  const [edit, setEdit] = useState<EditForm | null>(null);
 
   const services = useQuery({
     queryKey: ["services", businessId],
@@ -85,8 +95,37 @@ function ServicesPage() {
     },
   });
 
+  const update = useMutation({
+    mutationFn: async (input: EditForm) => {
+      const price = Math.round(Number(input.price.replace(",", ".")) * 100);
+      const duration = Number(input.duration);
+      if (!input.name.trim()) throw new Error("Informe o nome do serviço");
+      if (!Number.isFinite(price) || price < 0) throw new Error("Preço inválido");
+      if (!Number.isFinite(duration) || duration < 5) throw new Error("Duração mínima de 5 minutos");
+      const { error } = await supabase
+        .from("services")
+        .update({
+          name: input.name.trim(),
+          category: input.category.trim() || null,
+          price_cents: price,
+          duration_minutes: duration,
+        })
+        .eq("id", input.id)
+        .eq("business_id", businessId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      setEdit(null);
+      toast.success("Serviço atualizado");
+      queryClient.invalidateQueries({ queryKey: ["services", businessId] });
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível atualizar", { description: error.message }),
+  });
+
   return (
     <div>
+      <BackButton />
       <h1 className="font-display text-2xl font-bold text-foreground">Serviços</h1>
       <p className="text-sm text-muted-foreground">
         Categorias sugeridas para {config.label.toLowerCase()}: {config.categories.join(", ")}
