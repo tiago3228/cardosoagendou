@@ -57,6 +57,7 @@ export async function loadPublicBusinessBySlug(
 
 export interface PublicCatalog {
   services: { id: string; name: string; description: string | null; category: string | null; price_cents: number; duration_minutes: number; image_url: string | null }[];
+  products?: { id: string; name: string; price_cents: number; stock_quantity: number; image_url: string | null }[];
   professionals: { id: string; name: string; photo_url: string | null; bio: string | null }[];
   links: { professional_id: string; service_id: string }[];
   businessHours: { weekday: number; opens_at: string; closes_at: string; closed: boolean }[];
@@ -69,6 +70,7 @@ export async function loadPublicCatalogBySlug(db: Db, slug: string): Promise<Pub
   return (
     catalog ?? {
       services: [],
+      products: [],
       professionals: [],
       links: [],
       businessHours: [],
