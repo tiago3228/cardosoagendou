@@ -12,7 +12,14 @@ export const getMyPanel = createServerFn({ method: "POST" })
 
     const businessId = roles.data?.find((r) => r.business_id)?.business_id ?? null;
     if (!businessId) {
-      return { business: null, role: null, subscription: null, usage: null };
+      return {
+        business: null,
+        role: null,
+        ownerName: null,
+        subscription: null,
+        usage: null,
+        publicOrigin: null,
+      };
     }
 
     const [business, subscription, professionals, profile] = await Promise.all([
