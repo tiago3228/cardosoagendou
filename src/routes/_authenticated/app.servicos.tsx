@@ -95,8 +95,37 @@ function ServicesPage() {
     },
   });
 
+  const update = useMutation({
+    mutationFn: async (input: EditForm) => {
+      const price = Math.round(Number(input.price.replace(",", ".")) * 100);
+      const duration = Number(input.duration);
+      if (!input.name.trim()) throw new Error("Informe o nome do serviço");
+      if (!Number.isFinite(price) || price < 0) throw new Error("Preço inválido");
+      if (!Number.isFinite(duration) || duration < 5) throw new Error("Duração mínima de 5 minutos");
+      const { error } = await supabase
+        .from("services")
+        .update({
+          name: input.name.trim(),
+          category: input.category.trim() || null,
+          price_cents: price,
+          duration_minutes: duration,
+        })
+        .eq("id", input.id)
+        .eq("business_id", businessId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      setEdit(null);
+      toast.success("Serviço atualizado");
+      queryClient.invalidateQueries({ queryKey: ["services", businessId] });
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível atualizar", { description: error.message }),
+  });
+
   return (
     <div>
+      <BackButton />
       <h1 className="font-display text-2xl font-bold text-foreground">Serviços</h1>
       <p className="text-sm text-muted-foreground">
         Categorias sugeridas para {config.label.toLowerCase()}: {config.categories.join(", ")}
