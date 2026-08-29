@@ -2,11 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery } from "./app";
 import { formatBRL, formatDuration } from "@/lib/format";
 import { businessTypeConfig } from "@/lib/business-types";
+import { BackButton } from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,12 +16,21 @@ export const Route = createFileRoute("/_authenticated/app/servicos")({
   component: ServicesPage,
 });
 
+interface EditForm {
+  id: string;
+  name: string;
+  category: string;
+  price: string;
+  duration: string;
+}
+
 function ServicesPage() {
   const { data: panel } = useSuspenseQuery(panelQuery);
   const businessId = panel.business!.id;
   const config = businessTypeConfig(panel.business!.business_type);
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ name: "", category: "", price: "", duration: "30" });
+  const [edit, setEdit] = useState<EditForm | null>(null);
 
   const services = useQuery({
     queryKey: ["services", businessId],
