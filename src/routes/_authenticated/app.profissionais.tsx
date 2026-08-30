@@ -70,7 +70,7 @@ function ProfessionalsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("professionals")
-        .select("id, name, commission_percent, active, user_id")
+        .select("id, name, commission_percent, active, user_id, photo_url")
         .eq("business_id", businessId)
         .is("deleted_at", null)
         .order("name");
