@@ -188,11 +188,18 @@ function ProfessionalsPage() {
 
   return (
     <div>
+      <BackButton />
       <h1 className="font-display text-2xl font-bold text-foreground">Equipe</h1>
       <p className="text-sm text-muted-foreground">
         {panel.usage?.activeProfessionals} ativo(s)
         {plan?.professional_limit ? ` de ${plan.professional_limit} do plano ${plan.name}` : " · plano ilimitado"}
       </p>
+      {!teamManageEnabled ? (
+        <p className="mt-3 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+          No seu plano a equipe é apenas de consulta: você pode visualizar os profissionais, mas
+          editar ou excluir exige um plano superior.
+        </p>
+      ) : null}
 
       <form
         className="mt-6 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-3"
@@ -230,20 +237,53 @@ function ProfessionalsPage() {
         {(professionals.data ?? []).map((professional) => (
           <article key={professional.id} className="rounded-xl border border-border bg-card p-4">
             <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="font-medium text-card-foreground">{professional.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  Comissão de {Number(professional.commission_percent)}%
-                </p>
+              <div className="flex items-center gap-3">
+                {professional.photo_url ? (
+                  <img
+                    src={professional.photo_url}
+                    alt={professional.name}
+                    className="size-12 rounded-full object-cover"
+                  />
+                ) : null}
+                <div>
+                  <p className="font-medium text-card-foreground">{professional.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Comissão de {Number(professional.commission_percent)}%
+                  </p>
+                </div>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setActive.mutate({ id: professional.id, active: !professional.active })}
-              >
-                {professional.active ? "Ativo" : "Inativo"}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!teamManageEnabled}
+                  onClick={() => setActive.mutate({ id: professional.id, active: !professional.active })}
+                >
+                  {professional.active ? "Ativo" : "Inativo"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  aria-label={`Remover ${professional.name}`}
+                  disabled={!teamManageEnabled}
+                  onClick={() => remove.mutate(professional.id)}
+                >
+                  <Trash2 className="size-4" aria-hidden />
+                </Button>
+              </div>
             </div>
+
+            <div className="mt-3">
+              <PhotoField
+                businessId={businessId}
+                folder="profissionais"
+                value={professional.photo_url}
+                onChange={(url) => setPhoto.mutate({ id: professional.id, url })}
+                label="Foto do profissional"
+                disabled={!teamManageEnabled}
+              />
+            </div>
+
 
             <p className="mt-4 text-xs uppercase tracking-wide text-muted-foreground">
               Serviços que realiza
