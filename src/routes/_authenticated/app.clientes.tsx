@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { panelQuery } from "./app";
 import { formatWhatsapp } from "@/lib/format";
 import { Input } from "@/components/ui/input";
+import { BackButton } from "@/components/BackButton";
 
 export const Route = createFileRoute("/_authenticated/app/clientes")({
   component: ClientsPage,
@@ -34,6 +35,7 @@ function ClientsPage() {
 
   return (
     <div>
+      <BackButton />
       <h1 className="font-display text-2xl font-bold text-foreground">Clientes</h1>
       <p className="text-sm text-muted-foreground">{clients.data?.length ?? 0} cadastrados</p>
 

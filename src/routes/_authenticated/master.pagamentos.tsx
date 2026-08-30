@@ -7,6 +7,7 @@ import { getMasterStatus, listPixRequestsForReview, reviewPixRequest } from "@/l
 import { PIX_STATUS_LABEL } from "@/components/billing/PixCheckout";
 import { formatBRL } from "@/lib/format";
 import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/BackButton";
 
 export const Route = createFileRoute("/_authenticated/master/pagamentos")({
   head: () => ({
@@ -82,6 +83,7 @@ function MasterPixPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl px-5 py-8">
+      <BackButton />
       <h1 className="font-display text-2xl font-bold text-foreground">Pagamentos PIX</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Analise e libere as assinaturas pagas por PIX direto.
