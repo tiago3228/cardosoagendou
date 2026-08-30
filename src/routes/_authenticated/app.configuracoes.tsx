@@ -11,6 +11,7 @@ import { WhatsappInput } from "@/components/ui/whatsapp-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useInstallApp } from "@/lib/use-install-app";
+import { BackButton } from "@/components/BackButton";
 
 export const Route = createFileRoute("/_authenticated/app/configuracoes")({
   component: SettingsPage,
@@ -87,6 +88,7 @@ function SettingsPage() {
 
   return (
     <div>
+      <BackButton />
       <h1 className="font-display text-2xl font-bold text-foreground">Ajustes do negócio</h1>
       <p className="text-sm text-muted-foreground">
         Link público: /{business.slug} · fuso {business.timezone}

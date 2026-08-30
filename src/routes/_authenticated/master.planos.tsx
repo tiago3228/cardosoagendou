@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { listBusinessesForMaster, setMasterTestPlan } from "@/lib/master.functions";
 import { formatBRL } from "@/lib/format";
 import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/BackButton";
 
 export const Route = createFileRoute("/_authenticated/master/planos")({
   head: () => ({
@@ -78,7 +79,8 @@ function MasterPlansPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="font-display text-2xl font-bold">Modo de teste de planos</h1>
+        <BackButton />
+      <h1 className="font-display text-2xl font-bold">Modo de teste de planos</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Coloque qualquer negócio em um plano para validar limites e recursos. As restrições são
           aplicadas no banco de dados — não apenas na tela.

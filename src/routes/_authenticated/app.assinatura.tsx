@@ -24,6 +24,7 @@ import {
 import { formatBRL } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { PixCheckout } from "@/components/billing/PixCheckout";
+import { BackButton } from "@/components/BackButton";
 
 export const Route = createFileRoute("/_authenticated/app/assinatura")({
   component: SubscriptionPage,
@@ -135,6 +136,7 @@ function SubscriptionPage() {
 
   return (
     <div>
+      <BackButton />
       <h1 className="font-display text-2xl font-bold text-foreground">Assinatura</h1>
 
       {subscription ? (

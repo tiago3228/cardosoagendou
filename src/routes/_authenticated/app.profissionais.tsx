@@ -2,13 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Mail, Plus } from "lucide-react";
+import { Mail, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery, entitlementsQuery } from "./app";
 import { WEEKDAY_SHORT } from "@/lib/format";
+import { BackButton } from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhotoField } from "@/components/ui/photo-field";
 import { useServerFn } from "@tanstack/react-start";
 import {
   inviteProfessional,
@@ -25,6 +27,8 @@ function ProfessionalsPage() {
   const { data: entitlements } = useSuspenseQuery(entitlementsQuery);
   const commissionsEnabled =
     ((entitlements?.features ?? {}) as Record<string, unknown>)["commissions"] === true;
+  const teamManageEnabled =
+    ((entitlements?.features ?? {}) as Record<string, unknown>)["team_manage"] === true;
   const businessId = panel.business!.id;
   const plan = panel.subscription?.plans as { professional_limit?: number | null; name?: string } | null;
   const queryClient = useQueryClient();
@@ -70,7 +74,7 @@ function ProfessionalsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("professionals")
-        .select("id, name, commission_percent, active, user_id")
+        .select("id, name, commission_percent, active, user_id, photo_url")
         .eq("business_id", businessId)
         .is("deleted_at", null)
         .order("name");
@@ -186,13 +190,65 @@ function ProfessionalsPage() {
       }),
   });
 
+  const setPhoto = useMutation({
+    mutationFn: async (input: { id: string; url: string | null }) => {
+      const { error } = await supabase
+        .from("professionals")
+        .update({ photo_url: input.url })
+        .eq("id", input.id)
+        .eq("business_id", businessId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Foto atualizada!");
+      queryClient.invalidateQueries({ queryKey: ["professionals", businessId] });
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível atualizar a foto", {
+        description: error.message.includes("FEATURE_LOCKED_TEAM")
+          ? "Edição de profissionais exige um plano superior."
+          : error.message,
+      }),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("professionals")
+        .update({ deleted_at: new Date().toISOString(), active: false })
+        .eq("id", id)
+        .eq("business_id", businessId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Profissional removido");
+      queryClient.invalidateQueries({ queryKey: ["professionals", businessId] });
+      queryClient.invalidateQueries({ queryKey: ["panel"] });
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível remover", {
+        description: error.message.includes("FEATURE_LOCKED_TEAM")
+          ? "Excluir profissionais exige um plano superior."
+          : error.message,
+      }),
+  });
+
+
+
   return (
     <div>
+      <BackButton />
       <h1 className="font-display text-2xl font-bold text-foreground">Equipe</h1>
       <p className="text-sm text-muted-foreground">
         {panel.usage?.activeProfessionals} ativo(s)
         {plan?.professional_limit ? ` de ${plan.professional_limit} do plano ${plan.name}` : " · plano ilimitado"}
       </p>
+      {!teamManageEnabled ? (
+        <p className="mt-3 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+          No seu plano a equipe é apenas de consulta: você pode visualizar os profissionais, mas
+          editar ou excluir exige um plano superior.
+        </p>
+      ) : null}
 
       <form
         className="mt-6 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-3"
@@ -230,20 +286,53 @@ function ProfessionalsPage() {
         {(professionals.data ?? []).map((professional) => (
           <article key={professional.id} className="rounded-xl border border-border bg-card p-4">
             <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="font-medium text-card-foreground">{professional.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  Comissão de {Number(professional.commission_percent)}%
-                </p>
+              <div className="flex items-center gap-3">
+                {professional.photo_url ? (
+                  <img
+                    src={professional.photo_url}
+                    alt={professional.name}
+                    className="size-12 rounded-full object-cover"
+                  />
+                ) : null}
+                <div>
+                  <p className="font-medium text-card-foreground">{professional.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Comissão de {Number(professional.commission_percent)}%
+                  </p>
+                </div>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setActive.mutate({ id: professional.id, active: !professional.active })}
-              >
-                {professional.active ? "Ativo" : "Inativo"}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!teamManageEnabled}
+                  onClick={() => setActive.mutate({ id: professional.id, active: !professional.active })}
+                >
+                  {professional.active ? "Ativo" : "Inativo"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  aria-label={`Remover ${professional.name}`}
+                  disabled={!teamManageEnabled}
+                  onClick={() => remove.mutate(professional.id)}
+                >
+                  <Trash2 className="size-4" aria-hidden />
+                </Button>
+              </div>
             </div>
+
+            <div className="mt-3">
+              <PhotoField
+                businessId={businessId}
+                folder="profissionais"
+                value={professional.photo_url}
+                onChange={(url) => setPhoto.mutate({ id: professional.id, url })}
+                label="Foto do profissional"
+                disabled={!teamManageEnabled}
+              />
+            </div>
+
 
             <p className="mt-4 text-xs uppercase tracking-wide text-muted-foreground">
               Serviços que realiza

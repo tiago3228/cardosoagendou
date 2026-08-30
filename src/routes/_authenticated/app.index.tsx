@@ -9,6 +9,7 @@ import { setAppointmentStatus } from "@/lib/appointments.functions";
 import { panelQuery } from "./app";
 import { formatBRL, formatDuration, formatWhatsapp } from "@/lib/format";
 import { Button } from "@/components/ui/button";
+import { PlanBenefitsBanner } from "@/components/PlanBenefitsBanner";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: AgendaPage,
@@ -55,10 +56,10 @@ function AgendaPage() {
       }),
   });
 
-  const bookingUrl =
-    typeof window !== "undefined" && panel.business
-      ? `${window.location.origin}/${panel.business.slug}`
-      : "";
+  // Official public domain first, so the shared link never points at a preview host.
+  const origin =
+    panel.publicOrigin ?? (typeof window !== "undefined" ? window.location.origin : "");
+  const bookingUrl = panel.business && origin ? `${origin}/${panel.business.slug}` : "";
 
   const items = agenda.data ?? [];
   const revenue = items
@@ -102,6 +103,12 @@ function AgendaPage() {
           </Button>
         </div>
       ) : null}
+
+      <PlanBenefitsBanner
+        currentPlanCode={
+          (panel.subscription?.plans as { code?: string } | null)?.code ?? null
+        }
+      />
 
       <div className="mt-6 space-y-3">
         {agenda.isLoading ? <p className="text-sm text-muted-foreground">Carregando...</p> : null}
