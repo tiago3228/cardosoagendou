@@ -103,6 +103,12 @@ function AgendaPage() {
         </div>
       ) : null}
 
+      <PlanBenefitsBanner
+        currentPlanCode={
+          (panel.subscription?.plans as { code?: string } | null)?.code ?? null
+        }
+      />
+
       <div className="mt-6 space-y-3">
         {agenda.isLoading ? <p className="text-sm text-muted-foreground">Carregando...</p> : null}
         {!agenda.isLoading && items.length === 0 ? (
