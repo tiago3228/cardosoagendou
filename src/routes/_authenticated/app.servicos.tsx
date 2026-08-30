@@ -182,30 +182,99 @@ function ServicesPage() {
 
       <ul className="mt-6 space-y-2">
         {(services.data ?? []).map((service) => (
-          <li
-            key={service.id}
-            className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4"
-          >
-            <div>
-              <p className="font-medium text-card-foreground">{service.name}</p>
-              <p className="text-sm text-muted-foreground">
-                {service.category ? `${service.category} · ` : ""}
-                {formatDuration(service.duration_minutes)} · {formatBRL(service.price_cents)}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => toggle.mutate({ id: service.id, active: !service.active })}
+          <li key={service.id} className="rounded-xl border border-border bg-card p-4">
+            {edit?.id === service.id ? (
+              <form
+                className="grid gap-3 sm:grid-cols-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  update.mutate(edit);
+                }}
               >
-                {service.active ? "Ativo" : "Inativo"}
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => remove.mutate(service.id)}>
-                <Trash2 className="size-4" aria-hidden />
-              </Button>
-            </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label>Nome</Label>
+                  <Input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Categoria</Label>
+                  <Input
+                    value={edit.category}
+                    onChange={(e) => setEdit({ ...edit, category: e.target.value })}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Preço (R$)</Label>
+                    <Input
+                      inputMode="decimal"
+                      value={edit.price}
+                      onChange={(e) => setEdit({ ...edit, price: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Duração (min)</Label>
+                    <Input
+                      inputMode="numeric"
+                      value={edit.duration}
+                      onChange={(e) => setEdit({ ...edit, duration: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2 sm:col-span-2">
+                  <Button type="submit" size="sm" disabled={update.isPending}>
+                    Salvar alterações
+                  </Button>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setEdit(null)}>
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-medium text-card-foreground">{service.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {service.category ? `${service.category} · ` : ""}
+                    {formatDuration(service.duration_minutes)} · {formatBRL(service.price_cents)}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => toggle.mutate({ id: service.id, active: !service.active })}
+                  >
+                    {service.active ? "Ativo" : "Inativo"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    aria-label={`Editar ${service.name}`}
+                    onClick={() =>
+                      setEdit({
+                        id: service.id,
+                        name: service.name,
+                        category: service.category ?? "",
+                        price: (service.price_cents / 100).toFixed(2).replace(".", ","),
+                        duration: String(service.duration_minutes),
+                      })
+                    }
+                  >
+                    <Pencil className="size-4" aria-hidden />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    aria-label={`Remover ${service.name}`}
+                    onClick={() => remove.mutate(service.id)}
+                  >
+                    <Trash2 className="size-4" aria-hidden />
+                  </Button>
+                </div>
+              </div>
+            )}
           </li>
+
         ))}
       </ul>
     </div>
