@@ -186,6 +186,51 @@ function ProfessionalsPage() {
       }),
   });
 
+  const setPhoto = useMutation({
+    mutationFn: async (input: { id: string; url: string | null }) => {
+      const { error } = await supabase
+        .from("professionals")
+        .update({ photo_url: input.url })
+        .eq("id", input.id)
+        .eq("business_id", businessId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Foto atualizada!");
+      queryClient.invalidateQueries({ queryKey: ["professionals", businessId] });
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível atualizar a foto", {
+        description: error.message.includes("FEATURE_LOCKED_TEAM")
+          ? "Edição de profissionais exige um plano superior."
+          : error.message,
+      }),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("professionals")
+        .update({ deleted_at: new Date().toISOString(), active: false })
+        .eq("id", id)
+        .eq("business_id", businessId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Profissional removido");
+      queryClient.invalidateQueries({ queryKey: ["professionals", businessId] });
+      queryClient.invalidateQueries({ queryKey: ["panel"] });
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível remover", {
+        description: error.message.includes("FEATURE_LOCKED_TEAM")
+          ? "Excluir profissionais exige um plano superior."
+          : error.message,
+      }),
+  });
+
+
+
   return (
     <div>
       <BackButton />
