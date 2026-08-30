@@ -9,6 +9,7 @@ import { setAppointmentStatus } from "@/lib/appointments.functions";
 import { panelQuery } from "./app";
 import { formatBRL, formatDuration, formatWhatsapp } from "@/lib/format";
 import { Button } from "@/components/ui/button";
+import { PlanBenefitsBanner } from "@/components/PlanBenefitsBanner";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: AgendaPage,
