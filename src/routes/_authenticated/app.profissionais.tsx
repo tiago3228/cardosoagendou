@@ -27,6 +27,8 @@ function ProfessionalsPage() {
   const { data: entitlements } = useSuspenseQuery(entitlementsQuery);
   const commissionsEnabled =
     ((entitlements?.features ?? {}) as Record<string, unknown>)["commissions"] === true;
+  const teamManageEnabled =
+    ((entitlements?.features ?? {}) as Record<string, unknown>)["team_manage"] === true;
   const businessId = panel.business!.id;
   const plan = panel.subscription?.plans as { professional_limit?: number | null; name?: string } | null;
   const queryClient = useQueryClient();
