@@ -98,6 +98,18 @@ function BookingPage() {
   const totalMinutes = chosenServices.reduce((sum, s) => sum + s.duration_minutes, 0);
   const totalCents = chosenServices.reduce((sum, s) => sum + s.price_cents, 0);
 
+  /** Warns when two services of the same category are picked (usually a mistake). */
+  const categoryConflict = useMemo(() => {
+    const seen = new Set<string>();
+    for (const service of chosenServices) {
+      const category = service.category?.trim();
+      if (!category) continue;
+      if (seen.has(category)) return category;
+      seen.add(category);
+    }
+    return null;
+  }, [chosenServices]);
+
   const eligibleProfessionals = data!.professionals.filter((p) =>
     selected.every((sid) => data!.links.some((l) => l.professional_id === p.id && l.service_id === sid)),
   );
