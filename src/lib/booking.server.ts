@@ -61,7 +61,7 @@ export interface PublicCatalog {
   professionals: { id: string; name: string; photo_url: string | null; bio: string | null }[];
   links: { professional_id: string; service_id: string }[];
   businessHours: { weekday: number; opens_at: string; closes_at: string; closed: boolean }[];
-  professionalHours: { professional_id: string; weekday: number; starts_at: string; ends_at: string; enabled: boolean }[];
+  professionalHours: { professional_id: string; weekday: number; starts_at: string; ends_at: string; enabled: boolean; lunch_starts_at: string | null; lunch_ends_at: string | null }[];
 }
 
 export async function loadPublicCatalogBySlug(db: Db, slug: string): Promise<PublicCatalog> {
@@ -103,7 +103,7 @@ export async function loadPublicCatalog(db: Db, businessId: string) {
       .eq("business_id", businessId),
     db
       .from("professional_hours")
-      .select("professional_id, weekday, starts_at, ends_at, enabled")
+      .select("professional_id, weekday, starts_at, ends_at, enabled, lunch_starts_at, lunch_ends_at")
       .eq("business_id", businessId),
   ]);
 
@@ -215,12 +215,17 @@ export async function availabilityForDay(
     );
     const professionalWindow =
       ph && ph.enabled ? { startsAt: ph.starts_at, endsAt: ph.ends_at } : null;
+    const breakWindow =
+      ph && ph.enabled && ph.lunch_starts_at && ph.lunch_ends_at
+        ? { startsAt: ph.lunch_starts_at, endsAt: ph.lunch_ends_at }
+        : null;
     const busy = await busyIntervals(db, professional.id, date, business.timezone);
     const slots = computeSlots({
       date,
       timeZone: business.timezone,
       businessWindow,
       professionalWindow,
+      breakWindow,
       durationMinutes: selection.durationMinutes,
       slotIntervalMinutes: business.slot_interval_minutes,
       minNoticeMinutes: business.min_notice_minutes,
