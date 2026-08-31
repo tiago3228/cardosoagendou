@@ -446,7 +446,7 @@ function ProfessionalHours({ professionalId, businessId }: { professionalId: str
     queryFn: async () => {
       const { data, error } = await supabase
         .from("professional_hours")
-        .select("id, weekday, starts_at, ends_at, enabled")
+        .select("id, weekday, starts_at, ends_at, enabled, lunch_starts_at, lunch_ends_at")
         .eq("professional_id", professionalId)
         .order("weekday");
       if (error) throw new Error(error.message);
@@ -455,12 +455,26 @@ function ProfessionalHours({ professionalId, businessId }: { professionalId: str
   });
 
   const upsert = useMutation({
-    mutationFn: async (input: { weekday: number; enabled: boolean; starts_at: string; ends_at: string }) => {
+    mutationFn: async (input: {
+      weekday: number;
+      enabled: boolean;
+      starts_at: string;
+      ends_at: string;
+      lunch_starts_at: string | null;
+      lunch_ends_at: string | null;
+    }) => {
+      const payload = {
+        enabled: input.enabled,
+        starts_at: input.starts_at,
+        ends_at: input.ends_at,
+        lunch_starts_at: input.lunch_starts_at || null,
+        lunch_ends_at: input.lunch_ends_at || null,
+      };
       const existing = (hours.data ?? []).find((h) => h.weekday === input.weekday);
       if (existing) {
         const { error } = await supabase
           .from("professional_hours")
-          .update({ enabled: input.enabled, starts_at: input.starts_at, ends_at: input.ends_at })
+          .update(payload)
           .eq("id", existing.id);
         if (error) throw new Error(error.message);
       } else {
@@ -468,9 +482,7 @@ function ProfessionalHours({ professionalId, businessId }: { professionalId: str
           professional_id: professionalId,
           business_id: businessId,
           weekday: input.weekday,
-          starts_at: input.starts_at,
-          ends_at: input.ends_at,
-          enabled: input.enabled,
+          ...payload,
         });
         if (error) throw new Error(error.message);
       }
@@ -486,11 +498,21 @@ function ProfessionalHours({ professionalId, businessId }: { professionalId: str
           const row = (hours.data ?? []).find((h) => h.weekday === weekday);
           const starts = (row?.starts_at ?? "09:00").slice(0, 5);
           const ends = (row?.ends_at ?? "19:00").slice(0, 5);
+          const lunchStarts = row?.lunch_starts_at ? row.lunch_starts_at.slice(0, 5) : "";
+          const lunchEnds = row?.lunch_ends_at ? row.lunch_ends_at.slice(0, 5) : "";
           const enabled = row?.enabled ?? false;
+          const base = {
+            weekday,
+            enabled,
+            starts_at: starts,
+            ends_at: ends,
+            lunch_starts_at: lunchStarts || null,
+            lunch_ends_at: lunchEnds || null,
+          };
           return (
-            <div key={weekday} className="flex items-center gap-2 text-sm">
+            <div key={weekday} className="flex flex-wrap items-center gap-2 text-sm">
               <button
-                onClick={() => upsert.mutate({ weekday, enabled: !enabled, starts_at: starts, ends_at: ends })}
+                onClick={() => upsert.mutate({ ...base, enabled: !enabled })}
                 className={`w-14 rounded-md border px-2 py-1 ${enabled ? "border-primary bg-primary/10" : "border-border text-muted-foreground"}`}
               >
                 {WEEKDAY_SHORT[weekday]}
@@ -498,18 +520,30 @@ function ProfessionalHours({ professionalId, businessId }: { professionalId: str
               <input
                 type="time"
                 value={starts}
-                onChange={(e) =>
-                  upsert.mutate({ weekday, enabled, starts_at: e.target.value, ends_at: ends })
-                }
+                onChange={(e) => upsert.mutate({ ...base, starts_at: e.target.value })}
                 className="h-8 rounded-md border border-input bg-background px-2"
               />
               <span className="text-muted-foreground">até</span>
               <input
                 type="time"
                 value={ends}
-                onChange={(e) =>
-                  upsert.mutate({ weekday, enabled, starts_at: starts, ends_at: e.target.value })
-                }
+                onChange={(e) => upsert.mutate({ ...base, ends_at: e.target.value })}
+                className="h-8 rounded-md border border-input bg-background px-2"
+              />
+              <span className="text-muted-foreground">· almoço</span>
+              <input
+                type="time"
+                value={lunchStarts}
+                aria-label="Início do almoço"
+                onChange={(e) => upsert.mutate({ ...base, lunch_starts_at: e.target.value || null })}
+                className="h-8 rounded-md border border-input bg-background px-2"
+              />
+              <span className="text-muted-foreground">às</span>
+              <input
+                type="time"
+                value={lunchEnds}
+                aria-label="Fim do almoço"
+                onChange={(e) => upsert.mutate({ ...base, lunch_ends_at: e.target.value || null })}
                 className="h-8 rounded-md border border-input bg-background px-2"
               />
             </div>

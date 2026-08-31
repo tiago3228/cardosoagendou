@@ -747,6 +747,8 @@ export type Database = {
           enabled: boolean
           ends_at: string
           id: string
+          lunch_ends_at: string | null
+          lunch_starts_at: string | null
           professional_id: string
           starts_at: string
           weekday: number
@@ -756,6 +758,8 @@ export type Database = {
           enabled?: boolean
           ends_at?: string
           id?: string
+          lunch_ends_at?: string | null
+          lunch_starts_at?: string | null
           professional_id: string
           starts_at?: string
           weekday: number
@@ -765,6 +769,8 @@ export type Database = {
           enabled?: boolean
           ends_at?: string
           id?: string
+          lunch_ends_at?: string | null
+          lunch_starts_at?: string | null
           professional_id?: string
           starts_at?: string
           weekday?: number
