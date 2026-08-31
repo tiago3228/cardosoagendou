@@ -227,10 +227,47 @@ function BookingPage() {
                 );
               })}
             </ul>
+            {categoryConflict ? (
+              <p className="mt-4 rounded-lg border border-border bg-secondary/40 p-3 text-sm text-muted-foreground">
+                Atenção: você selecionou mais de um serviço de <strong>{categoryConflict}</strong>.
+                Confirme se realmente deseja os dois no mesmo horário.
+              </p>
+            ) : null}
             {data!.services.length === 0 ? (
               <p className="mt-4 text-sm text-muted-foreground">
                 Este negócio ainda não publicou serviços.
               </p>
+            ) : null}
+
+            {(data!.products ?? []).length > 0 ? (
+              <div className="mt-8">
+                <h3 className="font-display text-lg font-bold">Produtos disponíveis</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Peça no local durante o seu atendimento.
+                </p>
+                <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {(data!.products ?? []).map((product) => (
+                    <li
+                      key={product.id}
+                      className="flex items-center gap-3 rounded-xl border border-border bg-card p-3"
+                    >
+                      {product.image_url ? (
+                        <img
+                          src={product.image_url}
+                          alt={product.name}
+                          className="size-12 rounded-lg object-cover"
+                        />
+                      ) : null}
+                      <span>
+                        <span className="block font-medium text-card-foreground">{product.name}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {formatBRL(product.price_cents)}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ) : null}
           </section>
         ) : null}
