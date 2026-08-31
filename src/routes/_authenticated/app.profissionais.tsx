@@ -446,7 +446,7 @@ function ProfessionalHours({ professionalId, businessId }: { professionalId: str
     queryFn: async () => {
       const { data, error } = await supabase
         .from("professional_hours")
-        .select("id, weekday, starts_at, ends_at, enabled")
+        .select("id, weekday, starts_at, ends_at, enabled, lunch_starts_at, lunch_ends_at")
         .eq("professional_id", professionalId)
         .order("weekday");
       if (error) throw new Error(error.message);
@@ -455,12 +455,26 @@ function ProfessionalHours({ professionalId, businessId }: { professionalId: str
   });
 
   const upsert = useMutation({
-    mutationFn: async (input: { weekday: number; enabled: boolean; starts_at: string; ends_at: string }) => {
+    mutationFn: async (input: {
+      weekday: number;
+      enabled: boolean;
+      starts_at: string;
+      ends_at: string;
+      lunch_starts_at: string | null;
+      lunch_ends_at: string | null;
+    }) => {
+      const payload = {
+        enabled: input.enabled,
+        starts_at: input.starts_at,
+        ends_at: input.ends_at,
+        lunch_starts_at: input.lunch_starts_at || null,
+        lunch_ends_at: input.lunch_ends_at || null,
+      };
       const existing = (hours.data ?? []).find((h) => h.weekday === input.weekday);
       if (existing) {
         const { error } = await supabase
           .from("professional_hours")
-          .update({ enabled: input.enabled, starts_at: input.starts_at, ends_at: input.ends_at })
+          .update(payload)
           .eq("id", existing.id);
         if (error) throw new Error(error.message);
       } else {
@@ -468,9 +482,7 @@ function ProfessionalHours({ professionalId, businessId }: { professionalId: str
           professional_id: professionalId,
           business_id: businessId,
           weekday: input.weekday,
-          starts_at: input.starts_at,
-          ends_at: input.ends_at,
-          enabled: input.enabled,
+          ...payload,
         });
         if (error) throw new Error(error.message);
       }
