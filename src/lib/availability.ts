@@ -26,6 +26,8 @@ export interface SlotInput {
   businessWindow?: DayWindow | null;
   /** Professional working window for that weekday; null/undefined = closed. */
   professionalWindow?: DayWindow | null;
+  /** Lunch break window for that weekday; null/undefined = no break. */
+  breakWindow?: DayWindow | null;
   /** Sum of selected service durations, in minutes. */
   durationMinutes: number;
   slotIntervalMinutes: number;
@@ -121,6 +123,7 @@ export function computeSlots(input: SlotInput): Slot[] {
     timeZone,
     businessWindow,
     professionalWindow,
+    breakWindow,
     durationMinutes,
     slotIntervalMinutes,
     minNoticeMinutes,
@@ -147,6 +150,17 @@ export function computeSlots(input: SlotInput): Slot[] {
     start: new Date(b.start).getTime(),
     end: new Date(b.end).getTime(),
   }));
+
+  // Lunch break behaves as a busy interval: no appointment may overlap it.
+  if (breakWindow) {
+    const breakStart = minutesFromTime(breakWindow.startsAt);
+    const breakEnd = minutesFromTime(breakWindow.endsAt);
+    if (breakEnd > breakStart) {
+      const start = zonedToUtc(date, breakStart, timeZone);
+      const end = zonedToUtc(date, breakEnd, timeZone);
+      busyRanges.push({ start: start.getTime(), end: end.getTime() });
+    }
+  }
 
   const slots: Slot[] = [];
   for (let m = windowStart; m + durationMinutes <= windowEnd; m += step) {
