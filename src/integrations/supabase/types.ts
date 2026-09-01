@@ -686,6 +686,7 @@ export type Database = {
         Row: {
           active: boolean
           business_id: string
+          category: string | null
           cost_cents: number
           created_at: string
           deleted_at: string | null
@@ -697,11 +698,13 @@ export type Database = {
           price_cents: number
           sku: string | null
           stock_quantity: number
+          supplier: string | null
           updated_at: string
         }
         Insert: {
           active?: boolean
           business_id: string
+          category?: string | null
           cost_cents?: number
           created_at?: string
           deleted_at?: string | null
@@ -713,11 +716,13 @@ export type Database = {
           price_cents?: number
           sku?: string | null
           stock_quantity?: number
+          supplier?: string | null
           updated_at?: string
         }
         Update: {
           active?: boolean
           business_id?: string
+          category?: string | null
           cost_cents?: number
           created_at?: string
           deleted_at?: string | null
@@ -729,6 +734,7 @@ export type Database = {
           price_cents?: number
           sku?: string | null
           stock_quantity?: number
+          supplier?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -969,6 +975,58 @@ export type Database = {
         }
         Relationships: []
       }
+      service_conflicts: {
+        Row: {
+          business_id: string
+          conflicting_service_id: string
+          created_at: string
+          id: string
+          reason: string | null
+          service_id: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          conflicting_service_id: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          service_id: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          conflicting_service_id?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          service_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_conflicts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_conflicts_conflicting_service_id_fkey"
+            columns: ["conflicting_service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_conflicts_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           active: boolean
@@ -1184,6 +1242,7 @@ export type Database = {
           amount_cents: number
           appointment_id: string | null
           business_id: string
+          category: string | null
           created_at: string
           description: string | null
           id: string
@@ -1195,6 +1254,7 @@ export type Database = {
           amount_cents: number
           appointment_id?: string | null
           business_id: string
+          category?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -1206,6 +1266,7 @@ export type Database = {
           amount_cents?: number
           appointment_id?: string | null
           business_id?: string
+          category?: string | null
           created_at?: string
           description?: string | null
           id?: string
