@@ -125,11 +125,36 @@ export interface ResolvedSelection {
   priceCents: number;
 }
 
+/**
+ * Owner-configured incompatibilities (e.g. "Corte + Barba" with "Corte Masculino").
+ * Enforced here so every booking path (public page and panel) shares the rule,
+ * and again by a database trigger as the last line of defence.
+ */
+export async function assertNoServiceConflicts(
+  db: Db,
+  businessId: string,
+  serviceIds: string[],
+): Promise<void> {
+  if (serviceIds.length < 2) return;
+  const { data } = await db
+    .from("service_conflicts")
+    .select("service_id, conflicting_service_id")
+    .eq("business_id", businessId)
+    .in("service_id", serviceIds)
+    .in("conflicting_service_id", serviceIds);
+  if ((data ?? []).length > 0) {
+    throw new Error(
+      "SERVICE_CONFLICT: os serviços selecionados não podem ser combinados no mesmo atendimento",
+    );
+  }
+}
+
 export async function resolveSelection(
   db: Db,
   businessId: string,
   serviceIds: string[],
 ): Promise<ResolvedSelection> {
+  await assertNoServiceConflicts(db, businessId, serviceIds);
   const { data } = await db
     .from("services")
     .select("id, name, price_cents, duration_minutes")
