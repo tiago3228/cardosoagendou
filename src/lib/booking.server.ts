@@ -75,6 +75,7 @@ export async function loadPublicCatalogBySlug(db: Db, slug: string): Promise<Pub
       products: [],
       professionals: [],
       links: [],
+      serviceConflicts: [],
       businessHours: [],
       professionalHours: [],
     }
