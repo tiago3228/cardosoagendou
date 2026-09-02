@@ -60,6 +60,8 @@ export interface PublicCatalog {
   products?: { id: string; name: string; price_cents: number; stock_quantity: number; image_url: string | null }[];
   professionals: { id: string; name: string; photo_url: string | null; bio: string | null }[];
   links: { professional_id: string; service_id: string }[];
+  /** Owner-configured pairs of services that cannot be booked together. */
+  serviceConflicts?: { service_id: string; conflicting_service_id: string; reason: string | null }[];
   businessHours: { weekday: number; opens_at: string; closes_at: string; closed: boolean }[];
   professionalHours: { professional_id: string; weekday: number; starts_at: string; ends_at: string; enabled: boolean; lunch_starts_at: string | null; lunch_ends_at: string | null }[];
 }
