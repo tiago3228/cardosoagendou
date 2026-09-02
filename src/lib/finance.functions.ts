@@ -31,7 +31,7 @@ function bounds(date: string) {
 
 /** Resolves the caller's business and guards a plan feature server-side. */
 async function requireBusiness(
-  supabase: Awaited<ReturnType<typeof requireSupabaseAuth>> extends never ? never : any,
+  supabase: SupabaseClient<Database>,
   userId: string,
   feature?: string,
 ): Promise<string> {
@@ -39,7 +39,7 @@ async function requireBusiness(
     .from("user_roles")
     .select("role, business_id")
     .eq("user_id", userId);
-  const businessId = roles.data?.find((r: { business_id: string | null }) => r.business_id)?.business_id ?? null;
+  const businessId = roles.data?.find((r) => r.business_id)?.business_id ?? null;
   if (!businessId) throw new Error("NO_BUSINESS: usuário sem negócio vinculado");
   if (feature) {
     const { data, error } = await supabase.rpc("business_has_feature", {
