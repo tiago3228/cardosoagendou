@@ -60,6 +60,8 @@ export interface PublicCatalog {
   products?: { id: string; name: string; price_cents: number; stock_quantity: number; image_url: string | null }[];
   professionals: { id: string; name: string; photo_url: string | null; bio: string | null }[];
   links: { professional_id: string; service_id: string }[];
+  /** Owner-configured pairs of services that cannot be booked together. */
+  serviceConflicts?: { service_id: string; conflicting_service_id: string; reason: string | null }[];
   businessHours: { weekday: number; opens_at: string; closes_at: string; closed: boolean }[];
   professionalHours: { professional_id: string; weekday: number; starts_at: string; ends_at: string; enabled: boolean; lunch_starts_at: string | null; lunch_ends_at: string | null }[];
 }
@@ -73,6 +75,7 @@ export async function loadPublicCatalogBySlug(db: Db, slug: string): Promise<Pub
       products: [],
       professionals: [],
       links: [],
+      serviceConflicts: [],
       businessHours: [],
       professionalHours: [],
     }
@@ -122,11 +125,36 @@ export interface ResolvedSelection {
   priceCents: number;
 }
 
+/**
+ * Owner-configured incompatibilities (e.g. "Corte + Barba" with "Corte Masculino").
+ * Enforced here so every booking path (public page and panel) shares the rule,
+ * and again by a database trigger as the last line of defence.
+ */
+export async function assertNoServiceConflicts(
+  db: Db,
+  businessId: string,
+  serviceIds: string[],
+): Promise<void> {
+  if (serviceIds.length < 2) return;
+  const { data } = await db
+    .from("service_conflicts")
+    .select("service_id, conflicting_service_id")
+    .eq("business_id", businessId)
+    .in("service_id", serviceIds)
+    .in("conflicting_service_id", serviceIds);
+  if ((data ?? []).length > 0) {
+    throw new Error(
+      "SERVICE_CONFLICT: os serviços selecionados não podem ser combinados no mesmo atendimento",
+    );
+  }
+}
+
 export async function resolveSelection(
   db: Db,
   businessId: string,
   serviceIds: string[],
 ): Promise<ResolvedSelection> {
+  await assertNoServiceConflicts(db, businessId, serviceIds);
   const { data } = await db
     .from("services")
     .select("id, name, price_cents, duration_minutes")

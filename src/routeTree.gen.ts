@@ -20,6 +20,7 @@ import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAppAssinaturaRouteImport } from './routes/_authenticated/app.assinatura'
 import { Route as AuthenticatedAppClientesRouteImport } from './routes/_authenticated/app.clientes'
 import { Route as AuthenticatedAppConfiguracoesRouteImport } from './routes/_authenticated/app.configuracoes'
+import { Route as AuthenticatedAppFaturamentoRouteImport } from './routes/_authenticated/app.faturamento'
 import { Route as AuthenticatedAppProdutosRouteImport } from './routes/_authenticated/app.produtos'
 import { Route as AuthenticatedAppProfissionaisRouteImport } from './routes/_authenticated/app.profissionais'
 import { Route as AuthenticatedAppServicosRouteImport } from './routes/_authenticated/app.servicos'
@@ -85,6 +86,12 @@ const AuthenticatedAppConfiguracoesRoute =
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppFaturamentoRoute =
+  AuthenticatedAppFaturamentoRouteImport.update({
+    id: '/faturamento',
+    path: '/faturamento',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppProdutosRoute =
   AuthenticatedAppProdutosRouteImport.update({
     id: '/produtos',
@@ -137,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/app/assinatura': typeof AuthenticatedAppAssinaturaRoute
   '/app/clientes': typeof AuthenticatedAppClientesRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
+  '/app/faturamento': typeof AuthenticatedAppFaturamentoRoute
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/app/servicos': typeof AuthenticatedAppServicosRoute
@@ -155,6 +163,7 @@ export interface FileRoutesByTo {
   '/app/assinatura': typeof AuthenticatedAppAssinaturaRoute
   '/app/clientes': typeof AuthenticatedAppClientesRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
+  '/app/faturamento': typeof AuthenticatedAppFaturamentoRoute
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/app/servicos': typeof AuthenticatedAppServicosRoute
@@ -176,6 +185,7 @@ export interface FileRoutesById {
   '/_authenticated/app/assinatura': typeof AuthenticatedAppAssinaturaRoute
   '/_authenticated/app/clientes': typeof AuthenticatedAppClientesRoute
   '/_authenticated/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
+  '/_authenticated/app/faturamento': typeof AuthenticatedAppFaturamentoRoute
   '/_authenticated/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/_authenticated/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/_authenticated/app/servicos': typeof AuthenticatedAppServicosRoute
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/app/assinatura'
     | '/app/clientes'
     | '/app/configuracoes'
+    | '/app/faturamento'
     | '/app/produtos'
     | '/app/profissionais'
     | '/app/servicos'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/app/assinatura'
     | '/app/clientes'
     | '/app/configuracoes'
+    | '/app/faturamento'
     | '/app/produtos'
     | '/app/profissionais'
     | '/app/servicos'
@@ -235,6 +247,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/assinatura'
     | '/_authenticated/app/clientes'
     | '/_authenticated/app/configuracoes'
+    | '/_authenticated/app/faturamento'
     | '/_authenticated/app/produtos'
     | '/_authenticated/app/profissionais'
     | '/_authenticated/app/servicos'
@@ -335,6 +348,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/faturamento': {
+      id: '/_authenticated/app/faturamento'
+      path: '/faturamento'
+      fullPath: '/app/faturamento'
+      preLoaderRoute: typeof AuthenticatedAppFaturamentoRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/produtos': {
       id: '/_authenticated/app/produtos'
       path: '/produtos'
@@ -391,6 +411,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAssinaturaRoute: typeof AuthenticatedAppAssinaturaRoute
   AuthenticatedAppClientesRoute: typeof AuthenticatedAppClientesRoute
   AuthenticatedAppConfiguracoesRoute: typeof AuthenticatedAppConfiguracoesRoute
+  AuthenticatedAppFaturamentoRoute: typeof AuthenticatedAppFaturamentoRoute
   AuthenticatedAppProdutosRoute: typeof AuthenticatedAppProdutosRoute
   AuthenticatedAppProfissionaisRoute: typeof AuthenticatedAppProfissionaisRoute
   AuthenticatedAppServicosRoute: typeof AuthenticatedAppServicosRoute
@@ -401,6 +422,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppAssinaturaRoute: AuthenticatedAppAssinaturaRoute,
   AuthenticatedAppClientesRoute: AuthenticatedAppClientesRoute,
   AuthenticatedAppConfiguracoesRoute: AuthenticatedAppConfiguracoesRoute,
+  AuthenticatedAppFaturamentoRoute: AuthenticatedAppFaturamentoRoute,
   AuthenticatedAppProdutosRoute: AuthenticatedAppProdutosRoute,
   AuthenticatedAppProfissionaisRoute: AuthenticatedAppProfissionaisRoute,
   AuthenticatedAppServicosRoute: AuthenticatedAppServicosRoute,
