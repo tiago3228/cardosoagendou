@@ -494,8 +494,12 @@ function BookingPage() {
             </span>
             <span className="font-semibold">{formatBRL(totalCents)}</span>
           </div>
-          <Button className="mt-3 w-full" onClick={() => setStep(1)}>
-            Continuar
+          <Button
+            className="mt-3 w-full"
+            disabled={hardConflict !== null}
+            onClick={() => setStep(1)}
+          >
+            {hardConflict ? "Ajuste a seleção para continuar" : "Continuar"}
           </Button>
         </div>
       ) : null}
