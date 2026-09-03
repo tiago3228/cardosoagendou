@@ -110,6 +110,29 @@ function BookingPage() {
     return null;
   }, [chosenServices]);
 
+  /** Owner-configured incompatibilities: these combinations are blocked, not just warned. */
+  const conflictRules = data!.serviceConflicts ?? [];
+  const conflictsWith = (serviceId: string, otherId: string) =>
+    conflictRules.some(
+      (rule) =>
+        (rule.service_id === serviceId && rule.conflicting_service_id === otherId) ||
+        (rule.service_id === otherId && rule.conflicting_service_id === serviceId),
+    );
+  const blockedService = (serviceId: string) =>
+    !selected.includes(serviceId) && selected.some((sid) => conflictsWith(serviceId, sid));
+  const hardConflict = useMemo(() => {
+    for (const rule of conflictRules) {
+      if (selected.includes(rule.service_id) && selected.includes(rule.conflicting_service_id)) {
+        const nameOf = (id: string) => data!.services.find((s) => s.id === id)?.name ?? "serviço";
+        return {
+          message: `${nameOf(rule.service_id)} e ${nameOf(rule.conflicting_service_id)} não podem ser agendados juntos.`,
+          reason: rule.reason,
+        };
+      }
+    }
+    return null;
+  }, [conflictRules, selected, data]);
+
   const eligibleProfessionals = data!.professionals.filter((p) =>
     selected.every((sid) => data!.links.some((l) => l.professional_id === p.id && l.service_id === sid)),
   );
