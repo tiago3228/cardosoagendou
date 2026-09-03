@@ -277,6 +277,166 @@ function ServicesPage() {
 
         ))}
       </ul>
+
+      <ConflictRules businessId={businessId} services={services.data ?? []} />
     </div>
+  );
+}
+
+/**
+ * Incompatible service pairs — e.g. "Corte + Barba" cannot be combined with
+ * "Corte Masculino". Blocked on the public booking page and on the server.
+ */
+function ConflictRules({
+  businessId,
+  services,
+}: {
+  businessId: string;
+  services: { id: string; name: string }[];
+}) {
+  const queryClient = useQueryClient();
+  const [pair, setPair] = useState({ a: "", b: "", reason: "" });
+
+  const conflicts = useQuery({
+    queryKey: ["service-conflicts", businessId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("service_conflicts")
+        .select("id, service_id, conflicting_service_id, reason")
+        .eq("business_id", businessId);
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  });
+
+  const add = useMutation({
+    mutationFn: async () => {
+      if (!pair.a || !pair.b) throw new Error("Selecione os dois serviços");
+      if (pair.a === pair.b) throw new Error("Selecione serviços diferentes");
+      const { error } = await supabase.from("service_conflicts").insert({
+        business_id: businessId,
+        service_id: pair.a,
+        conflicting_service_id: pair.b,
+        reason: pair.reason.trim() || null,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      setPair({ a: "", b: "", reason: "" });
+      toast.success("Regra criada");
+      queryClient.invalidateQueries({ queryKey: ["service-conflicts", businessId] });
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível criar a regra", {
+        description: error.message.replace(/^[A-Z_]+:\s*/, ""),
+      }),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("service_conflicts").delete().eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Regra removida");
+      queryClient.invalidateQueries({ queryKey: ["service-conflicts", businessId] });
+    },
+  });
+
+  const nameOf = (id: string) => services.find((s) => s.id === id)?.name ?? "Serviço removido";
+  const selectClass =
+    "h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground";
+
+  return (
+    <section className="mt-10">
+      <h2 className="font-display text-lg font-bold text-foreground">Serviços incompatíveis</h2>
+      <p className="text-sm text-muted-foreground">
+        Impeça combinações que não fazem sentido no mesmo atendimento (ex.: “Corte + Barba” junto de
+        “Corte Masculino”).
+      </p>
+
+      <form
+        className="mt-4 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          add.mutate();
+        }}
+      >
+        <div className="space-y-1.5">
+          <Label>Serviço</Label>
+          <select
+            className={selectClass}
+            value={pair.a}
+            onChange={(e) => setPair({ ...pair, a: e.target.value })}
+          >
+            <option value="">Selecione</option>
+            {services.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Não pode ser combinado com</Label>
+          <select
+            className={selectClass}
+            value={pair.b}
+            onChange={(e) => setPair({ ...pair, b: e.target.value })}
+          >
+            <option value="">Selecione</option>
+            {services.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label>Motivo (opcional)</Label>
+          <Input
+            value={pair.reason}
+            onChange={(e) => setPair({ ...pair, reason: e.target.value })}
+            placeholder="Serviços equivalentes"
+          />
+        </div>
+        <div className="sm:col-span-2">
+          <Button type="submit" size="sm" disabled={add.isPending}>
+            <Plus className="size-4" aria-hidden /> Criar regra
+          </Button>
+        </div>
+      </form>
+
+      <ul className="mt-4 space-y-2">
+        {(conflicts.data ?? []).map((rule) => (
+          <li
+            key={rule.id}
+            className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4"
+          >
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-card-foreground">
+                {nameOf(rule.service_id)} ✕ {nameOf(rule.conflicting_service_id)}
+              </p>
+              {rule.reason ? (
+                <p className="text-sm text-muted-foreground">{rule.reason}</p>
+              ) : null}
+            </div>
+            <Button
+              size="sm"
+              variant="ghost"
+              aria-label="Remover regra"
+              onClick={() => remove.mutate(rule.id)}
+            >
+              <Trash2 className="size-4" aria-hidden />
+            </Button>
+          </li>
+        ))}
+        {(conflicts.data ?? []).length === 0 ? (
+          <li className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+            Nenhuma regra criada. Todos os serviços podem ser combinados.
+          </li>
+        ) : null}
+      </ul>
+    </section>
   );
 }
