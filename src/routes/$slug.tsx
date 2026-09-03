@@ -237,9 +237,12 @@ function BookingPage() {
             <ul className="mt-4 space-y-2">
               {data!.services.map((service) => {
                 const active = selected.includes(service.id);
+                const blocked = blockedService(service.id);
                 return (
                   <li key={service.id}>
                     <button
+                      disabled={blocked}
+                      aria-disabled={blocked}
                       onClick={() =>
                         setSelected((prev) =>
                           prev.includes(service.id)
@@ -247,7 +250,7 @@ function BookingPage() {
                             : [...prev, service.id],
                         )
                       }
-                      className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition ${active ? "border-primary bg-primary/5" : "border-border bg-card"}`}
+                      className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition ${active ? "border-primary bg-primary/5" : "border-border bg-card"} ${blocked ? "cursor-not-allowed opacity-50" : ""}`}
                     >
                       <span>
                         <span className="block font-medium text-card-foreground">{service.name}</span>
@@ -255,6 +258,11 @@ function BookingPage() {
                           <Clock className="size-3.5" aria-hidden />
                           {formatDuration(service.duration_minutes)} · {formatBRL(service.price_cents)}
                         </span>
+                        {blocked ? (
+                          <span className="mt-1 block text-xs text-muted-foreground">
+                            Indisponível junto dos serviços já selecionados
+                          </span>
+                        ) : null}
                       </span>
                       {active ? <Check className="size-5 text-primary" aria-hidden /> : null}
                     </button>
@@ -262,6 +270,12 @@ function BookingPage() {
                 );
               })}
             </ul>
+            {hardConflict ? (
+              <p className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                {hardConflict.message}
+                {hardConflict.reason ? ` ${hardConflict.reason}` : ""}
+              </p>
+            ) : null}
             {categoryConflict ? (
               <p className="mt-4 rounded-lg border border-border bg-secondary/40 p-3 text-sm text-muted-foreground">
                 Atenção: você selecionou mais de um serviço de <strong>{categoryConflict}</strong>.
