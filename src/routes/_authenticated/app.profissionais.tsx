@@ -10,6 +10,7 @@ import { BackButton } from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { PhotoField } from "@/components/ui/photo-field";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -74,7 +75,7 @@ function ProfessionalsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("professionals")
-        .select("id, name, commission_percent, active, user_id, photo_url")
+        .select("id, name, commission_percent, active, user_id, photo_url, bio")
         .eq("business_id", businessId)
         .is("deleted_at", null)
         .order("name");
@@ -211,6 +212,27 @@ function ProfessionalsPage() {
       }),
   });
 
+  const setBio = useMutation({
+    mutationFn: async (input: { id: string; bio: string }) => {
+      const { error } = await supabase
+        .from("professionals")
+        .update({ bio: input.bio.trim() || null })
+        .eq("id", input.id)
+        .eq("business_id", businessId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Descrição salva");
+      queryClient.invalidateQueries({ queryKey: ["professionals", businessId] });
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível salvar a descrição", {
+        description: error.message.includes("FEATURE_LOCKED_TEAM")
+          ? "Edição de profissionais exige um plano superior."
+          : error.message,
+      }),
+  });
+
   const remove = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -332,6 +354,13 @@ function ProfessionalsPage() {
                 disabled={!teamManageEnabled}
               />
             </div>
+
+            <BioField
+              value={professional.bio ?? ""}
+              disabled={!teamManageEnabled}
+              saving={setBio.isPending}
+              onSave={(bio) => setBio.mutate({ id: professional.id, bio })}
+            />
 
 
             <p className="mt-4 text-xs uppercase tracking-wide text-muted-foreground">
@@ -549,6 +578,54 @@ function ProfessionalHours({ professionalId, businessId }: { professionalId: str
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Short professional description shown on the public booking page,
+ * so clients know who they are booking with.
+ */
+function BioField({
+  value,
+  disabled,
+  saving,
+  onSave,
+}: {
+  value: string;
+  disabled: boolean;
+  saving: boolean;
+  onSave: (bio: string) => void;
+}) {
+  const [draft, setDraft] = useState(value);
+  const dirty = draft.trim() !== value.trim();
+
+  return (
+    <div className="mt-4 space-y-1.5">
+      <Label>Descrição / especialidades (aparece na página de reservas)</Label>
+      <Textarea
+        rows={3}
+        maxLength={400}
+        value={draft}
+        disabled={disabled}
+        placeholder="Ex.: Especialista em cortes masculinos e barba, 8 anos de experiência."
+        onChange={(e) => setDraft(e.target.value)}
+      />
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={disabled || !dirty || saving}
+          onClick={() => onSave(draft)}
+        >
+          Salvar descrição
+        </Button>
+        {dirty ? (
+          <Button size="sm" variant="ghost" onClick={() => setDraft(value)}>
+            Desfazer
+          </Button>
+        ) : null}
       </div>
     </div>
   );
