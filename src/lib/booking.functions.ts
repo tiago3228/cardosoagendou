@@ -15,7 +15,7 @@ export const getPublicBusiness = createServerFn({ method: "GET" })
 
     // Entitlement gate: a blocked/suspended business shows the page but no slots.
     if (acceptsBookings !== true) {
-      return { business, services: [], products: [], professionals: [], links: [], businessHours: [], professionalHours: [], acceptsBookings: false as const };
+      return { business, services: [], products: [], professionals: [], links: [], businessHours: [], professionalHours: [], serviceConflicts: [], acceptsBookings: false as const };
     }
 
     const catalog = await loadPublicCatalogBySlug(db, data.slug);

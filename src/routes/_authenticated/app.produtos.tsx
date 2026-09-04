@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, Minus, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, History, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery, entitlementsQuery } from "./app";
 import { formatBRL } from "@/lib/format";
@@ -23,15 +23,28 @@ function ProductsPage() {
   const inventoryEnabled =
     ((entitlements?.features ?? {}) as Record<string, unknown>)["inventory"] === true;
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ name: "", price: "", cost: "", stock: "0", min: "0" });
+  const financeEnabled =
+    ((entitlements?.features ?? {}) as Record<string, unknown>)["finance"] === true;
+  const [form, setForm] = useState({
+    name: "",
+    sku: "",
+    category: "",
+    supplier: "",
+    price: "",
+    cost: "",
+    stock: "0",
+    min: "0",
+  });
   const [photo, setPhoto] = useState<string | null>(null);
+  const [term, setTerm] = useState("");
+  const [openHistory, setOpenHistory] = useState<string | null>(null);
 
   const products = useQuery({
     queryKey: ["products", businessId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, price_cents, cost_cents, stock_quantity, min_stock, active, image_url")
+        .select("id, name, sku, category, supplier, price_cents, cost_cents, stock_quantity, min_stock, active, image_url")
         .eq("business_id", businessId)
         .is("deleted_at", null)
         .order("name");
@@ -46,6 +59,9 @@ function ProductsPage() {
       const { error } = await supabase.from("products").insert({
         business_id: businessId,
         name: form.name.trim(),
+        sku: form.sku.trim() || null,
+        category: form.category.trim() || null,
+        supplier: form.supplier.trim() || null,
         price_cents: Math.round(Number(form.price.replace(",", ".")) * 100) || 0,
         cost_cents: Math.round(Number(form.cost.replace(",", ".")) * 100) || 0,
         stock_quantity: Number(form.stock) || 0,
@@ -55,7 +71,7 @@ function ProductsPage() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      setForm({ name: "", price: "", cost: "", stock: "0", min: "0" });
+      setForm({ name: "", sku: "", category: "", supplier: "", price: "", cost: "", stock: "0", min: "0" });
       setPhoto(null);
       toast.success("Produto criado com sucesso!");
       queryClient.invalidateQueries({ queryKey: ["products", businessId] });
@@ -74,11 +90,51 @@ function ProductsPage() {
       });
       if (error) throw new Error(error.message);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["products", businessId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products", businessId] });
+      queryClient.invalidateQueries({ queryKey: ["stock-movements"] });
+    },
     onError: (error: Error) =>
       toast.error("Movimentação recusada", {
         description: error.message.includes("INSUFFICIENT_STOCK")
           ? "Estoque insuficiente para essa saída."
+          : error.message,
+      }),
+  });
+
+  /** Sale = stock exit + revenue entry (revenue only on the Unlimited plan). */
+  const sell = useMutation({
+    mutationFn: async (product: { id: string; name: string; price_cents: number }) => {
+      const movement = await supabase.from("stock_movements").insert({
+        business_id: businessId,
+        product_id: product.id,
+        type: "OUT",
+        quantity: 1,
+        reason: `Venda: ${product.name}`,
+      });
+      if (movement.error) throw new Error(movement.error.message);
+      if (financeEnabled && product.price_cents > 0) {
+        const entry = await supabase.from("transactions").insert({
+          business_id: businessId,
+          type: "PRODUCT_INCOME",
+          amount_cents: product.price_cents,
+          description: `Venda de ${product.name}`,
+          category: "Produtos",
+          occurred_at: new Date().toISOString(),
+        });
+        if (entry.error) throw new Error(entry.error.message);
+      }
+    },
+    onSuccess: () => {
+      toast.success("Venda registrada");
+      queryClient.invalidateQueries({ queryKey: ["products", businessId] });
+      queryClient.invalidateQueries({ queryKey: ["stock-movements"] });
+      queryClient.invalidateQueries({ queryKey: ["finance"] });
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível registrar a venda", {
+        description: error.message.includes("INSUFFICIENT_STOCK")
+          ? "Estoque insuficiente para essa venda."
           : error.message,
       }),
   });
@@ -160,6 +216,30 @@ function ProductsPage() {
           />
         </div>
         <div className="space-y-1.5">
+          <Label>Código / SKU</Label>
+          <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Categoria</Label>
+          <Input
+            list="produto-categorias"
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+          />
+          <datalist id="produto-categorias">
+            {["Cabelo", "Barba", "Pele", "Unhas", "Bebidas", "Acessórios"].map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
+        </div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label>Fornecedor</Label>
+          <Input
+            value={form.supplier}
+            onChange={(e) => setForm({ ...form, supplier: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1.5">
           <Label>Preço de venda (R$)</Label>
           <Input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
         </div>
@@ -182,8 +262,21 @@ function ProductsPage() {
         </div>
       </form>
 
-      <ul className="mt-6 space-y-2">
-        {(products.data ?? []).map((product) => (
+      <Input
+        className="mt-6"
+        placeholder="Buscar por nome, código, categoria ou fornecedor"
+        value={term}
+        onChange={(e) => setTerm(e.target.value)}
+      />
+
+      <ul className="mt-4 space-y-2">
+        {(products.data ?? [])
+          .filter((product) =>
+            `${product.name} ${product.sku ?? ""} ${product.category ?? ""} ${product.supplier ?? ""}`
+              .toLowerCase()
+              .includes(term.toLowerCase()),
+          )
+          .map((product) => (
           <li key={product.id} className="rounded-xl border border-border bg-card p-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -199,6 +292,15 @@ function ProductsPage() {
                   <p className="text-sm text-muted-foreground">
                     {formatBRL(product.price_cents)} · estoque {product.stock_quantity}
                   </p>
+                  <p className="text-xs text-muted-foreground">
+                    {[
+                      product.sku ? `Cód. ${product.sku}` : null,
+                      product.category,
+                      product.supplier,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
                   {product.stock_quantity <= product.min_stock ? (
                     <p className="mt-1 flex items-center gap-1 text-sm text-destructive">
                       <AlertTriangle className="size-3.5" aria-hidden /> Estoque baixo
@@ -206,7 +308,14 @@ function ProductsPage() {
                   ) : null}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => sell.mutate(product)}
+                  disabled={product.stock_quantity < 1}
+                >
+                  <ShoppingCart className="size-4" aria-hidden /> Vender
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
@@ -222,6 +331,16 @@ function ProductsPage() {
                   onClick={() => move.mutate({ productId: product.id, type: "IN" })}
                 >
                   <Plus className="size-4" aria-hidden />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  aria-label={`Histórico de ${product.name}`}
+                  onClick={() =>
+                    setOpenHistory((current) => (current === product.id ? null : product.id))
+                  }
+                >
+                  <History className="size-4" aria-hidden />
                 </Button>
                 <Button
                   size="sm"
@@ -242,8 +361,65 @@ function ProductsPage() {
                 label="Foto"
               />
             </div>
+            {openHistory === product.id ? (
+              <StockHistory businessId={businessId} productId={product.id} />
+            ) : null}
+          </li>
+          ))}
+      </ul>
+    </div>
+  );
+}
+
+const MOVEMENT_LABEL: Record<string, string> = {
+  IN: "Entrada",
+  OUT: "Saída",
+  ADJUST: "Ajuste",
+};
+
+/** Stock history for one product — every movement is immutable in the database. */
+function StockHistory({ businessId, productId }: { businessId: string; productId: string }) {
+  const movements = useQuery({
+    queryKey: ["stock-movements", productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stock_movements")
+        .select("id, type, quantity, reason, created_at")
+        .eq("business_id", businessId)
+        .eq("product_id", productId)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  });
+
+  return (
+    <div className="mt-3 rounded-lg border border-border bg-secondary/30 p-3">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+        Histórico de estoque
+      </p>
+      <ul className="mt-2 space-y-1.5">
+        {(movements.data ?? []).map((m) => (
+          <li key={m.id} className="flex items-center justify-between gap-3 text-sm">
+            <span className="text-muted-foreground">
+              {new Date(m.created_at).toLocaleString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+              {m.reason ? ` · ${m.reason}` : ""}
+            </span>
+            <span className="font-medium text-foreground">
+              {MOVEMENT_LABEL[m.type] ?? m.type} {m.type === "OUT" ? "-" : "+"}
+              {m.quantity}
+            </span>
           </li>
         ))}
+        {(movements.data ?? []).length === 0 ? (
+          <li className="text-sm text-muted-foreground">Nenhuma movimentação registrada.</li>
+        ) : null}
       </ul>
     </div>
   );
