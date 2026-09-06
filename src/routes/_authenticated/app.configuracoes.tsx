@@ -34,6 +34,9 @@ function SettingsPage() {
     slot_interval_minutes: String(business.slot_interval_minutes),
     min_notice_minutes: String(business.min_notice_minutes),
     max_advance_days: String(business.max_advance_days),
+    whatsapp_notifications_enabled: business.whatsapp_notifications_enabled ?? false,
+    reminder_enabled: business.reminder_enabled ?? true,
+    reminder_minutes: String(business.reminder_minutes ?? 60),
   });
 
   const save = useMutation({
@@ -62,7 +65,23 @@ function SettingsPage() {
       if (instagram.error && !instagram.error.message.includes("instagram_url")) {
         throw new Error(instagram.error.message);
       }
-      return { instagramSaved: !instagram.error };
+      const whatsappConfig = await supabase
+        .from("businesses")
+        .update({
+          whatsapp_notifications_enabled: form.whatsapp_notifications_enabled,
+          reminder_enabled: form.reminder_enabled,
+          reminder_minutes: Number(form.reminder_minutes) || 60,
+        })
+        .eq("id", business.id);
+      if (
+        whatsappConfig.error &&
+        !whatsappConfig.error.message.includes("whatsapp_notifications_enabled") &&
+        !whatsappConfig.error.message.includes("reminder_enabled") &&
+        !whatsappConfig.error.message.includes("reminder_minutes")
+      ) {
+        throw new Error(whatsappConfig.error.message);
+      }
+      return { instagramSaved: !instagram.error, whatsappSaved: !whatsappConfig.error };
     },
     onSuccess: (result) => {
       toast.success(
@@ -170,6 +189,42 @@ function SettingsPage() {
             />
             Mostrar endereço para clientes
           </label>
+        </div>
+        <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-4 sm:col-span-2">
+          <p className="text-sm font-medium text-foreground">WhatsApp e notificações</p>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={form.whatsapp_notifications_enabled}
+              onChange={(e) =>
+                setForm({ ...form, whatsapp_notifications_enabled: e.target.checked })
+              }
+            />
+            Habilitar notificações automáticas via WhatsApp
+          </label>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={form.reminder_enabled}
+              onChange={(e) => setForm({ ...form, reminder_enabled: e.target.checked })}
+            />
+            Enviar lembretes
+          </label>
+          <div className="max-w-xs space-y-1.5">
+            <Label>Antecedência do lembrete (minutos)</Label>
+            <Input
+              type="number"
+              min={15}
+              max={10080}
+              value={form.reminder_minutes}
+              onChange={(e) => setForm({ ...form, reminder_minutes: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">
+              Exemplos: 60 = 1h, 120 = 2h, 1440 = 24h.
+            </p>
+          </div>
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Endereço</Label>

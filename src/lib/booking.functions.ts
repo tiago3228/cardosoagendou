@@ -71,6 +71,7 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
       startsAt,
       now: new Date(),
     });
+    const manageToken = crypto.randomUUID() + crypto.randomUUID();
 
     const { data: created, error } = await supabaseAdmin.rpc("create_appointment_atomic", {
       _business_id: business.id,
@@ -85,6 +86,7 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
       _idempotency_key: data.idempotencyKey ?? null,
       _policy_accepted: data.policyAccepted,
       _policy_text: business.booking_policy,
+      _manage_token: manageToken,
     });
     if (error || !created) {
       const message = error?.message ?? "";
@@ -115,5 +117,6 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
       endsAt: result.ends_at,
       durationMinutes: result.duration_minutes,
       totalPriceCents: result.total_price_cents,
+      manageToken,
     };
   });

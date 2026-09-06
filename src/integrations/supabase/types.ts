@@ -232,6 +232,9 @@ export type Database = {
           active: boolean;
           address: string | null;
           booking_policy: string | null;
+          whatsapp_notifications_enabled: boolean;
+          reminder_enabled: boolean;
+          reminder_minutes: number;
           business_type: Database["public"]["Enums"]["business_type"];
           cover_url: string | null;
           created_at: string;
@@ -255,6 +258,9 @@ export type Database = {
           active?: boolean;
           address?: string | null;
           booking_policy?: string | null;
+          whatsapp_notifications_enabled?: boolean;
+          reminder_enabled?: boolean;
+          reminder_minutes?: number;
           business_type?: Database["public"]["Enums"]["business_type"];
           cover_url?: string | null;
           created_at?: string;
@@ -278,6 +284,9 @@ export type Database = {
           active?: boolean;
           address?: string | null;
           booking_policy?: string | null;
+          whatsapp_notifications_enabled?: boolean;
+          reminder_enabled?: boolean;
+          reminder_minutes?: number;
           business_type?: Database["public"]["Enums"]["business_type"];
           cover_url?: string | null;
           created_at?: string;
@@ -1394,12 +1403,33 @@ export type Database = {
           _notes?: string | null;
           _policy_accepted?: boolean;
           _policy_text?: string | null;
+          _manage_token?: string | null;
           _professional_id: string;
           _service_ids: string[];
           _source?: string;
           _starts_at: string;
           _status?: Database["public"]["Enums"]["appointment_status"];
         };
+        Returns: Json;
+      };
+      enqueue_message: {
+        Args: {
+          _appointment_id: string;
+          _available_at?: string;
+          _business_id: string;
+          _dedupe_key: string;
+          _event_type: string;
+          _payload: Json;
+          _recipient: string;
+        };
+        Returns: string;
+      };
+      appointment_manage_by_token: {
+        Args: { _token_hash: string };
+        Returns: Json;
+      };
+      appointment_presence_by_token: {
+        Args: { _presence: string; _token_hash: string };
         Returns: Json;
       };
       master_set_test_plan: {

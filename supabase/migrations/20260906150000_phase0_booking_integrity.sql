@@ -1,4 +1,6 @@
 -- Phase 0: atomic appointment creation, retry idempotency and parallel-service materialization.
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 ALTER TABLE public.appointments
   ADD COLUMN IF NOT EXISTS idempotency_key text;
 
@@ -27,7 +29,8 @@ CREATE OR REPLACE FUNCTION public.create_appointment_atomic(
   _source text DEFAULT 'public_booking',
   _idempotency_key text DEFAULT NULL,
   _policy_accepted boolean DEFAULT false,
-  _policy_text text DEFAULT NULL
+  _policy_text text DEFAULT NULL,
+  _manage_token text DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -139,13 +142,15 @@ BEGIN
   INSERT INTO public.appointments (
     business_id, professional_id, client_id, client_name, client_whatsapp,
     starts_at, ends_at, duration_minutes, total_price_cents, status, notes,
-    idempotency_key, blocks_agenda, policy_accepted_at, policy_text_snapshot, snapshot
+    idempotency_key, blocks_agenda, policy_accepted_at, policy_text_snapshot, manage_token_hash, manage_token_expires_at, snapshot
   ) VALUES (
     _business_id, _professional_id, client_id, trim(_client_name), _client_whatsapp,
     _starts_at, ends_at, duration, price, _status, _notes,
     _idempotency_key, blocks,
     CASE WHEN COALESCE(_policy_accepted, false) THEN now() ELSE NULL END,
     CASE WHEN COALESCE(_policy_accepted, false) THEN COALESCE(_policy_text, biz.booking_policy) ELSE NULL END,
+    CASE WHEN _manage_token IS NOT NULL THEN encode(digest(_manage_token, 'sha256'), 'hex') ELSE NULL END,
+    CASE WHEN _manage_token IS NOT NULL THEN now() + interval '90 days' ELSE NULL END,
     jsonb_build_object(
       'source', _source,
       'business_name', biz.name,
@@ -218,5 +223,5 @@ EXCEPTION
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.create_appointment_atomic(uuid, uuid, uuid[], timestamptz, text, text, public.appointment_status, text, text, text, boolean, text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.create_appointment_atomic(uuid, uuid, uuid[], timestamptz, text, text, public.appointment_status, text, text, text, boolean, text) TO authenticated, service_role;
+REVOKE ALL ON FUNCTION public.create_appointment_atomic(uuid, uuid, uuid[], timestamptz, text, text, public.appointment_status, text, text, text, boolean, text, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.create_appointment_atomic(uuid, uuid, uuid[], timestamptz, text, text, public.appointment_status, text, text, text, boolean, text, text) TO authenticated, service_role;

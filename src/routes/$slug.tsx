@@ -110,9 +110,11 @@ function BookingPage() {
   const [notes, setNotes] = useState("");
   const [policyAccepted, setPolicyAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [confirmed, setConfirmed] = useState<{ startsAt: string; totalPriceCents: number } | null>(
-    null,
-  );
+  const [confirmed, setConfirmed] = useState<{
+    startsAt: string;
+    totalPriceCents: number;
+    manageToken: string;
+  } | null>(null);
   const idempotencyKey = useRef<string | null>(null);
 
   const chosenServices = useMemo(
@@ -209,10 +211,15 @@ function BookingPage() {
           clientName,
           whatsapp,
           notes: notes || undefined,
+          policyAccepted,
           idempotencyKey: idempotencyKey.current ?? (idempotencyKey.current = crypto.randomUUID()),
         },
       });
-      setConfirmed({ startsAt: result.startsAt, totalPriceCents: result.totalPriceCents });
+      setConfirmed({
+        startsAt: result.startsAt,
+        totalPriceCents: result.totalPriceCents,
+        manageToken: result.manageToken,
+      });
       setStep(4);
     } catch (error) {
       toast.error("Não foi possível concluir a reserva", {
@@ -633,6 +640,9 @@ function BookingPage() {
                 <br />
                 Total: {formatBRL(confirmed.totalPriceCents)}
               </p>
+              <Button asChild variant="outline" className="mt-6 w-full">
+                <a href={`/agendamento/${confirmed.manageToken}`}>Gerenciar meu agendamento</a>
+              </Button>
               {business.whatsapp ? (
                 <Button asChild variant="outline" className="mt-6">
                   <a

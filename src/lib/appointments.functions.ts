@@ -15,7 +15,9 @@ export const setAppointmentStatus = createServerFn({ method: "POST" })
     const { logAudit } = await import("./subscription.server");
     const current = await context.supabase
       .from("appointments")
-      .select("id, business_id, professional_id, status, total_price_cents, starts_at")
+      .select(
+        "id, business_id, professional_id, status, total_price_cents, starts_at, client_name, client_whatsapp",
+      )
       .eq("id", data.appointmentId)
       .maybeSingle();
     if (!current.data) throw new Error("APPOINTMENT_NOT_FOUND: agendamento não encontrado");
@@ -37,6 +39,23 @@ export const setAppointmentStatus = createServerFn({ method: "POST" })
       .select("id, status")
       .single();
     if (update.error) throw new Error(`STATUS_UPDATE_FAILED: ${update.error.message}`);
+
+    if (data.status === "CONFIRMED") {
+      const queued = await context.supabase.rpc("enqueue_message", {
+        _business_id: current.data.business_id,
+        _appointment_id: current.data.id,
+        _event_type: "APPOINTMENT_CONFIRMED",
+        _recipient: current.data.client_whatsapp,
+        _payload: {
+          appointment_id: current.data.id,
+          business_id: current.data.business_id,
+          client_name: current.data.client_name,
+          starts_at: current.data.starts_at,
+        },
+        _dedupe_key: `confirmed:${current.data.id}`,
+      });
+      if (queued.error) throw new Error(`NOTIFICATION_QUEUE_FAILED: ${queued.error.message}`);
+    }
 
     if (data.status === "COMPLETED") {
       const professional = await context.supabase

@@ -59,12 +59,26 @@ export const getMyPanel = createServerFn({ method: "POST" })
       .select("instagram_url")
       .eq("id", businessId)
       .maybeSingle();
+    const whatsappConfig = await context.supabase
+      .from("businesses")
+      .select("whatsapp_notifications_enabled, reminder_enabled, reminder_minutes")
+      .eq("id", businessId)
+      .maybeSingle();
 
     return {
       business: business.data
         ? {
             ...business.data,
             instagram_url: instagram.error ? null : (instagram.data?.instagram_url ?? null),
+            whatsapp_notifications_enabled: whatsappConfig.error
+              ? false
+              : (whatsappConfig.data?.whatsapp_notifications_enabled ?? false),
+            reminder_enabled: whatsappConfig.error
+              ? true
+              : (whatsappConfig.data?.reminder_enabled ?? true),
+            reminder_minutes: whatsappConfig.error
+              ? 60
+              : (whatsappConfig.data?.reminder_minutes ?? 60),
           }
         : null,
       role: roles.data?.find((r) => r.business_id === businessId)?.role ?? null,
