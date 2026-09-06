@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery } from "./app";
-import { WEEKDAY_LABELS } from "@/lib/format";
+import { instagramHandle, normalizeInstagramUrl, WEEKDAY_LABELS } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WhatsappInput } from "@/components/ui/whatsapp-input";
@@ -27,6 +27,7 @@ function SettingsPage() {
     whatsapp: business.whatsapp ?? "",
     email: business.email ?? "",
     address: business.address ?? "",
+    instagram_url: business.instagram_url ?? "",
     booking_policy: business.booking_policy ?? "",
     show_address: business.show_address,
     show_whatsapp: business.show_whatsapp,
@@ -46,6 +47,7 @@ function SettingsPage() {
           email: form.email.trim() || null,
           address: form.address.trim() || null,
           booking_policy: form.booking_policy.trim() || null,
+          instagram_url: normalizeInstagramUrl(form.instagram_url),
           show_address: form.show_address,
           show_whatsapp: form.show_whatsapp,
           slot_interval_minutes: Number(form.slot_interval_minutes) || 15,
@@ -56,7 +58,7 @@ function SettingsPage() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      toast.success("Configurações salvas");
+      toast.success("Instagram atualizado com sucesso.");
       queryClient.invalidateQueries({ queryKey: ["panel"] });
     },
     onError: (error: Error) =>
@@ -104,6 +106,12 @@ function SettingsPage() {
         className="mt-6 grid gap-4 rounded-xl border border-border bg-card p-5 sm:grid-cols-2"
         onSubmit={(e) => {
           e.preventDefault();
+          if (form.instagram_url.trim() && !normalizeInstagramUrl(form.instagram_url)) {
+            toast.error("Instagram inválido", {
+              description: "Informe um perfil do Instagram, como @seuperfil.",
+            });
+            return;
+          }
           save.mutate();
         }}
       >
@@ -158,6 +166,22 @@ function SettingsPage() {
             value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
           />
+        </div>
+        <div className="space-y-1.5 sm:col-span-2 rounded-lg border border-border bg-muted/40 p-4">
+          <p className="text-sm font-medium text-foreground">Redes sociais</p>
+          <Label>Instagram</Label>
+          <Input
+            value={form.instagram_url}
+            placeholder="https://instagram.com/seuperfil ou @seuperfil"
+            onChange={(e) => setForm({ ...form, instagram_url: e.target.value })}
+          />
+          <p className="text-xs text-muted-foreground">
+            Adicione o Instagram do estabelecimento para que seus clientes possam conhecer seus
+            serviços e trabalhos.
+            {form.instagram_url && normalizeInstagramUrl(form.instagram_url)
+              ? ` Será salvo como ${instagramHandle(form.instagram_url)}.`
+              : ""}
+          </p>
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Política de agendamento</Label>

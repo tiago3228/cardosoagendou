@@ -232,6 +232,7 @@ export type Database = {
           description: string | null;
           email: string | null;
           id: string;
+          instagram_url: string | null;
           logo_url: string | null;
           max_advance_days: number;
           min_notice_minutes: number;
@@ -254,6 +255,7 @@ export type Database = {
           description?: string | null;
           email?: string | null;
           id?: string;
+          instagram_url?: string | null;
           logo_url?: string | null;
           max_advance_days?: number;
           min_notice_minutes?: number;
@@ -276,6 +278,7 @@ export type Database = {
           description?: string | null;
           email?: string | null;
           id?: string;
+          instagram_url?: string | null;
           logo_url?: string | null;
           max_advance_days?: number;
           min_notice_minutes?: number;

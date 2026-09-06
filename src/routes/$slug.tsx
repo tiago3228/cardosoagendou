@@ -7,6 +7,7 @@ import {
   Check,
   ChevronLeft,
   Clock,
+  Instagram,
   MapPin,
   MessageCircle,
   Navigation,
@@ -17,7 +18,13 @@ import {
   getAvailability,
   getPublicBusiness,
 } from "@/lib/booking.functions";
-import { formatBRL, formatDuration, whatsappLink } from "@/lib/format";
+import {
+  formatBRL,
+  formatDuration,
+  instagramHandle,
+  normalizeInstagramUrl,
+  whatsappLink,
+} from "@/lib/format";
 import { businessTypeConfig } from "@/lib/business-types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -287,6 +294,30 @@ function BookingPage() {
             >
               <MessageCircle className="size-4" aria-hidden /> Falar com o estabelecimento
             </a>
+          ) : null}
+          {normalizeInstagramUrl(business.instagram_url) ? (
+            <div className="mt-5 rounded-2xl border border-[#35302A] bg-[#1E1B17] p-4">
+              <div className="flex items-start gap-3">
+                <Instagram className="mt-0.5 size-5 shrink-0 text-[#B4884F]" aria-hidden />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#B4884F]">
+                    Siga nosso trabalho
+                  </p>
+                  <p className="mt-1 text-sm text-[#9C948A]">
+                    Veja nossos serviços, resultados e novidades no Instagram.
+                  </p>
+                  <a
+                    href={normalizeInstagramUrl(business.instagram_url) ?? undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[#D1A66C] hover:underline"
+                  >
+                    {instagramHandle(business.instagram_url) ?? "Instagram oficial"}{" "}
+                    <ArrowRight className="size-4" aria-hidden />
+                  </a>
+                </div>
+              </div>
+            </div>
           ) : null}
         </div>
 
