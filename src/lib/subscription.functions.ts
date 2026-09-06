@@ -93,7 +93,7 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
       }
     }
 
-    const origin = process.env["APP_ORIGIN"] ?? "https://cardosoagendou.lovable.app";
+    const origin = process.env["APP_ORIGIN"] ?? "https://agendou-br.lovable.app";
     const created = await provider.createSubscription({
       businessId,
       providerCustomerId: customer.providerCustomerId,
