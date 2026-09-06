@@ -3,7 +3,12 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { CalendarCheck, Clock, MessageCircle, Package, Users, Wallet } from "lucide-react";
 import { listPlans } from "@/lib/public.functions";
-import { annualFreeMonths, annualMonthlyEquivalentCents, planLimitLabel, type PlanRow } from "@/lib/plans";
+import {
+  annualFreeMonths,
+  annualMonthlyEquivalentCents,
+  planLimitLabel,
+  type PlanRow,
+} from "@/lib/plans";
 import { formatBRL } from "@/lib/format";
 import { BUSINESS_TYPE_CONFIG, BUSINESS_TYPES } from "@/lib/business-types";
 import { Button } from "@/components/ui/button";
@@ -70,12 +75,36 @@ function Landing() {
 
         <ul className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { icon: CalendarCheck, title: "Página de reservas própria", text: "Link exclusivo do seu negócio, otimizado para celular." },
-            { icon: Clock, title: "Duração inteligente", text: "Vários serviços na mesma reserva somam a duração automaticamente." },
-            { icon: Users, title: "Equipe organizada", text: "Horários por profissional, serviços por profissional e comissões." },
-            { icon: MessageCircle, title: "Confirmação por WhatsApp", text: "Cada reserva gera avisos para o cliente e para o negócio." },
-            { icon: Package, title: "Produtos e estoque", text: "Venda produtos e acompanhe o estoque mínimo." },
-            { icon: Wallet, title: "Financeiro simples", text: "Receitas, despesas e comissões em um só lugar." },
+            {
+              icon: CalendarCheck,
+              title: "Página de reservas própria",
+              text: "Link exclusivo do seu negócio, otimizado para celular.",
+            },
+            {
+              icon: Clock,
+              title: "Duração inteligente",
+              text: "Vários serviços na mesma reserva somam a duração automaticamente.",
+            },
+            {
+              icon: Users,
+              title: "Equipe organizada",
+              text: "Horários por profissional, serviços por profissional e comissões.",
+            },
+            {
+              icon: MessageCircle,
+              title: "Confirmação por WhatsApp",
+              text: "Cada reserva gera avisos para o cliente e para o negócio.",
+            },
+            {
+              icon: Package,
+              title: "Produtos e estoque",
+              text: "Venda produtos e acompanhe o estoque mínimo.",
+            },
+            {
+              icon: Wallet,
+              title: "Financeiro simples",
+              text: "Receitas, despesas e comissões em um só lugar.",
+            },
           ].map((f) => (
             <li key={f.title} className="rounded-xl border border-border bg-card p-5 shadow-sm">
               <f.icon className="size-5 text-primary" aria-hidden />
@@ -142,12 +171,15 @@ function Landing() {
               </p>
               {annual ? (
                 <p className="mt-1 text-sm text-primary">
-                  {formatBRL(plan.annual_price_cents)} por ano — {annualFreeMonths(plan)} meses grátis
+                  {formatBRL(plan.annual_price_cents)} por ano — {annualFreeMonths(plan)} meses
+                  grátis
                 </p>
               ) : (
                 <p className="mt-1 text-sm text-muted-foreground">cobrado mensalmente</p>
               )}
-              <p className="mt-4 text-sm font-medium text-card-foreground">{planLimitLabel(plan)}</p>
+              <p className="mt-4 text-sm font-medium text-card-foreground">
+                {planLimitLabel(plan)}
+              </p>
               <Button asChild className="mt-6">
                 <Link to="/cadastro" search={{ plano: plan.code }}>
                   Testar {plan.trial_days} dias grátis

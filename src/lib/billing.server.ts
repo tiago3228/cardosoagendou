@@ -16,7 +16,10 @@ export async function platformSetting<T>(db: Db, key: string, fallback: T): Prom
 }
 
 /** Active gateway: platform_settings wins over the env var. */
-export async function resolveProvider(db: Db, providerName?: string | null): Promise<PaymentProvider> {
+export async function resolveProvider(
+  db: Db,
+  providerName?: string | null,
+): Promise<PaymentProvider> {
   if (providerName) return getPaymentProvider(providerName);
   const configured = await platformSetting<string>(db, "billing.provider", "mercadopago");
   return getPaymentProvider(configured);

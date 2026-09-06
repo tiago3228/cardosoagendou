@@ -12,7 +12,8 @@ export type InstallPlatform = "android" | "ios" | "desktop";
 export function detectPlatform(): InstallPlatform {
   if (typeof navigator === "undefined") return "desktop";
   const ua = navigator.userAgent;
-  if (/iPad|iPhone|iPod/.test(ua) || (ua.includes("Macintosh") && "ontouchend" in document)) return "ios";
+  if (/iPad|iPhone|iPod/.test(ua) || (ua.includes("Macintosh") && "ontouchend" in document))
+    return "ios";
   if (/Android/i.test(ua)) return "android";
   return "desktop";
 }

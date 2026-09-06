@@ -54,6 +54,10 @@ export function totalPriceCents(services: { price_cents: number }[]): number {
   return services.reduce((sum, s) => sum + s.price_cents, 0);
 }
 
+export function blocksAgenda(services: { allows_parallel: boolean }[]): boolean {
+  return !services.length || !services.every((service) => service.allows_parallel);
+}
+
 export function minutesFromTime(time: string): number {
   const [h = "0", m = "0"] = time.split(":");
   return Number(h) * 60 + Number(m);
@@ -169,7 +173,11 @@ export function computeSlots(input: SlotInput): Slot[] {
     if (start.getTime() < earliest) continue;
     const overlaps = busyRanges.some((r) => start.getTime() < r.end && end.getTime() > r.start);
     if (overlaps) continue;
-    slots.push({ label: timeFromMinutes(m), startsAt: start.toISOString(), endsAt: end.toISOString() });
+    slots.push({
+      label: timeFromMinutes(m),
+      startsAt: start.toISOString(),
+      endsAt: end.toISOString(),
+    });
   }
   return slots;
 }

@@ -1,6 +1,16 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { CalendarDays, CreditCard, LogOut, Package, Scissors, Settings, Users, UserSquare, Wallet } from "lucide-react";
+import {
+  CalendarDays,
+  CreditCard,
+  LogOut,
+  Package,
+  Scissors,
+  Settings,
+  Users,
+  UserSquare,
+  Wallet,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyPanel } from "@/lib/panel.functions";
 import { getMasterStatus } from "@/lib/manual-pix.functions";

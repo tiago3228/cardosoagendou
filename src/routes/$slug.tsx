@@ -1,10 +1,14 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Check, ChevronLeft, Clock, MapPin } from "lucide-react";
 import { toast } from "sonner";
-import { createPublicAppointment, getAvailability, getPublicBusiness } from "@/lib/booking.functions";
+import {
+  createPublicAppointment,
+  getAvailability,
+  getPublicBusiness,
+} from "@/lib/booking.functions";
 import { formatBRL, formatDuration, whatsappLink } from "@/lib/format";
 import { businessTypeConfig } from "@/lib/business-types";
 import { Button } from "@/components/ui/button";
@@ -27,7 +31,10 @@ export const Route = createFileRoute("/$slug")({
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
-        meta: [{ title: "Página não encontrada — Agendou" }, { name: "robots", content: "noindex" }],
+        meta: [
+          { title: "Página não encontrada — Agendou" },
+          { name: "robots", content: "noindex" },
+        ],
       };
     }
     const title = `${loaderData.business.name} — agende seu horário`;
@@ -81,7 +88,11 @@ function BookingPage() {
   const [professionalId, setProfessionalId] = useState<string | null>(null);
   const [date, setDate] = useState(todayISO());
   const [slots, setSlots] = useState<
-    { professionalId: string; professionalName: string; slots: { label: string; startsAt: string }[] }[]
+    {
+      professionalId: string;
+      professionalName: string;
+      slots: { label: string; startsAt: string }[];
+    }[]
   >([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [chosen, setChosen] = useState<{ startsAt: string; professionalId: string } | null>(null);
@@ -89,7 +100,10 @@ function BookingPage() {
   const [whatsapp, setWhatsapp] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
-  const [confirmed, setConfirmed] = useState<{ startsAt: string; totalPriceCents: number } | null>(null);
+  const [confirmed, setConfirmed] = useState<{ startsAt: string; totalPriceCents: number } | null>(
+    null,
+  );
+  const idempotencyKey = useRef<string | null>(null);
 
   const chosenServices = useMemo(
     () => data!.services.filter((s) => selected.includes(s.id)),
@@ -134,7 +148,9 @@ function BookingPage() {
   }, [conflictRules, selected, data]);
 
   const eligibleProfessionals = data!.professionals.filter((p) =>
-    selected.every((sid) => data!.links.some((l) => l.professional_id === p.id && l.service_id === sid)),
+    selected.every((sid) =>
+      data!.links.some((l) => l.professional_id === p.id && l.service_id === sid),
+    ),
   );
 
   const days = useMemo(() => {
@@ -150,6 +166,7 @@ function BookingPage() {
   async function loadSlots(nextDate: string, prof: string | null) {
     setLoadingSlots(true);
     setChosen(null);
+    idempotencyKey.current = null;
     try {
       const result = await fetchAvailability({
         data: { slug, date: nextDate, serviceIds: selected, professionalId: prof },
@@ -179,6 +196,7 @@ function BookingPage() {
           clientName,
           whatsapp,
           notes: notes || undefined,
+          idempotencyKey: idempotencyKey.current ?? (idempotencyKey.current = crypto.randomUUID()),
         },
       });
       setConfirmed({ startsAt: result.startsAt, totalPriceCents: result.totalPriceCents });
@@ -253,14 +271,22 @@ function BookingPage() {
                       className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition ${active ? "border-primary bg-primary/5" : "border-border bg-card"} ${blocked ? "cursor-not-allowed opacity-50" : ""}`}
                     >
                       <span>
-                        <span className="block font-medium text-card-foreground">{service.name}</span>
+                        <span className="block font-medium text-card-foreground">
+                          {service.name}
+                        </span>
                         <span className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground">
                           <Clock className="size-3.5" aria-hidden />
-                          {formatDuration(service.duration_minutes)} · {formatBRL(service.price_cents)}
+                          {formatDuration(service.duration_minutes)} ·{" "}
+                          {formatBRL(service.price_cents)}
                         </span>
                         {blocked ? (
                           <span className="mt-1 block text-xs text-muted-foreground">
                             Indisponível junto dos serviços já selecionados
+                          </span>
+                        ) : null}
+                        {service.allows_parallel ? (
+                          <span className="mt-1 block text-xs text-muted-foreground">
+                            Pode ocorrer atendimento simultâneo durante parte do serviço
                           </span>
                         ) : null}
                       </span>
@@ -308,7 +334,9 @@ function BookingPage() {
                         />
                       ) : null}
                       <span>
-                        <span className="block font-medium text-card-foreground">{product.name}</span>
+                        <span className="block font-medium text-card-foreground">
+                          {product.name}
+                        </span>
                         <span className="text-sm text-muted-foreground">
                           {formatBRL(product.price_cents)}
                         </span>
@@ -355,7 +383,9 @@ function BookingPage() {
                       />
                     ) : null}
                     <span>
-                      <span className="block font-medium text-card-foreground">{professional.name}</span>
+                      <span className="block font-medium text-card-foreground">
+                        {professional.name}
+                      </span>
                       {professional.bio ? (
                         <span className="text-sm text-muted-foreground">{professional.bio}</span>
                       ) : null}
@@ -408,7 +438,10 @@ function BookingPage() {
                         <button
                           key={`${p.professionalId}-${slot.startsAt}`}
                           onClick={() => {
-                            setChosen({ startsAt: slot.startsAt, professionalId: p.professionalId });
+                            setChosen({
+                              startsAt: slot.startsAt,
+                              professionalId: p.professionalId,
+                            });
                             setStep(3);
                           }}
                           className="rounded-lg border border-border bg-card py-2 text-sm font-medium"
@@ -436,7 +469,12 @@ function BookingPage() {
             <form onSubmit={confirm} className="mt-5 space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="nome">Nome completo</Label>
-                <Input id="nome" required value={clientName} onChange={(e) => setClientName(e.target.value)} />
+                <Input
+                  id="nome"
+                  required
+                  value={clientName}
+                  onChange={(e) => setClientName(e.target.value)}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="zap">WhatsApp</Label>
@@ -474,7 +512,10 @@ function BookingPage() {
             {business.whatsapp ? (
               <Button asChild variant="outline" className="mt-6">
                 <a
-                  href={whatsappLink(business.whatsapp, `Olá! Acabei de agendar em ${business.name}.`)}
+                  href={whatsappLink(
+                    business.whatsapp,
+                    `Olá! Acabei de agendar em ${business.name}.`,
+                  )}
                   target="_blank"
                   rel="noreferrer"
                 >

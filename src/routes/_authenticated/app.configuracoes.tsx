@@ -59,7 +59,8 @@ function SettingsPage() {
       toast.success("Configurações salvas");
       queryClient.invalidateQueries({ queryKey: ["panel"] });
     },
-    onError: (error: Error) => toast.error("Não foi possível salvar", { description: error.message }),
+    onError: (error: Error) =>
+      toast.error("Não foi possível salvar", { description: error.message }),
   });
 
   const hours = useQuery({
@@ -76,7 +77,12 @@ function SettingsPage() {
   });
 
   const saveHour = useMutation({
-    mutationFn: async (input: { id: string; opens_at: string; closes_at: string; closed: boolean }) => {
+    mutationFn: async (input: {
+      id: string;
+      opens_at: string;
+      closes_at: string;
+      closed: boolean;
+    }) => {
       const { error } = await supabase
         .from("business_hours")
         .update({ opens_at: input.opens_at, closes_at: input.closes_at, closed: input.closed })
@@ -114,7 +120,10 @@ function SettingsPage() {
         </div>
         <div className="space-y-1.5">
           <Label>WhatsApp</Label>
-          <WhatsappInput value={form.whatsapp} onChange={(v) => setForm({ ...form, whatsapp: v })} />
+          <WhatsappInput
+            value={form.whatsapp}
+            onChange={(v) => setForm({ ...form, whatsapp: v })}
+          />
         </div>
 
         <div className="space-y-1.5">
@@ -145,7 +154,10 @@ function SettingsPage() {
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Endereço</Label>
-          <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+          <Input
+            value={form.address}
+            onChange={(e) => setForm({ ...form, address: e.target.value })}
+          />
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Política de agendamento</Label>
@@ -182,7 +194,9 @@ function SettingsPage() {
         </div>
       </form>
 
-      <h2 className="mt-8 font-display text-lg font-semibold text-foreground">Horário de funcionamento</h2>
+      <h2 className="mt-8 font-display text-lg font-semibold text-foreground">
+        Horário de funcionamento
+      </h2>
       <div className="mt-3 space-y-2 rounded-xl border border-border bg-card p-4">
         {(hours.data ?? []).map((hour) => (
           <div key={hour.id} className="flex flex-wrap items-center gap-2 text-sm">
@@ -275,4 +289,3 @@ function InstallAppSection() {
     </div>
   );
 }
-

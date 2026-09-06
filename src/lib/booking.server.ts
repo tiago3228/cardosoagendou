@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import {
   computeSlots,
+  blocksAgenda,
   localDateOf,
   totalDuration,
   totalPriceCents,
@@ -41,6 +42,19 @@ export async function loadBusinessBySlug(db: Db, slug: string): Promise<BookingB
   return (data as BookingBusiness | null) ?? null;
 }
 
+export async function loadBusinessById(
+  db: Db,
+  businessId: string,
+): Promise<BookingBusiness | null> {
+  const { data } = await db
+    .from("businesses")
+    .select(BUSINESS_COLUMNS)
+    .eq("id", businessId)
+    .eq("active", true)
+    .maybeSingle();
+  return (data as BookingBusiness | null) ?? null;
+}
+
 /**
  * PUBLIC path (anon key): the booking page never reads tables directly.
  * `public_business` / `public_catalog` are the only anon-reachable surface and
@@ -56,14 +70,41 @@ export async function loadPublicBusinessBySlug(
 }
 
 export interface PublicCatalog {
-  services: { id: string; name: string; description: string | null; category: string | null; price_cents: number; duration_minutes: number; image_url: string | null }[];
-  products?: { id: string; name: string; price_cents: number; stock_quantity: number; image_url: string | null }[];
+  services: {
+    id: string;
+    name: string;
+    description: string | null;
+    category: string | null;
+    price_cents: number;
+    duration_minutes: number;
+    image_url: string | null;
+    allows_parallel: boolean;
+  }[];
+  products?: {
+    id: string;
+    name: string;
+    price_cents: number;
+    stock_quantity: number;
+    image_url: string | null;
+  }[];
   professionals: { id: string; name: string; photo_url: string | null; bio: string | null }[];
   links: { professional_id: string; service_id: string }[];
   /** Owner-configured pairs of services that cannot be booked together. */
-  serviceConflicts?: { service_id: string; conflicting_service_id: string; reason: string | null }[];
+  serviceConflicts?: {
+    service_id: string;
+    conflicting_service_id: string;
+    reason: string | null;
+  }[];
   businessHours: { weekday: number; opens_at: string; closes_at: string; closed: boolean }[];
-  professionalHours: { professional_id: string; weekday: number; starts_at: string; ends_at: string; enabled: boolean; lunch_starts_at: string | null; lunch_ends_at: string | null }[];
+  professionalHours: {
+    professional_id: string;
+    weekday: number;
+    starts_at: string;
+    ends_at: string;
+    enabled: boolean;
+    lunch_starts_at: string | null;
+    lunch_ends_at: string | null;
+  }[];
 }
 
 export async function loadPublicCatalogBySlug(db: Db, slug: string): Promise<PublicCatalog> {
@@ -86,7 +127,9 @@ export async function loadPublicCatalog(db: Db, businessId: string) {
   const [services, professionals, links, businessHours, professionalHours] = await Promise.all([
     db
       .from("services")
-      .select("id, name, description, category, price_cents, duration_minutes, image_url")
+      .select(
+        "id, name, description, category, price_cents, duration_minutes, image_url, allows_parallel",
+      )
       .eq("business_id", businessId)
       .eq("active", true)
       .is("deleted_at", null)
@@ -99,14 +142,19 @@ export async function loadPublicCatalog(db: Db, businessId: string) {
       .eq("active", true)
       .is("deleted_at", null)
       .order("name", { ascending: true }),
-    db.from("professional_services").select("professional_id, service_id").eq("business_id", businessId),
+    db
+      .from("professional_services")
+      .select("professional_id, service_id")
+      .eq("business_id", businessId),
     db
       .from("business_hours")
       .select("weekday, opens_at, closes_at, closed")
       .eq("business_id", businessId),
     db
       .from("professional_hours")
-      .select("professional_id, weekday, starts_at, ends_at, enabled, lunch_starts_at, lunch_ends_at")
+      .select(
+        "professional_id, weekday, starts_at, ends_at, enabled, lunch_starts_at, lunch_ends_at",
+      )
       .eq("business_id", businessId),
   ]);
 
@@ -120,9 +168,16 @@ export async function loadPublicCatalog(db: Db, businessId: string) {
 }
 
 export interface ResolvedSelection {
-  services: { id: string; name: string; price_cents: number; duration_minutes: number }[];
+  services: {
+    id: string;
+    name: string;
+    price_cents: number;
+    duration_minutes: number;
+    allows_parallel: boolean;
+  }[];
   durationMinutes: number;
   priceCents: number;
+  blocksAgenda: boolean;
 }
 
 /**
@@ -157,7 +212,7 @@ export async function resolveSelection(
   await assertNoServiceConflicts(db, businessId, serviceIds);
   const { data } = await db
     .from("services")
-    .select("id, name, price_cents, duration_minutes")
+    .select("id, name, price_cents, duration_minutes, allows_parallel")
     .eq("business_id", businessId)
     .eq("active", true)
     .is("deleted_at", null)
@@ -170,6 +225,7 @@ export async function resolveSelection(
     services: rows,
     durationMinutes: totalDuration(rows),
     priceCents: totalPriceCents(rows),
+    blocksAgenda: blocksAgenda(rows),
   };
 }
 
@@ -178,6 +234,7 @@ export async function busyIntervals(
   professionalId: string,
   date: string,
   timeZone: string,
+  excludeAppointmentId?: string,
 ): Promise<BusyInterval[]> {
   // Widen by a day on both sides so timezone conversion never clips an appointment.
   const from = new Date(`${date}T00:00:00Z`);
@@ -187,12 +244,15 @@ export async function busyIntervals(
   void timeZone;
   const { data } = await db
     .from("appointments")
-    .select("starts_at, ends_at, status")
+    .select("id, starts_at, ends_at, status, blocks_agenda")
     .eq("professional_id", professionalId)
     .gte("starts_at", from.toISOString())
     .lt("starts_at", to.toISOString())
     .not("status", "in", "(CANCELED,NO_SHOW)");
-  return (data ?? []).map((a) => ({ start: a.starts_at, end: a.ends_at }));
+  const rows = excludeAppointmentId
+    ? (data ?? []).filter((a) => a.id !== excludeAppointmentId)
+    : (data ?? []);
+  return rows.filter((a) => a.blocks_agenda).map((a) => ({ start: a.starts_at, end: a.ends_at }));
 }
 
 export interface DaySlots {
@@ -208,6 +268,7 @@ export async function availabilityForDay(
   date: string,
   professionalId: string | null,
   now: Date,
+  excludeAppointmentId?: string,
 ): Promise<{ durationMinutes: number; priceCents: number; byProfessional: DaySlots[] }> {
   const selection = await resolveSelection(db, business.id, serviceIds);
 
@@ -218,15 +279,18 @@ export async function availabilityForDay(
     business.timezone,
   );
   if (date < today || date > maxDate) {
-    return { durationMinutes: selection.durationMinutes, priceCents: selection.priceCents, byProfessional: [] };
+    return {
+      durationMinutes: selection.durationMinutes,
+      priceCents: selection.priceCents,
+      byProfessional: [],
+    };
   }
 
   const catalog = await loadPublicCatalog(db, business.id);
   const weekday = weekdayOf(date);
 
   const bh = catalog.businessHours.find((h) => h.weekday === weekday);
-  const businessWindow =
-    bh && !bh.closed ? { startsAt: bh.opens_at, endsAt: bh.closes_at } : null;
+  const businessWindow = bh && !bh.closed ? { startsAt: bh.opens_at, endsAt: bh.closes_at } : null;
 
   const candidates = catalog.professionals.filter((p) => {
     if (professionalId && p.id !== professionalId) return false;
@@ -247,7 +311,13 @@ export async function availabilityForDay(
       ph && ph.enabled && ph.lunch_starts_at && ph.lunch_ends_at
         ? { startsAt: ph.lunch_starts_at, endsAt: ph.lunch_ends_at }
         : null;
-    const busy = await busyIntervals(db, professional.id, date, business.timezone);
+    const busy = await busyIntervals(
+      db,
+      professional.id,
+      date,
+      business.timezone,
+      excludeAppointmentId,
+    );
     const slots = computeSlots({
       date,
       timeZone: business.timezone,
@@ -260,7 +330,11 @@ export async function availabilityForDay(
       busy,
       now: now.toISOString(),
     });
-    byProfessional.push({ professionalId: professional.id, professionalName: professional.name, slots });
+    byProfessional.push({
+      professionalId: professional.id,
+      professionalName: professional.name,
+      slots,
+    });
   }
 
   return {
@@ -268,4 +342,56 @@ export async function availabilityForDay(
     priceCents: selection.priceCents,
     byProfessional,
   };
+}
+
+export async function assertBookableAppointment(
+  db: Db,
+  business: BookingBusiness,
+  input: {
+    professionalId: string;
+    serviceIds: string[];
+    startsAt: Date;
+    now: Date;
+    excludeAppointmentId?: string;
+  },
+): Promise<ResolvedSelection> {
+  if (input.serviceIds.length === 0) {
+    throw new Error("SERVICE_NOT_AVAILABLE: selecione ao menos um serviço");
+  }
+  const professional = await db
+    .from("professionals")
+    .select("id")
+    .eq("id", input.professionalId)
+    .eq("business_id", business.id)
+    .eq("active", true)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!professional.data) throw new Error("PROFESSIONAL_NOT_AVAILABLE: profissional indisponível");
+
+  const selection = await resolveSelection(db, business.id, input.serviceIds);
+  const links = await db
+    .from("professional_services")
+    .select("service_id")
+    .eq("business_id", business.id)
+    .eq("professional_id", input.professionalId)
+    .in("service_id", input.serviceIds);
+  if ((links.data ?? []).length !== new Set(input.serviceIds).size) {
+    throw new Error("PROFESSIONAL_SERVICE_MISMATCH: profissional não executa todos os serviços");
+  }
+
+  const date = localDateOf(input.startsAt, business.timezone);
+  const availability = await availabilityForDay(
+    db,
+    business,
+    input.serviceIds,
+    date,
+    input.professionalId,
+    input.now,
+    input.excludeAppointmentId,
+  );
+  const offered = availability.byProfessional
+    .find((professionalSlots) => professionalSlots.professionalId === input.professionalId)
+    ?.slots.some((slot) => slot.startsAt === input.startsAt.toISOString());
+  if (!offered) throw new Error("SLOT_UNAVAILABLE: esse horário não está disponível");
+  return selection;
 }

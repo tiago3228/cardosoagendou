@@ -44,7 +44,9 @@ function ProductsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, sku, category, supplier, price_cents, cost_cents, stock_quantity, min_stock, active, image_url")
+        .select(
+          "id, name, sku, category, supplier, price_cents, cost_cents, stock_quantity, min_stock, active, image_url",
+        )
         .eq("business_id", businessId)
         .is("deleted_at", null)
         .order("name");
@@ -71,12 +73,22 @@ function ProductsPage() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      setForm({ name: "", sku: "", category: "", supplier: "", price: "", cost: "", stock: "0", min: "0" });
+      setForm({
+        name: "",
+        sku: "",
+        category: "",
+        supplier: "",
+        price: "",
+        cost: "",
+        stock: "0",
+        min: "0",
+      });
       setPhoto(null);
       toast.success("Produto criado com sucesso!");
       queryClient.invalidateQueries({ queryKey: ["products", businessId] });
     },
-    onError: (error: Error) => toast.error("Não foi possível salvar", { description: error.message }),
+    onError: (error: Error) =>
+      toast.error("Não foi possível salvar", { description: error.message }),
   });
 
   const move = useMutation({
@@ -152,7 +164,8 @@ function ProductsPage() {
       toast.success("Foto do produto atualizada!");
       queryClient.invalidateQueries({ queryKey: ["products", businessId] });
     },
-    onError: (error: Error) => toast.error("Não foi possível atualizar a foto", { description: error.message }),
+    onError: (error: Error) =>
+      toast.error("Não foi possível atualizar a foto", { description: error.message }),
   });
 
   const remove = useMutation({
@@ -168,7 +181,8 @@ function ProductsPage() {
       toast.success("Produto removido");
       queryClient.invalidateQueries({ queryKey: ["products", businessId] });
     },
-    onError: (error: Error) => toast.error("Não foi possível remover", { description: error.message }),
+    onError: (error: Error) =>
+      toast.error("Não foi possível remover", { description: error.message }),
   });
 
   if (!inventoryEnabled) {
@@ -277,94 +291,94 @@ function ProductsPage() {
               .includes(term.toLowerCase()),
           )
           .map((product) => (
-          <li key={product.id} className="rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                {product.image_url ? (
-                  <img
-                    src={product.image_url}
-                    alt={product.name}
-                    className="size-12 rounded-lg object-cover"
-                  />
-                ) : null}
-                <div>
-                  <p className="font-medium text-card-foreground">{product.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {formatBRL(product.price_cents)} · estoque {product.stock_quantity}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {[
-                      product.sku ? `Cód. ${product.sku}` : null,
-                      product.category,
-                      product.supplier,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
-                  {product.stock_quantity <= product.min_stock ? (
-                    <p className="mt-1 flex items-center gap-1 text-sm text-destructive">
-                      <AlertTriangle className="size-3.5" aria-hidden /> Estoque baixo
-                    </p>
+            <li key={product.id} className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  {product.image_url ? (
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="size-12 rounded-lg object-cover"
+                    />
                   ) : null}
+                  <div>
+                    <p className="font-medium text-card-foreground">{product.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatBRL(product.price_cents)} · estoque {product.stock_quantity}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {[
+                        product.sku ? `Cód. ${product.sku}` : null,
+                        product.category,
+                        product.supplier,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                    {product.stock_quantity <= product.min_stock ? (
+                      <p className="mt-1 flex items-center gap-1 text-sm text-destructive">
+                        <AlertTriangle className="size-3.5" aria-hidden /> Estoque baixo
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => sell.mutate(product)}
+                    disabled={product.stock_quantity < 1}
+                  >
+                    <ShoppingCart className="size-4" aria-hidden /> Vender
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    aria-label="Registrar saída"
+                    onClick={() => move.mutate({ productId: product.id, type: "OUT" })}
+                  >
+                    <Minus className="size-4" aria-hidden />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    aria-label="Registrar entrada"
+                    onClick={() => move.mutate({ productId: product.id, type: "IN" })}
+                  >
+                    <Plus className="size-4" aria-hidden />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    aria-label={`Histórico de ${product.name}`}
+                    onClick={() =>
+                      setOpenHistory((current) => (current === product.id ? null : product.id))
+                    }
+                  >
+                    <History className="size-4" aria-hidden />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    aria-label={`Remover ${product.name}`}
+                    onClick={() => remove.mutate(product.id)}
+                  >
+                    <Trash2 className="size-4" aria-hidden />
+                  </Button>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => sell.mutate(product)}
-                  disabled={product.stock_quantity < 1}
-                >
-                  <ShoppingCart className="size-4" aria-hidden /> Vender
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  aria-label="Registrar saída"
-                  onClick={() => move.mutate({ productId: product.id, type: "OUT" })}
-                >
-                  <Minus className="size-4" aria-hidden />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  aria-label="Registrar entrada"
-                  onClick={() => move.mutate({ productId: product.id, type: "IN" })}
-                >
-                  <Plus className="size-4" aria-hidden />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  aria-label={`Histórico de ${product.name}`}
-                  onClick={() =>
-                    setOpenHistory((current) => (current === product.id ? null : product.id))
-                  }
-                >
-                  <History className="size-4" aria-hidden />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  aria-label={`Remover ${product.name}`}
-                  onClick={() => remove.mutate(product.id)}
-                >
-                  <Trash2 className="size-4" aria-hidden />
-                </Button>
+              <div className="mt-3">
+                <PhotoField
+                  businessId={businessId}
+                  folder="produtos"
+                  value={product.image_url}
+                  onChange={(url) => setProductPhoto.mutate({ id: product.id, url })}
+                  label="Foto"
+                />
               </div>
-            </div>
-            <div className="mt-3">
-              <PhotoField
-                businessId={businessId}
-                folder="produtos"
-                value={product.image_url}
-                onChange={(url) => setProductPhoto.mutate({ id: product.id, url })}
-                label="Foto"
-              />
-            </div>
-            {openHistory === product.id ? (
-              <StockHistory businessId={businessId} productId={product.id} />
-            ) : null}
-          </li>
+              {openHistory === product.id ? (
+                <StockHistory businessId={businessId} productId={product.id} />
+              ) : null}
+            </li>
           ))}
       </ul>
     </div>
@@ -396,9 +410,7 @@ function StockHistory({ businessId, productId }: { businessId: string; productId
 
   return (
     <div className="mt-3 rounded-lg border border-border bg-secondary/30 p-3">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">
-        Histórico de estoque
-      </p>
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">Histórico de estoque</p>
       <ul className="mt-2 space-y-1.5">
         {(movements.data ?? []).map((m) => (
           <li key={m.id} className="flex items-center justify-between gap-3 text-sm">

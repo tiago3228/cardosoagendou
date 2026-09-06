@@ -37,6 +37,7 @@ export const publicBookingSchema = z.object({
   clientName: z.string().trim().min(2, "Informe seu nome").max(80),
   whatsapp: whatsappSchema,
   notes: z.string().trim().max(500).optional(),
+  idempotencyKey: z.string().trim().min(16).max(100).optional(),
 });
 
 export const planChangeSchema = z.object({
@@ -68,6 +69,7 @@ export const manualAppointmentSchema = z.object({
   clientName: z.string().trim().min(2).max(80),
   whatsapp: whatsappSchema,
   notes: z.string().trim().max(500).optional(),
+  idempotencyKey: z.string().trim().min(16).max(100).optional(),
 });
 
 /** Allowed appointment status transitions (state machine). */

@@ -27,7 +27,12 @@ export interface BusinessTypeConfig {
   service: string;
   services: string;
   categories: string[];
-  sampleServices: { name: string; duration_minutes: number; price_cents: number; category: string }[];
+  sampleServices: {
+    name: string;
+    duration_minutes: number;
+    price_cents: number;
+    category: string;
+  }[];
 }
 
 const DEFAULT_CONFIG: BusinessTypeConfig = {
@@ -37,7 +42,9 @@ const DEFAULT_CONFIG: BusinessTypeConfig = {
   service: "Serviço",
   services: "Serviços",
   categories: ["Geral"],
-  sampleServices: [{ name: "Atendimento padrão", duration_minutes: 45, price_cents: 8000, category: "Geral" }],
+  sampleServices: [
+    { name: "Atendimento padrão", duration_minutes: 45, price_cents: 8000, category: "Geral" },
+  ],
 };
 
 export const BUSINESS_TYPE_CONFIG: Record<BusinessType, BusinessTypeConfig> = {
@@ -75,7 +82,12 @@ export const BUSINESS_TYPE_CONFIG: Record<BusinessType, BusinessTypeConfig> = {
     services: "Serviços",
     categories: ["Cabelo", "Unhas", "Depilação", "Maquiagem"],
     sampleServices: [
-      { name: "Design de sobrancelha", duration_minutes: 30, price_cents: 4000, category: "Depilação" },
+      {
+        name: "Design de sobrancelha",
+        duration_minutes: 30,
+        price_cents: 4000,
+        category: "Depilação",
+      },
       { name: "Maquiagem social", duration_minutes: 60, price_cents: 12000, category: "Maquiagem" },
     ],
   },
@@ -87,7 +99,12 @@ export const BUSINESS_TYPE_CONFIG: Record<BusinessType, BusinessTypeConfig> = {
     services: "Procedimentos",
     categories: ["Facial", "Corporal", "Laser", "Avaliação"],
     sampleServices: [
-      { name: "Limpeza de pele profunda", duration_minutes: 60, price_cents: 15000, category: "Facial" },
+      {
+        name: "Limpeza de pele profunda",
+        duration_minutes: 60,
+        price_cents: 15000,
+        category: "Facial",
+      },
       { name: "Avaliação inicial", duration_minutes: 30, price_cents: 0, category: "Avaliação" },
     ],
   },
@@ -101,7 +118,12 @@ export const BUSINESS_TYPE_CONFIG: Record<BusinessType, BusinessTypeConfig> = {
     sampleServices: [
       { name: "Manicure", duration_minutes: 45, price_cents: 4500, category: "Mãos" },
       { name: "Pedicure", duration_minutes: 50, price_cents: 5000, category: "Pés" },
-      { name: "Alongamento em gel", duration_minutes: 120, price_cents: 16000, category: "Alongamento" },
+      {
+        name: "Alongamento em gel",
+        duration_minutes: 120,
+        price_cents: 16000,
+        category: "Alongamento",
+      },
     ],
   },
   MASSAGE: {
@@ -112,8 +134,18 @@ export const BUSINESS_TYPE_CONFIG: Record<BusinessType, BusinessTypeConfig> = {
     services: "Sessões",
     categories: ["Relaxante", "Terapêutica", "Corporal"],
     sampleServices: [
-      { name: "Massagem relaxante 50min", duration_minutes: 50, price_cents: 13000, category: "Relaxante" },
-      { name: "Drenagem linfática", duration_minutes: 60, price_cents: 15000, category: "Corporal" },
+      {
+        name: "Massagem relaxante 50min",
+        duration_minutes: 50,
+        price_cents: 13000,
+        category: "Relaxante",
+      },
+      {
+        name: "Drenagem linfática",
+        duration_minutes: 60,
+        price_cents: 15000,
+        category: "Corporal",
+      },
     ],
   },
   TATTOO: {
@@ -125,7 +157,12 @@ export const BUSINESS_TYPE_CONFIG: Record<BusinessType, BusinessTypeConfig> = {
     categories: ["Tatuagem", "Piercing", "Orçamento"],
     sampleServices: [
       { name: "Orçamento presencial", duration_minutes: 30, price_cents: 0, category: "Orçamento" },
-      { name: "Sessão de tatuagem (2h)", duration_minutes: 120, price_cents: 40000, category: "Tatuagem" },
+      {
+        name: "Sessão de tatuagem (2h)",
+        duration_minutes: 120,
+        price_cents: 40000,
+        category: "Tatuagem",
+      },
       { name: "Piercing", duration_minutes: 30, price_cents: 12000, category: "Piercing" },
     ],
   },
@@ -137,8 +174,18 @@ export const BUSINESS_TYPE_CONFIG: Record<BusinessType, BusinessTypeConfig> = {
     services: "Sessões",
     categories: ["Avaliação", "Sessão", "Retorno"],
     sampleServices: [
-      { name: "Avaliação inicial", duration_minutes: 60, price_cents: 15000, category: "Avaliação" },
-      { name: "Sessão de fisioterapia", duration_minutes: 50, price_cents: 12000, category: "Sessão" },
+      {
+        name: "Avaliação inicial",
+        duration_minutes: 60,
+        price_cents: 15000,
+        category: "Avaliação",
+      },
+      {
+        name: "Sessão de fisioterapia",
+        duration_minutes: 50,
+        price_cents: 12000,
+        category: "Sessão",
+      },
     ],
   },
   OTHER: DEFAULT_CONFIG,

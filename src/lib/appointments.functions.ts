@@ -7,24 +7,20 @@ import {
   rescheduleSchema,
 } from "./schemas";
 
-/**
- * Moves an appointment through the status state machine.
- * COMPLETED also books the service income and the professional commission.
- */
 export const setAppointmentStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => appointmentStatusSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { canTransition } = await import("./schemas");
     const { logAudit } = await import("./subscription.server");
-
     const current = await context.supabase
       .from("appointments")
       .select("id, business_id, professional_id, status, total_price_cents, starts_at")
       .eq("id", data.appointmentId)
       .maybeSingle();
     if (!current.data) throw new Error("APPOINTMENT_NOT_FOUND: agendamento não encontrado");
-    if (current.data.status === data.status) return { status: data.status, changed: false as const };
+    if (current.data.status === data.status)
+      return { status: data.status, changed: false as const };
     if (!canTransition(current.data.status, data.status)) {
       throw new Error(
         `INVALID_TRANSITION: não é possível mudar de ${current.data.status} para ${data.status}`,
@@ -73,7 +69,10 @@ export const setAppointmentStatus = createServerFn({ method: "POST" })
             ]
           : []),
       ];
-      await context.supabase.from("transactions").insert(rows);
+      const financial = await context.supabase.from("transactions").insert(rows);
+      if (financial.error && financial.error.code !== "23505") {
+        throw new Error(`FINANCIAL_UPDATE_FAILED: ${financial.error.message}`);
+      }
     }
 
     await logAudit(
@@ -85,62 +84,85 @@ export const setAppointmentStatus = createServerFn({ method: "POST" })
       current.data.id,
       { from: current.data.status },
     );
-
     return { status: data.status, changed: true as const };
   });
 
-/** Moves an appointment to a new time (and optionally professional). */
 export const rescheduleAppointment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => rescheduleSchema.parse(input))
   .handler(async ({ data, context }) => {
+    const { loadBusinessById, assertBookableAppointment } = await import("./booking.server");
     const { logAudit } = await import("./subscription.server");
-
     const current = await context.supabase
       .from("appointments")
-      .select("id, business_id, professional_id, duration_minutes, status")
+      .select("id, business_id, professional_id, status")
       .eq("id", data.appointmentId)
       .maybeSingle();
     if (!current.data) throw new Error("APPOINTMENT_NOT_FOUND");
     if (["COMPLETED", "CANCELED", "NO_SHOW"].includes(current.data.status)) {
       throw new Error("INVALID_TRANSITION: agendamentos finalizados não podem ser remarcados");
     }
-
+    const services = await context.supabase
+      .from("appointment_services")
+      .select("service_id")
+      .eq("appointment_id", data.appointmentId)
+      .not("service_id", "is", null);
+    const serviceIds = (services.data ?? [])
+      .map((row) => row.service_id)
+      .filter((id): id is string => Boolean(id));
+    const business = await loadBusinessById(context.supabase, current.data.business_id);
+    if (!business) throw new Error("BUSINESS_NOT_FOUND");
+    const professionalId = data.professionalId ?? current.data.professional_id;
     const startsAt = new Date(data.startsAt);
-    const endsAt = new Date(startsAt.getTime() + current.data.duration_minutes * 60000);
+    const selection = await assertBookableAppointment(context.supabase, business, {
+      professionalId,
+      serviceIds,
+      startsAt,
+      now: new Date(),
+      excludeAppointmentId: data.appointmentId,
+    });
+    const endsAt = new Date(startsAt.getTime() + selection.durationMinutes * 60000);
     const update = await context.supabase
       .from("appointments")
       .update({
         starts_at: startsAt.toISOString(),
         ends_at: endsAt.toISOString(),
-        professional_id: data.professionalId ?? current.data.professional_id,
+        professional_id: professionalId,
+        duration_minutes: selection.durationMinutes,
+        total_price_cents: selection.priceCents,
+        blocks_agenda: selection.blocksAgenda,
       })
       .eq("id", data.appointmentId)
       .select("id, starts_at, ends_at")
       .single();
-
     if (update.error) {
       if (update.error.message.includes("DOUBLE_BOOKING")) {
         throw new Error("SLOT_UNAVAILABLE: o profissional já tem um atendimento nesse horário");
       }
       throw new Error(`RESCHEDULE_FAILED: ${update.error.message}`);
     }
-
-    await logAudit(context.supabase, current.data.business_id, context.userId, "appointment.rescheduled", "appointment", current.data.id, {
-      starts_at: update.data.starts_at,
-    });
+    await logAudit(
+      context.supabase,
+      current.data.business_id,
+      context.userId,
+      "appointment.rescheduled",
+      "appointment",
+      current.data.id,
+      {
+        starts_at: update.data.starts_at,
+        professional_id: professionalId,
+      },
+    );
     return { startsAt: update.data.starts_at, endsAt: update.data.ends_at };
   });
 
-/** Creates an appointment from inside the panel (walk-in / phone booking). */
 export const createManualAppointment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => manualAppointmentSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { resolveSelection } = await import("./booking.server");
+    const { loadBusinessById, assertBookableAppointment } = await import("./booking.server");
     const { normalizeBrWhatsapp } = await import("./format");
     const { logAudit } = await import("./subscription.server");
-
     const member = await context.supabase
       .from("user_roles")
       .select("business_id")
@@ -148,72 +170,60 @@ export const createManualAppointment = createServerFn({ method: "POST" })
       .eq("business_id", data.businessId)
       .maybeSingle();
     if (!member.data) throw new Error("FORBIDDEN: sem acesso a este negócio");
-
+    const business = await loadBusinessById(context.supabase, data.businessId);
+    if (!business) throw new Error("BUSINESS_NOT_FOUND");
     const whatsapp = normalizeBrWhatsapp(data.whatsapp);
     if (!whatsapp) throw new Error("WHATSAPP_INVALID: WhatsApp inválido");
-
-    const selection = await resolveSelection(context.supabase, data.businessId, data.serviceIds);
     const startsAt = new Date(data.startsAt);
-    const endsAt = new Date(startsAt.getTime() + selection.durationMinutes * 60000);
-
-    const client = await context.supabase
-      .from("clients")
-      .upsert(
-        { business_id: data.businessId, name: data.clientName, whatsapp },
-        { onConflict: "business_id,whatsapp" },
-      )
-      .select("id")
-      .single();
-
-    const appointment = await context.supabase
-      .from("appointments")
-      .insert({
-        business_id: data.businessId,
-        professional_id: data.professionalId,
-        client_id: client.data?.id ?? null,
-        client_name: data.clientName,
-        client_whatsapp: whatsapp,
-        starts_at: startsAt.toISOString(),
-        ends_at: endsAt.toISOString(),
-        duration_minutes: selection.durationMinutes,
-        total_price_cents: selection.priceCents,
-        status: "CONFIRMED",
-        notes: data.notes ?? null,
-        snapshot: { source: "panel", services: selection.services },
-      })
-      .select("id, starts_at, ends_at, duration_minutes, total_price_cents")
-      .single();
-
-    if (appointment.error || !appointment.data) {
-      if (appointment.error?.message.includes("DOUBLE_BOOKING")) {
+    await assertBookableAppointment(context.supabase, business, {
+      professionalId: data.professionalId,
+      serviceIds: data.serviceIds,
+      startsAt,
+      now: new Date(),
+    });
+    const { data: created, error } = await context.supabase.rpc("create_appointment_atomic", {
+      _business_id: data.businessId,
+      _professional_id: data.professionalId,
+      _service_ids: data.serviceIds,
+      _starts_at: startsAt.toISOString(),
+      _client_name: data.clientName,
+      _client_whatsapp: whatsapp,
+      _status: "CONFIRMED",
+      _notes: data.notes ?? null,
+      _source: "panel",
+      _idempotency_key: data.idempotencyKey ?? null,
+    });
+    if (error || !created) {
+      if (error?.message.includes("DOUBLE_BOOKING")) {
         throw new Error("SLOT_UNAVAILABLE: o profissional já tem um atendimento nesse horário");
       }
-      throw new Error(`APPOINTMENT_FAILED: ${appointment.error?.message}`);
+      throw new Error(`APPOINTMENT_FAILED: ${error?.message ?? "operação recusada"}`);
     }
-
-    await context.supabase.from("appointment_services").insert(
-      selection.services.map((s) => ({
-        appointment_id: appointment.data.id,
-        business_id: data.businessId,
-        service_id: s.id,
-        service_name: s.name,
-        price_cents: s.price_cents,
-        duration_minutes: s.duration_minutes,
-      })),
+    const result = created as {
+      id: string;
+      starts_at: string;
+      ends_at: string;
+      duration_minutes: number;
+      total_price_cents: number;
+    };
+    await logAudit(
+      context.supabase,
+      data.businessId,
+      context.userId,
+      "appointment.created_manual",
+      "appointment",
+      result.id,
+      {},
     );
-
-    await logAudit(context.supabase, data.businessId, context.userId, "appointment.created_manual", "appointment", appointment.data.id, {});
-
     return {
-      id: appointment.data.id,
-      startsAt: appointment.data.starts_at,
-      endsAt: appointment.data.ends_at,
-      durationMinutes: appointment.data.duration_minutes,
-      totalPriceCents: appointment.data.total_price_cents,
+      id: result.id,
+      startsAt: result.starts_at,
+      endsAt: result.ends_at,
+      durationMinutes: result.duration_minutes,
+      totalPriceCents: result.total_price_cents,
     };
   });
 
-/** Panel-side availability (uses the same engine as the public page). */
 export const getPanelAvailability = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => availabilitySchema.parse(input))

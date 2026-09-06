@@ -12,12 +12,19 @@ export const getPublicBusiness = createServerFn({ method: "GET" })
     const found = await loadPublicBusinessBySlug(db, data.slug);
     if (!found) return null;
     const { accepts_bookings: acceptsBookings, ...business } = found;
-
-    // Entitlement gate: a blocked/suspended business shows the page but no slots.
     if (acceptsBookings !== true) {
-      return { business, services: [], products: [], professionals: [], links: [], businessHours: [], professionalHours: [], serviceConflicts: [], acceptsBookings: false as const };
+      return {
+        business,
+        services: [],
+        products: [],
+        professionals: [],
+        links: [],
+        businessHours: [],
+        professionalHours: [],
+        serviceConflicts: [],
+        acceptsBookings: false as const,
+      };
     }
-
     const catalog = await loadPublicCatalogBySlug(db, data.slug);
     return { business, ...catalog, acceptsBookings: true as const };
   });
@@ -42,120 +49,64 @@ export const getAvailability = createServerFn({ method: "POST" })
     );
   });
 
-/** Creates an appointment from the public page. Duration/price are recomputed server-side. */
+/** Creates an appointment from the public page using the same server validation and an atomic RPC. */
 export const createPublicAppointment = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => publicBookingSchema.parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { loadBusinessBySlug, resolveSelection, availabilityForDay } = await import("./booking.server");
+    const { loadBusinessBySlug, assertBookableAppointment } = await import("./booking.server");
     const { normalizeBrWhatsapp } = await import("./format");
-    const { localDateOf } = await import("./availability");
     const { assertAcceptsBookings } = await import("./billing.server");
 
     const business = await loadBusinessBySlug(supabaseAdmin, data.slug);
     if (!business) throw new Error("BUSINESS_NOT_FOUND");
-    // Blocked subscriptions cannot receive new bookings.
     await assertAcceptsBookings(supabaseAdmin, business.id);
 
     const whatsapp = normalizeBrWhatsapp(data.whatsapp);
     if (!whatsapp) throw new Error("WHATSAPP_INVALID: WhatsApp inválido");
-
-    const selection = await resolveSelection(supabaseAdmin, business.id, data.serviceIds);
     const startsAt = new Date(data.startsAt);
-    const endsAt = new Date(startsAt.getTime() + selection.durationMinutes * 60000);
+    const selection = await assertBookableAppointment(supabaseAdmin, business, {
+      professionalId: data.professionalId,
+      serviceIds: data.serviceIds,
+      startsAt,
+      now: new Date(),
+    });
 
-    // Re-validate the slot against the engine so a stale page cannot book a taken time.
-    const day = localDateOf(startsAt, business.timezone);
-    const availability = await availabilityForDay(
-      supabaseAdmin,
-      business,
-      data.serviceIds,
-      day,
-      data.professionalId,
-      new Date(),
-    );
-    const offered = availability.byProfessional
-      .find((p) => p.professionalId === data.professionalId)
-      ?.slots.some((s) => s.startsAt === startsAt.toISOString());
-    if (!offered) throw new Error("SLOT_UNAVAILABLE: esse horário não está mais disponível");
-
-    const client = await supabaseAdmin
-      .from("clients")
-      .upsert(
-        { business_id: business.id, name: data.clientName, whatsapp },
-        { onConflict: "business_id,whatsapp" },
-      )
-      .select("id")
-      .single();
-
-    const appointment = await supabaseAdmin
-      .from("appointments")
-      .insert({
-        business_id: business.id,
-        professional_id: data.professionalId,
-        client_id: client.data?.id ?? null,
-        client_name: data.clientName,
-        client_whatsapp: whatsapp,
-        starts_at: startsAt.toISOString(),
-        ends_at: endsAt.toISOString(),
-        duration_minutes: selection.durationMinutes,
-        total_price_cents: selection.priceCents,
-        status: "PENDING",
-        notes: data.notes ?? null,
-        snapshot: {
-          source: "public_booking",
-          services: selection.services,
-          business_name: business.name,
-        },
-      })
-      .select("id, starts_at, ends_at, total_price_cents, duration_minutes")
-      .single();
-
-    if (appointment.error || !appointment.data) {
-      const message = appointment.error?.message ?? "";
+    const { data: created, error } = await supabaseAdmin.rpc("create_appointment_atomic", {
+      _business_id: business.id,
+      _professional_id: data.professionalId,
+      _service_ids: data.serviceIds,
+      _starts_at: startsAt.toISOString(),
+      _client_name: data.clientName,
+      _client_whatsapp: whatsapp,
+      _status: "PENDING",
+      _notes: data.notes ?? null,
+      _source: "public_booking",
+      _idempotency_key: data.idempotencyKey ?? null,
+    });
+    if (error || !created) {
+      const message = error?.message ?? "";
       if (message.includes("DOUBLE_BOOKING")) {
         throw new Error("SLOT_UNAVAILABLE: esse horário acabou de ser reservado");
       }
       throw new Error(`APPOINTMENT_FAILED: ${message}`);
     }
 
-    await supabaseAdmin.from("appointment_services").insert(
-      selection.services.map((s) => ({
-        appointment_id: appointment.data.id,
-        business_id: business.id,
-        service_id: s.id,
-        service_name: s.name,
-        price_cents: s.price_cents,
-        duration_minutes: s.duration_minutes,
-      })),
-    );
-
-    await supabaseAdmin.from("notifications").insert([
-      {
-        business_id: business.id,
-        appointment_id: appointment.data.id,
-        recipient: whatsapp,
-        template: "appointment.created.client",
-        payload: { name: data.clientName, starts_at: appointment.data.starts_at },
-      },
-      ...(business.whatsapp
-        ? [
-            {
-              business_id: business.id,
-              appointment_id: appointment.data.id,
-              recipient: business.whatsapp,
-              template: "appointment.created.business",
-              payload: { client: data.clientName, starts_at: appointment.data.starts_at },
-            },
-          ]
-        : []),
-    ]);
-
+    const result = created as {
+      id: string;
+      starts_at: string;
+      ends_at: string;
+      total_price_cents: number;
+      duration_minutes: number;
+      blocks_agenda: boolean;
+    };
+    // Keep the server-side calculation explicit so future callers cannot mistake client totals for authority.
+    void selection;
     return {
-      id: appointment.data.id,
-      startsAt: appointment.data.starts_at,
-      endsAt: appointment.data.ends_at,
-      durationMinutes: appointment.data.duration_minutes,
-      totalPriceCents: appointment.data.total_price_cents,
+      id: result.id,
+      startsAt: result.starts_at,
+      endsAt: result.ends_at,
+      durationMinutes: result.duration_minutes,
+      totalPriceCents: result.total_price_cents,
     };
   });

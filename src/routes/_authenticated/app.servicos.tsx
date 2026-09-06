@@ -52,7 +52,8 @@ function ServicesPage() {
       const duration = Number(form.duration);
       if (!form.name.trim()) throw new Error("Informe o nome do serviço");
       if (!Number.isFinite(price) || price < 0) throw new Error("Preço inválido");
-      if (!Number.isFinite(duration) || duration < 5) throw new Error("Duração mínima de 5 minutos");
+      if (!Number.isFinite(duration) || duration < 5)
+        throw new Error("Duração mínima de 5 minutos");
       const { error } = await supabase.from("services").insert({
         business_id: businessId,
         name: form.name.trim(),
@@ -67,7 +68,8 @@ function ServicesPage() {
       toast.success("Serviço criado");
       queryClient.invalidateQueries({ queryKey: ["services", businessId] });
     },
-    onError: (error: Error) => toast.error("Não foi possível salvar", { description: error.message }),
+    onError: (error: Error) =>
+      toast.error("Não foi possível salvar", { description: error.message }),
   });
 
   const toggle = useMutation({
@@ -101,7 +103,8 @@ function ServicesPage() {
       const duration = Number(input.duration);
       if (!input.name.trim()) throw new Error("Informe o nome do serviço");
       if (!Number.isFinite(price) || price < 0) throw new Error("Preço inválido");
-      if (!Number.isFinite(duration) || duration < 5) throw new Error("Duração mínima de 5 minutos");
+      if (!Number.isFinite(duration) || duration < 5)
+        throw new Error("Duração mínima de 5 minutos");
       const { error } = await supabase
         .from("services")
         .update({
@@ -193,7 +196,10 @@ function ServicesPage() {
               >
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label>Nome</Label>
-                  <Input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} />
+                  <Input
+                    value={edit.name}
+                    onChange={(e) => setEdit({ ...edit, name: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Categoria</Label>
@@ -274,7 +280,6 @@ function ServicesPage() {
               </div>
             )}
           </li>
-
         ))}
       </ul>
 
@@ -417,9 +422,7 @@ function ConflictRules({
               <p className="truncate text-sm font-medium text-card-foreground">
                 {nameOf(rule.service_id)} ✕ {nameOf(rule.conflicting_service_id)}
               </p>
-              {rule.reason ? (
-                <p className="text-sm text-muted-foreground">{rule.reason}</p>
-              ) : null}
+              {rule.reason ? <p className="text-sm text-muted-foreground">{rule.reason}</p> : null}
             </div>
             <Button
               size="sm"

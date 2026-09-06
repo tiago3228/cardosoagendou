@@ -3,7 +3,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { getMasterStatus, listPixRequestsForReview, reviewPixRequest } from "@/lib/manual-pix.functions";
+import {
+  getMasterStatus,
+  listPixRequestsForReview,
+  reviewPixRequest,
+} from "@/lib/manual-pix.functions";
 import { PIX_STATUS_LABEL } from "@/components/billing/PixCheckout";
 import { formatBRL } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -13,7 +17,10 @@ export const Route = createFileRoute("/_authenticated/master/pagamentos")({
   head: () => ({
     meta: [
       { title: "Pagamentos PIX — Master · Agendou Pro" },
-      { name: "description", content: "Análise e liberação de pagamentos PIX manuais das assinaturas." },
+      {
+        name: "description",
+        content: "Análise e liberação de pagamentos PIX manuais das assinaturas.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -63,14 +70,17 @@ function MasterPixPage() {
       }),
   });
 
-  if (master.isPending) return <main className="p-6 text-sm text-muted-foreground">Carregando…</main>;
+  if (master.isPending)
+    return <main className="p-6 text-sm text-muted-foreground">Carregando…</main>;
 
   if (!master.data?.isMaster) {
     return (
       <main className="flex min-h-screen items-center justify-center px-5 text-center">
         <div>
           <h1 className="font-display text-2xl font-bold">Acesso restrito</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Esta área é exclusiva da conta master.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Esta área é exclusiva da conta master.
+          </p>
           <Button asChild className="mt-6">
             <Link to="/app">Voltar ao painel</Link>
           </Button>
@@ -101,7 +111,9 @@ function MasterPixPage() {
             <li key={row.id} className="rounded-xl border border-border bg-card p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-card-foreground">{business?.name ?? "Negócio"}</p>
+                  <p className="font-semibold text-card-foreground">
+                    {business?.name ?? "Negócio"}
+                  </p>
                   <p className="text-sm text-muted-foreground">
                     {plan?.name ?? "Plano"} ·{" "}
                     {row.billing_interval === "ANNUAL" ? "Anual" : "Mensal"} ·{" "}
@@ -134,7 +146,9 @@ function MasterPixPage() {
                 <div className="mt-4 space-y-2">
                   <input
                     value={notes[row.id] ?? ""}
-                    onChange={(event) => setNotes((prev) => ({ ...prev, [row.id]: event.target.value }))}
+                    onChange={(event) =>
+                      setNotes((prev) => ({ ...prev, [row.id]: event.target.value }))
+                    }
                     placeholder="Observação interna (opcional)"
                     maxLength={500}
                     className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"

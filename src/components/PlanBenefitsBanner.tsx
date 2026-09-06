@@ -8,11 +8,7 @@ import { formatBRL } from "@/lib/format";
 
 const BENEFITS: Record<string, string[]> = {
   BASIC: ["1 profissional", "Agenda online e página de reservas", "Clientes e serviços"],
-  MEDIUM: [
-    "Até 5 profissionais",
-    "Editar e excluir profissionais",
-    "Relatórios do negócio",
-  ],
+  MEDIUM: ["Até 5 profissionais", "Editar e excluir profissionais", "Relatórios do negócio"],
   UNLIMITED: [
     "Profissionais ilimitados",
     "Produtos e vendas na página de reservas",
@@ -61,7 +57,10 @@ export function PlanBenefitsBanner({ currentPlanCode }: { currentPlanCode: strin
               </p>
               <ul className="mt-2 space-y-1">
                 {(BENEFITS[plan.code] ?? []).map((benefit) => (
-                  <li key={benefit} className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                  <li
+                    key={benefit}
+                    className="flex items-start gap-1.5 text-xs text-muted-foreground"
+                  >
                     {isCurrent ? (
                       <Check className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden />
                     ) : (

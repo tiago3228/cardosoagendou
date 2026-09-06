@@ -50,8 +50,6 @@ export function InstallAppDialog() {
 
   if (!open) return null;
 
-
-
   return (
     <Dialog open={open} onOpenChange={(value) => (value ? setOpen(true) : later())}>
       <DialogContent className="sm:max-w-md">
