@@ -2,6 +2,10 @@
 ALTER TABLE public.appointments
   ADD COLUMN IF NOT EXISTS idempotency_key text;
 
+ALTER TABLE public.appointments
+  ADD COLUMN IF NOT EXISTS policy_accepted_at timestamptz,
+  ADD COLUMN IF NOT EXISTS policy_text_snapshot text;
+
 CREATE UNIQUE INDEX IF NOT EXISTS appointments_business_idempotency_key
   ON public.appointments (business_id, idempotency_key)
   WHERE idempotency_key IS NOT NULL;
@@ -21,7 +25,9 @@ CREATE OR REPLACE FUNCTION public.create_appointment_atomic(
   _status public.appointment_status DEFAULT 'PENDING',
   _notes text DEFAULT NULL,
   _source text DEFAULT 'public_booking',
-  _idempotency_key text DEFAULT NULL
+  _idempotency_key text DEFAULT NULL,
+  _policy_accepted boolean DEFAULT false,
+  _policy_text text DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -68,8 +74,11 @@ BEGIN
     END IF;
   END IF;
 
-  SELECT id, name INTO biz FROM public.businesses WHERE id = _business_id AND active;
+  SELECT id, name, booking_policy INTO biz FROM public.businesses WHERE id = _business_id AND active;
   IF biz.id IS NULL THEN RAISE EXCEPTION 'BUSINESS_NOT_FOUND'; END IF;
+  IF NULLIF(trim(biz.booking_policy), '') IS NOT NULL AND NOT COALESCE(_policy_accepted, false) THEN
+    RAISE EXCEPTION 'POLICY_NOT_ACCEPTED: aceite a política do estabelecimento para continuar';
+  END IF;
 
   SELECT id, name INTO prof
     FROM public.professionals
@@ -130,11 +139,13 @@ BEGIN
   INSERT INTO public.appointments (
     business_id, professional_id, client_id, client_name, client_whatsapp,
     starts_at, ends_at, duration_minutes, total_price_cents, status, notes,
-    idempotency_key, blocks_agenda, snapshot
+    idempotency_key, blocks_agenda, policy_accepted_at, policy_text_snapshot, snapshot
   ) VALUES (
     _business_id, _professional_id, client_id, trim(_client_name), _client_whatsapp,
     _starts_at, ends_at, duration, price, _status, _notes,
     _idempotency_key, blocks,
+    CASE WHEN COALESCE(_policy_accepted, false) THEN now() ELSE NULL END,
+    CASE WHEN COALESCE(_policy_accepted, false) THEN COALESCE(_policy_text, biz.booking_policy) ELSE NULL END,
     jsonb_build_object(
       'source', _source,
       'business_name', biz.name,
@@ -207,5 +218,5 @@ EXCEPTION
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.create_appointment_atomic(uuid, uuid, uuid[], timestamptz, text, text, public.appointment_status, text, text, text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.create_appointment_atomic(uuid, uuid, uuid[], timestamptz, text, text, public.appointment_status, text, text, text) TO authenticated, service_role;
+REVOKE ALL ON FUNCTION public.create_appointment_atomic(uuid, uuid, uuid[], timestamptz, text, text, public.appointment_status, text, text, text, boolean, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.create_appointment_atomic(uuid, uuid, uuid[], timestamptz, text, text, public.appointment_status, text, text, text, boolean, text) TO authenticated, service_role;

@@ -74,6 +74,8 @@ export type Database = {
           id: string;
           idempotency_key: string | null;
           notes: string | null;
+          policy_accepted_at: string | null;
+          policy_text_snapshot: string | null;
           professional_id: string;
           snapshot: Json;
           starts_at: string;
@@ -94,6 +96,8 @@ export type Database = {
           id?: string;
           idempotency_key?: string | null;
           notes?: string | null;
+          policy_accepted_at?: string | null;
+          policy_text_snapshot?: string | null;
           professional_id: string;
           snapshot?: Json;
           starts_at: string;
@@ -114,6 +118,8 @@ export type Database = {
           id?: string;
           idempotency_key?: string | null;
           notes?: string | null;
+          policy_accepted_at?: string | null;
+          policy_text_snapshot?: string | null;
           professional_id?: string;
           snapshot?: Json;
           starts_at?: string;
@@ -1386,6 +1392,8 @@ export type Database = {
           _client_whatsapp: string;
           _idempotency_key?: string | null;
           _notes?: string | null;
+          _policy_accepted?: boolean;
+          _policy_text?: string | null;
           _professional_id: string;
           _service_ids: string[];
           _source?: string;

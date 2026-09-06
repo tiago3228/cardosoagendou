@@ -83,6 +83,8 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
       _notes: data.notes ?? null,
       _source: "public_booking",
       _idempotency_key: data.idempotencyKey ?? null,
+      _policy_accepted: data.policyAccepted,
+      _policy_text: business.booking_policy,
     });
     if (error || !created) {
       const message = error?.message ?? "";

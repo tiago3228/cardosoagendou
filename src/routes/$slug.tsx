@@ -18,13 +18,7 @@ import {
   getAvailability,
   getPublicBusiness,
 } from "@/lib/booking.functions";
-import {
-  formatBRL,
-  formatDuration,
-  instagramHandle,
-  normalizeInstagramUrl,
-  whatsappLink,
-} from "@/lib/format";
+import { formatBRL, formatDuration, normalizeInstagramUrl, whatsappLink } from "@/lib/format";
 import { businessTypeConfig } from "@/lib/business-types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -114,6 +108,7 @@ function BookingPage() {
   const [clientName, setClientName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [notes, setNotes] = useState("");
+  const [policyAccepted, setPolicyAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmed, setConfirmed] = useState<{ startsAt: string; totalPriceCents: number } | null>(
     null,
@@ -273,10 +268,15 @@ function BookingPage() {
               href={mapLink ?? undefined}
               target="_blank"
               rel="noreferrer"
-              className="mt-4 flex items-start gap-2 text-sm text-[#9C948A] transition hover:text-[#D1A66C]"
+              className="mt-4 flex items-start gap-2 rounded-xl border border-[#35302A] bg-[#1E1B17] p-3 text-sm text-[#F2EDE4] transition hover:border-[#B4884F]"
             >
               <MapPin className="mt-0.5 size-4 shrink-0 text-[#B4884F]" aria-hidden />
-              <span className="flex-1">{business.address}</span>
+              <span className="flex-1">
+                <span className="block text-xs font-semibold uppercase tracking-wide text-[#B4884F]">
+                  Onde estamos
+                </span>
+                {business.address}
+              </span>
               {mapLink ? (
                 <Navigation className="size-4 shrink-0 text-[#B4884F]" aria-hidden />
               ) : null}
@@ -290,7 +290,7 @@ function BookingPage() {
               )}
               target="_blank"
               rel="noreferrer"
-              className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#D1A66C]"
+              className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[#B4884F] bg-[#B4884F] px-4 py-3 text-sm font-semibold text-[#14120F]"
             >
               <MessageCircle className="size-4" aria-hidden /> Falar com o estabelecimento
             </a>
@@ -312,8 +312,7 @@ function BookingPage() {
                     rel="noopener noreferrer"
                     className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[#D1A66C] hover:underline"
                   >
-                    {instagramHandle(business.instagram_url) ?? "Instagram oficial"}{" "}
-                    <ArrowRight className="size-4" aria-hidden />
+                    <span>Ver Instagram</span> <ArrowRight className="size-4" aria-hidden />
                   </a>
                 </div>
               </div>
@@ -594,12 +593,28 @@ function BookingPage() {
                   <Label htmlFor="obs">Observações (opcional)</Label>
                   <Input id="obs" value={notes} onChange={(e) => setNotes(e.target.value)} />
                 </div>
+                {business.booking_policy ? (
+                  <label className="flex items-start gap-3 rounded-xl border border-[#35302A] bg-[#1E1B17] p-4 text-sm text-[#F2EDE4]">
+                    <input
+                      type="checkbox"
+                      required
+                      checked={policyAccepted}
+                      onChange={(e) => setPolicyAccepted(e.target.checked)}
+                      className="mt-0.5 size-4 accent-[#B4884F]"
+                    />
+                    <span>
+                      <span className="font-semibold text-[#D1A66C]">
+                        Li e aceito a política do estabelecimento.
+                      </span>
+                      <span className="mt-2 block whitespace-pre-wrap text-xs leading-5 text-[#9C948A]">
+                        {business.booking_policy}
+                      </span>
+                    </span>
+                  </label>
+                ) : null}
                 <Button type="submit" className="w-full" disabled={busy}>
                   {busy ? "Confirmando..." : "Confirmar agendamento"}
                 </Button>
-                {business.booking_policy ? (
-                  <p className="text-xs text-muted-foreground">{business.booking_policy}</p>
-                ) : null}
               </form>
             </section>
           ) : null}
