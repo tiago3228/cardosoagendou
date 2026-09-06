@@ -47,7 +47,6 @@ function SettingsPage() {
           email: form.email.trim() || null,
           address: form.address.trim() || null,
           booking_policy: form.booking_policy.trim() || null,
-          instagram_url: normalizeInstagramUrl(form.instagram_url),
           show_address: form.show_address,
           show_whatsapp: form.show_whatsapp,
           slot_interval_minutes: Number(form.slot_interval_minutes) || 15,
@@ -56,9 +55,21 @@ function SettingsPage() {
         })
         .eq("id", business.id);
       if (error) throw new Error(error.message);
+      const instagram = await supabase
+        .from("businesses")
+        .update({ instagram_url: normalizeInstagramUrl(form.instagram_url) })
+        .eq("id", business.id);
+      if (instagram.error && !instagram.error.message.includes("instagram_url")) {
+        throw new Error(instagram.error.message);
+      }
+      return { instagramSaved: !instagram.error };
     },
-    onSuccess: () => {
-      toast.success("Instagram atualizado com sucesso.");
+    onSuccess: (result) => {
+      toast.success(
+        result.instagramSaved
+          ? "Configurações salvas. Instagram atualizado com sucesso."
+          : "Configurações salvas. A migration do Instagram ainda precisa ser aplicada.",
+      );
       queryClient.invalidateQueries({ queryKey: ["panel"] });
     },
     onError: (error: Error) =>

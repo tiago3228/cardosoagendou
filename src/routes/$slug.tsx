@@ -341,105 +341,161 @@ function BookingPage() {
                   Agendar horário
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-[#9C948A]">
-                  Escolha seu serviço e encontre um horário que funciona para você.
+                  Primeiro escolha quem vai realizar seu atendimento.
                 </p>
-                <div className="mt-4 flex items-center gap-2 text-xs text-[#9C948A]">
-                  <Clock className="size-4 text-[#B4884F]" aria-hidden /> Disponibilidade em tempo
-                  real
-                </div>
               </div>
               <h2 className="font-display text-xl font-bold uppercase tracking-wide">
-                1. Escolha os serviços
+                1. Escolha o profissional
+              </h2>
+              <p className="mt-1 text-sm text-[#9C948A]">
+                Depois você poderá escolher os serviços disponíveis para essa pessoa.
+              </p>
+              <ul className="mt-4 space-y-2">
+                <li>
+                  <button
+                    onClick={() => {
+                      setProfessionalId(null);
+                      setSelected([]);
+                      setStep(1);
+                    }}
+                    className="flex w-full items-center justify-between rounded-xl border border-[#35302A] bg-[#1E1B17] p-4 text-left font-medium text-[#F2EDE4] transition hover:border-[#B4884F]"
+                  >
+                    Qualquer profissional disponível
+                    <ArrowRight className="size-4 text-[#B4884F]" aria-hidden />
+                  </button>
+                </li>
+                {data!.professionals.map((professional) => (
+                  <li key={professional.id}>
+                    <button
+                      onClick={() => {
+                        setProfessionalId(professional.id);
+                        setSelected([]);
+                        setStep(1);
+                      }}
+                      className="flex w-full items-center gap-3 rounded-xl border border-[#35302A] bg-[#1E1B17] p-4 text-left transition hover:border-[#B4884F]"
+                    >
+                      {professional.photo_url ? (
+                        <img
+                          src={professional.photo_url}
+                          alt={professional.name}
+                          className="size-12 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex size-12 items-center justify-center rounded-full border border-[#B4884F] text-lg font-semibold text-[#D1A66C]">
+                          {professional.name.slice(0, 1).toUpperCase()}
+                        </div>
+                      )}
+                      <span>
+                        <span className="block font-medium text-[#F2EDE4]">
+                          {professional.name}
+                        </span>
+                        {professional.bio ? (
+                          <span className="text-sm text-[#9C948A]">{professional.bio}</span>
+                        ) : null}
+                      </span>
+                      <ArrowRight className="ml-auto size-4 text-[#B4884F]" aria-hidden />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {step === 1 ? (
+            <section>
+              <h2 className="font-display text-xl font-bold uppercase tracking-wide">
+                2. Escolha os serviços
               </h2>
               <p className="mt-1 text-sm text-[#9C948A]">
                 Pode escolher mais de um — somamos a duração automaticamente.
               </p>
               <ul className="mt-4 space-y-2">
-                {data!.services.map((service) => {
-                  const active = selected.includes(service.id);
-                  const blocked = blockedService(service.id);
-                  return (
-                    <li key={service.id}>
-                      <button
-                        disabled={blocked}
-                        aria-disabled={blocked}
-                        onClick={() =>
-                          setSelected((prev) =>
-                            prev.includes(service.id)
-                              ? prev.filter((id) => id !== service.id)
-                              : [...prev, service.id],
-                          )
-                        }
-                        className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition ${active ? "border-[#B4884F] bg-[#262220]" : "border-[#35302A] bg-[#1E1B17]"} ${blocked ? "cursor-not-allowed opacity-50" : ""}`}
-                      >
-                        <span>
-                          <span className="block font-medium text-card-foreground">
-                            {service.name}
-                          </span>
-                          <span className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground">
-                            <Clock className="size-3.5" aria-hidden />
-                            {formatDuration(service.duration_minutes)} ·{" "}
-                            {formatBRL(service.price_cents)}
-                          </span>
-                          {blocked ? (
-                            <span className="mt-1 block text-xs text-muted-foreground">
-                              Indisponível junto dos serviços já selecionados
+                {data!.services
+                  .filter(
+                    (service) =>
+                      !professionalId ||
+                      data!.links.some(
+                        (l) => l.professional_id === professionalId && l.service_id === service.id,
+                      ),
+                  )
+                  .map((service) => {
+                    const active = selected.includes(service.id);
+                    const blocked = blockedService(service.id);
+                    return (
+                      <li key={service.id}>
+                        <button
+                          disabled={blocked}
+                          aria-disabled={blocked}
+                          onClick={() =>
+                            setSelected((prev) =>
+                              prev.includes(service.id)
+                                ? prev.filter((id) => id !== service.id)
+                                : [...prev, service.id],
+                            )
+                          }
+                          className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition ${active ? "border-[#B4884F] bg-[#262220]" : "border-[#35302A] bg-[#1E1B17]"} ${blocked ? "cursor-not-allowed opacity-50" : "hover:border-[#B4884F]"}`}
+                        >
+                          <span>
+                            <span className="block font-medium text-[#F2EDE4]">{service.name}</span>
+                            <span className="mt-1 flex items-center gap-1 text-sm text-[#D1A66C]">
+                              <Clock className="size-3.5" aria-hidden />
+                              {formatDuration(service.duration_minutes)} ·{" "}
+                              {formatBRL(service.price_cents)}
                             </span>
-                          ) : null}
-                          {service.allows_parallel ? (
-                            <span className="mt-1 block text-xs text-muted-foreground">
-                              Pode ocorrer atendimento simultâneo durante parte do serviço
-                            </span>
-                          ) : null}
-                        </span>
-                        {active ? <Check className="size-5 text-primary" aria-hidden /> : null}
-                      </button>
-                    </li>
-                  );
-                })}
+                            {blocked ? (
+                              <span className="mt-1 block text-xs text-[#9C948A]">
+                                Indisponível junto dos serviços já selecionados
+                              </span>
+                            ) : null}
+                            {service.allows_parallel ? (
+                              <span className="mt-1 block text-xs text-[#9C948A]">
+                                Pode ocorrer atendimento simultâneo durante parte do serviço
+                              </span>
+                            ) : null}
+                          </span>
+                          {active ? <Check className="size-5 text-[#D1A66C]" aria-hidden /> : null}
+                        </button>
+                      </li>
+                    );
+                  })}
               </ul>
               {hardConflict ? (
-                <p className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                <p className="mt-4 rounded-lg border border-red-400/40 bg-red-950/30 p-3 text-sm text-red-200">
                   {hardConflict.message}
                   {hardConflict.reason ? ` ${hardConflict.reason}` : ""}
                 </p>
               ) : null}
               {categoryConflict ? (
-                <p className="mt-4 rounded-lg border border-border bg-secondary/40 p-3 text-sm text-muted-foreground">
+                <p className="mt-4 rounded-lg border border-[#35302A] bg-[#262220] p-3 text-sm text-[#D1A66C]">
                   Atenção: você selecionou mais de um serviço de <strong>{categoryConflict}</strong>
-                  . Confirme se realmente deseja os dois no mesmo horário.
+                  .
                 </p>
               ) : null}
-              {data!.services.length === 0 ? (
-                <p className="mt-4 text-sm text-muted-foreground">
-                  Este negócio ainda não publicou serviços.
-                </p>
+              {chosenServices.length > 0 && !hardConflict ? (
+                <Button
+                  className="mt-6 w-full bg-[#B4884F] text-[#14120F] hover:bg-[#D1A66C]"
+                  onClick={() => {
+                    setStep(2);
+                    void loadSlots(date, professionalId);
+                  }}
+                >
+                  Continuar para horários <ArrowRight className="ml-2 size-4" aria-hidden />
+                </Button>
               ) : null}
-
               {(data!.products ?? []).length > 0 ? (
                 <div className="mt-8">
-                  <h3 className="font-display text-lg font-bold">Produtos disponíveis</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Peça no local durante o seu atendimento.
-                  </p>
+                  <h3 className="font-display text-lg font-bold text-[#F2EDE4]">
+                    Produtos disponíveis
+                  </h3>
                   <ul className="mt-3 grid gap-2 sm:grid-cols-2">
                     {(data!.products ?? []).map((product) => (
                       <li
                         key={product.id}
-                        className="flex items-center gap-3 rounded-xl border border-border bg-card p-3"
+                        className="flex items-center gap-3 rounded-xl border border-[#35302A] bg-[#1E1B17] p-3"
                       >
-                        {product.image_url ? (
-                          <img
-                            src={product.image_url}
-                            alt={product.name}
-                            className="size-12 rounded-lg object-cover"
-                          />
-                        ) : null}
                         <span>
-                          <span className="block font-medium text-card-foreground">
-                            {product.name}
-                          </span>
-                          <span className="text-sm text-muted-foreground">
+                          <span className="block font-medium text-[#F2EDE4]">{product.name}</span>
+                          <span className="text-sm text-[#D1A66C]">
                             {formatBRL(product.price_cents)}
                           </span>
                         </span>
@@ -451,57 +507,11 @@ function BookingPage() {
             </section>
           ) : null}
 
-          {step === 1 ? (
-            <section>
-              <h2 className="font-display text-xl font-bold">2. Escolha o profissional</h2>
-              <ul className="mt-4 space-y-2">
-                <li>
-                  <button
-                    onClick={() => {
-                      setProfessionalId(null);
-                      setStep(2);
-                      void loadSlots(date, null);
-                    }}
-                    className="w-full rounded-xl border border-border bg-card p-4 text-left font-medium"
-                  >
-                    Qualquer profissional disponível
-                  </button>
-                </li>
-                {eligibleProfessionals.map((professional) => (
-                  <li key={professional.id}>
-                    <button
-                      onClick={() => {
-                        setProfessionalId(professional.id);
-                        setStep(2);
-                        void loadSlots(date, professional.id);
-                      }}
-                      className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left"
-                    >
-                      {professional.photo_url ? (
-                        <img
-                          src={professional.photo_url}
-                          alt={professional.name}
-                          className="size-10 rounded-full object-cover"
-                        />
-                      ) : null}
-                      <span>
-                        <span className="block font-medium text-card-foreground">
-                          {professional.name}
-                        </span>
-                        {professional.bio ? (
-                          <span className="text-sm text-muted-foreground">{professional.bio}</span>
-                        ) : null}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-
           {step === 2 ? (
             <section>
-              <h2 className="font-display text-xl font-bold">3. Escolha o horário</h2>
+              <h2 className="font-display text-xl font-bold uppercase tracking-wide text-[#F2EDE4]">
+                3. Escolha o horário
+              </h2>
               <div className="-mx-5 mt-4 flex gap-2 overflow-x-auto px-5 pb-2">
                 {days.map((day) => (
                   <button
@@ -510,7 +520,7 @@ function BookingPage() {
                       setDate(day);
                       void loadSlots(day, professionalId);
                     }}
-                    className={`shrink-0 rounded-xl border px-4 py-2 text-sm ${day === date ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}
+                    className={`shrink-0 rounded-xl border px-4 py-2 text-sm font-semibold ${day === date ? "border-[#B4884F] bg-[#B4884F] text-[#14120F]" : "border-[#35302A] bg-[#1E1B17] text-[#F2EDE4]"}`}
                   >
                     {new Date(`${day}T12:00:00`).toLocaleDateString("pt-BR", {
                       weekday: "short",
@@ -520,11 +530,10 @@ function BookingPage() {
                   </button>
                 ))}
               </div>
-
               {loadingSlots ? (
-                <p className="mt-6 text-sm text-muted-foreground">Carregando horários...</p>
+                <p className="mt-6 text-sm text-[#9C948A]">Carregando horários...</p>
               ) : slots.every((p) => p.slots.length === 0) ? (
-                <p className="mt-6 text-sm text-muted-foreground">
+                <p className="mt-6 text-sm text-[#9C948A]">
                   Nenhum horário livre neste dia. Tente outra data.
                 </p>
               ) : (
@@ -532,9 +541,7 @@ function BookingPage() {
                   .filter((p) => p.slots.length > 0)
                   .map((p) => (
                     <div key={p.professionalId} className="mt-6">
-                      <h3 className="text-sm font-semibold text-muted-foreground">
-                        {p.professionalName}
-                      </h3>
+                      <h3 className="text-sm font-semibold text-[#D1A66C]">{p.professionalName}</h3>
                       <div className="mt-2 grid grid-cols-3 gap-2">
                         {p.slots.map((slot) => (
                           <button
@@ -546,7 +553,7 @@ function BookingPage() {
                               });
                               setStep(3);
                             }}
-                            className="rounded-lg border border-border bg-card py-2 text-sm font-medium"
+                            className="rounded-xl border border-[#35302A] bg-[#262220] py-3 text-sm font-semibold text-[#F2EDE4] shadow-sm transition hover:border-[#B4884F] hover:bg-[#B4884F] hover:text-[#14120F]"
                           >
                             {slot.label}
                           </button>
@@ -628,24 +635,6 @@ function BookingPage() {
             </section>
           ) : null}
         </div>
-
-        {step === 0 && selected.length > 0 ? (
-          <div className="fixed inset-x-0 bottom-0 mx-auto max-w-lg border-t border-border bg-card/95 p-4 backdrop-blur">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                {selected.length} serviço(s) · {formatDuration(totalMinutes)}
-              </span>
-              <span className="font-semibold">{formatBRL(totalCents)}</span>
-            </div>
-            <Button
-              className="mt-3 w-full"
-              disabled={hardConflict !== null}
-              onClick={() => setStep(1)}
-            >
-              {hardConflict ? "Ajuste a seleção para continuar" : "Continuar"}
-            </Button>
-          </div>
-        ) : null}
       </div>
     </main>
   );

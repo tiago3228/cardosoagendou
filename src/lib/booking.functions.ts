@@ -89,6 +89,11 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
       if (message.includes("DOUBLE_BOOKING")) {
         throw new Error("SLOT_UNAVAILABLE: esse horário acabou de ser reservado");
       }
+      if (message.includes("Could not find the function public.create_appointment_atomic")) {
+        throw new Error(
+          "BOOKING_MIGRATION_REQUIRED: o banco ainda não recebeu a migration de integridade de agendamentos",
+        );
+      }
       throw new Error(`APPOINTMENT_FAILED: ${message}`);
     }
 
