@@ -28,7 +28,8 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Agendou — agenda online para negócios de serviço" },
       {
         property: "og:description",
-        content: "Sua página de agendamento pronta em minutos. Teste grátis por 14 dias.",
+        content:
+          "Sua página de agendamento pronta em minutos. Teste grátis por 30 dias com todos os recursos.",
       },
     ],
   }),
@@ -66,7 +67,7 @@ function Landing() {
         </p>
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <Button asChild size="lg">
-            <Link to="/cadastro">Começar teste grátis de 14 dias</Link>
+            <Link to="/cadastro">Começar teste grátis de 30 dias</Link>
           </Button>
           <Button asChild size="lg" variant="outline">
             <Link to="/auth">Já tenho conta</Link>

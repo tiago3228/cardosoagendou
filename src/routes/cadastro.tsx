@@ -155,7 +155,7 @@ function SignupPage() {
             </>
           ) : (
             <>
-              14 dias grátis, sem cartão de crédito. Já tem conta?{" "}
+              30 dias grátis com todos os recursos, sem cartão de crédito. Já tem conta?{" "}
               <Link
                 to="/auth"
                 className="font-medium text-primary underline-offset-4 hover:underline"
