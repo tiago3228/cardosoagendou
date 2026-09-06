@@ -31,7 +31,7 @@ export interface BookingBusiness {
 }
 
 const BUSINESS_COLUMNS =
-  "id, slug, name, business_type, description, logo_url, cover_url, whatsapp, address, instagram_url, booking_policy, timezone, slot_interval_minutes, min_notice_minutes, max_advance_days";
+  "id, slug, name, business_type, description, logo_url, cover_url, whatsapp, address, booking_policy, timezone, slot_interval_minutes, min_notice_minutes, max_advance_days";
 
 export async function loadBusinessBySlug(db: Db, slug: string): Promise<BookingBusiness | null> {
   const { data } = await db
