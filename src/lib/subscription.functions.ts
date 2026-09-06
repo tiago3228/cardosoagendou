@@ -99,6 +99,15 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
     }
 
     const origin = process.env["APP_ORIGIN"] ?? "https://agendou-br.lovable.app";
+    // Mercado Pago exige que auto_recurring.start_date seja estritamente futura.
+    // Use pelo menos amanhã quando o trial já terminou ou termina hoje.
+    const minimumGatewayDate = dueDateString(new Date(), 1);
+    const trialDueDate =
+      current.status === "TRIALING" &&
+      current.trial_ends_at &&
+      new Date(current.trial_ends_at) > new Date()
+        ? dueDateString(new Date(current.trial_ends_at))
+        : minimumGatewayDate;
     const created = await provider.createSubscription({
       businessId,
       providerCustomerId: customer.providerCustomerId,
@@ -108,12 +117,7 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
       amountCents,
       method: data.method,
       // Trials keep their remaining days: first charge lands when the trial ends.
-      nextDueDate:
-        current.status === "TRIALING" &&
-        current.trial_ends_at &&
-        new Date(current.trial_ends_at) > new Date()
-          ? dueDateString(new Date(current.trial_ends_at))
-          : dueDateString(new Date()),
+      nextDueDate: trialDueDate > minimumGatewayDate ? trialDueDate : minimumGatewayDate,
       returnUrl: `${origin}/app/assinatura?checkout=done`,
     });
 
