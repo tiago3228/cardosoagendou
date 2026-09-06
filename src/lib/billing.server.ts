@@ -1,398 +1,339 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import {
-  computeSlots,
-  blocksAgenda,
-  localDateOf,
-  totalDuration,
-  totalPriceCents,
-  weekdayOf,
-  type BusyInterval,
-} from "./availability";
+import { addPeriod, planPriceCents, type BillingInterval, type PlanRow } from "./plans";
+import { getPaymentProvider, type PaymentProvider } from "./payments";
+import type { NormalizedWebhookEvent, PaymentMethod } from "./payments/PaymentProvider";
 
-export type Db = SupabaseClient<Database>;
+type Db = SupabaseClient<Database>;
 
-export interface BookingBusiness {
+const PLAN_COLUMNS =
+  "id, code, name, description, professional_limit, monthly_price_cents, annual_price_cents, annual_months_charged, trial_days, sort_order";
+
+/** Reads a platform setting, falling back to the given default. */
+export async function platformSetting<T>(db: Db, key: string, fallback: T): Promise<T> {
+  const { data } = await db.from("platform_settings").select("value").eq("key", key).maybeSingle();
+  return (data?.value as T | undefined) ?? fallback;
+}
+
+/** Active gateway: platform_settings wins over the env var. */
+export async function resolveProvider(
+  db: Db,
+  providerName?: string | null,
+): Promise<PaymentProvider> {
+  if (providerName) return getPaymentProvider(providerName);
+  const configured = await platformSetting<string>(db, "billing.provider", "mercadopago");
+  return getPaymentProvider(configured);
+}
+
+export async function graceDays(db: Db): Promise<number> {
+  const value = await platformSetting<number>(db, "billing.grace_period_days", 7);
+  return Number(value) || 7;
+}
+
+export interface SubscriptionRow {
   id: string;
-  slug: string;
-  name: string;
-  business_type: string;
-  description: string | null;
-  logo_url: string | null;
-  cover_url: string | null;
-  whatsapp: string | null;
-  address: string | null;
-  instagram_url: string | null;
-  booking_policy: string | null;
-  timezone: string;
-  slot_interval_minutes: number;
-  min_notice_minutes: number;
-  max_advance_days: number;
+  business_id: string;
+  plan_id: string;
+  status: Database["public"]["Enums"]["subscription_status"];
+  billing_interval: BillingInterval;
+  payment_method: PaymentMethod | null;
+  current_period_start: string;
+  current_period_end: string;
+  trial_ends_at: string | null;
+  cancel_at_period_end: boolean;
+  canceled_at: string | null;
+  pending_plan_id: string | null;
+  pending_billing_interval: BillingInterval | null;
+  provider: string;
+  provider_customer_id: string | null;
+  provider_subscription_id: string | null;
+  amount_cents: number | null;
+  grace_expires_at: string | null;
 }
 
-const BUSINESS_COLUMNS =
-  "id, slug, name, business_type, description, logo_url, cover_url, whatsapp, address, booking_policy, timezone, slot_interval_minutes, min_notice_minutes, max_advance_days";
+const SUBSCRIPTION_COLUMNS =
+  "id, business_id, plan_id, status, billing_interval, payment_method, current_period_start, current_period_end, trial_ends_at, cancel_at_period_end, canceled_at, pending_plan_id, pending_billing_interval, provider, provider_customer_id, provider_subscription_id, amount_cents, grace_expires_at";
 
-export async function loadBusinessBySlug(db: Db, slug: string): Promise<BookingBusiness | null> {
+export async function loadSubscriptionByBusiness(db: Db, businessId: string) {
   const { data } = await db
-    .from("businesses")
-    .select(BUSINESS_COLUMNS)
-    .eq("slug", slug)
-    .eq("active", true)
+    .from("subscriptions")
+    .select(SUBSCRIPTION_COLUMNS)
+    .eq("business_id", businessId)
     .maybeSingle();
-  return (data as BookingBusiness | null) ?? null;
+  return (data as SubscriptionRow | null) ?? null;
 }
 
-export async function loadBusinessById(
-  db: Db,
-  businessId: string,
-): Promise<BookingBusiness | null> {
+export async function loadSubscriptionByProviderId(db: Db, providerSubscriptionId: string) {
   const { data } = await db
-    .from("businesses")
-    .select(BUSINESS_COLUMNS)
-    .eq("id", businessId)
-    .eq("active", true)
+    .from("subscriptions")
+    .select(SUBSCRIPTION_COLUMNS)
+    .eq("provider_subscription_id", providerSubscriptionId)
     .maybeSingle();
-  return (data as BookingBusiness | null) ?? null;
+  return (data as SubscriptionRow | null) ?? null;
 }
 
-/**
- * PUBLIC path (anon key): the booking page never reads tables directly.
- * `public_business` / `public_catalog` are the only anon-reachable surface and
- * they project public columns only (email is never exposed; address/WhatsApp
- * honour the business visibility toggles).
- */
-export async function loadPublicBusinessBySlug(
-  db: Db,
-  slug: string,
-): Promise<(BookingBusiness & { accepts_bookings: boolean }) | null> {
-  const { data } = await db.rpc("public_business", { _slug: slug });
-  return (data as (BookingBusiness & { accepts_bookings: boolean }) | null) ?? null;
+export async function loadPlanById(db: Db, planId: string): Promise<PlanRow | null> {
+  const { data } = await db.from("plans").select(PLAN_COLUMNS).eq("id", planId).maybeSingle();
+  return (data as PlanRow | null) ?? null;
 }
 
-export interface PublicCatalog {
-  services: {
-    id: string;
-    name: string;
-    description: string | null;
-    category: string | null;
-    price_cents: number;
-    duration_minutes: number;
-    image_url: string | null;
-    allows_parallel: boolean;
-  }[];
-  products?: {
-    id: string;
-    name: string;
-    price_cents: number;
-    stock_quantity: number;
-    image_url: string | null;
-  }[];
-  professionals: { id: string; name: string; photo_url: string | null; bio: string | null }[];
-  links: { professional_id: string; service_id: string }[];
-  /** Owner-configured pairs of services that cannot be booked together. */
-  serviceConflicts?: {
-    service_id: string;
-    conflicting_service_id: string;
-    reason: string | null;
-  }[];
-  businessHours: { weekday: number; opens_at: string; closes_at: string; closed: boolean }[];
-  professionalHours: {
-    professional_id: string;
-    weekday: number;
-    starts_at: string;
-    ends_at: string;
-    enabled: boolean;
-    lunch_starts_at: string | null;
-    lunch_ends_at: string | null;
-  }[];
-}
-
-export async function loadPublicCatalogBySlug(db: Db, slug: string): Promise<PublicCatalog> {
-  const { data } = await db.rpc("public_catalog", { _slug: slug });
-  const catalog = (data as PublicCatalog | null) ?? null;
-  return (
-    catalog ?? {
-      services: [],
-      products: [],
-      professionals: [],
-      links: [],
-      serviceConflicts: [],
-      businessHours: [],
-      professionalHours: [],
-    }
-  );
-}
-
-export async function loadPublicCatalog(db: Db, businessId: string) {
-  const [services, professionals, links, businessHours, professionalHours] = await Promise.all([
-    db
-      .from("services")
-      .select(
-        "id, name, description, category, price_cents, duration_minutes, image_url, allows_parallel",
-      )
-      .eq("business_id", businessId)
-      .eq("active", true)
-      .is("deleted_at", null)
-      .order("category", { ascending: true })
-      .order("name", { ascending: true }),
-    db
-      .from("professionals")
-      .select("id, name, photo_url, bio")
-      .eq("business_id", businessId)
-      .eq("active", true)
-      .is("deleted_at", null)
-      .order("name", { ascending: true }),
-    db
-      .from("professional_services")
-      .select("professional_id, service_id")
-      .eq("business_id", businessId),
-    db
-      .from("business_hours")
-      .select("weekday, opens_at, closes_at, closed")
-      .eq("business_id", businessId),
-    db
-      .from("professional_hours")
-      .select(
-        "professional_id, weekday, starts_at, ends_at, enabled, lunch_starts_at, lunch_ends_at",
-      )
-      .eq("business_id", businessId),
-  ]);
-
-  return {
-    services: services.data ?? [],
-    professionals: professionals.data ?? [],
-    links: links.data ?? [],
-    businessHours: businessHours.data ?? [],
-    professionalHours: professionalHours.data ?? [],
+/** Central entitlement source of truth — computed in the database. */
+export async function businessEntitlements(db: Db, businessId: string) {
+  const { data, error } = await db.rpc("business_entitlements", { _business_id: businessId });
+  if (error) throw new Error(error.message);
+  return data as {
+    plan_code: string | null;
+    plan_name?: string | null;
+    professional_limit: number | null;
+    status: string | null;
+    booking_state: string;
+    entitled?: boolean;
+    grace_expires_at?: string | null;
+    accepts_bookings: boolean;
+    features: Record<string, string | number | boolean | null>;
+    current_period_end?: string | null;
+    trial_ends_at?: string | null;
+    cancel_at_period_end?: boolean | null;
+    grace_period_days?: number | null;
   };
 }
 
-export interface ResolvedSelection {
-  services: {
-    id: string;
-    name: string;
-    price_cents: number;
-    duration_minutes: number;
-    allows_parallel: boolean;
-  }[];
-  durationMinutes: number;
-  priceCents: number;
-  blocksAgenda: boolean;
-}
-
-/**
- * Owner-configured incompatibilities (e.g. "Corte + Barba" with "Corte Masculino").
- * Enforced here so every booking path (public page and panel) shares the rule,
- * and again by a database trigger as the last line of defence.
- */
-export async function assertNoServiceConflicts(
-  db: Db,
-  businessId: string,
-  serviceIds: string[],
-): Promise<void> {
-  if (serviceIds.length < 2) return;
-  const { data } = await db
-    .from("service_conflicts")
-    .select("service_id, conflicting_service_id")
-    .eq("business_id", businessId)
-    .in("service_id", serviceIds)
-    .in("conflicting_service_id", serviceIds);
-  if ((data ?? []).length > 0) {
+export async function assertAcceptsBookings(db: Db, businessId: string): Promise<void> {
+  const { data, error } = await db.rpc("business_accepts_bookings", { _business_id: businessId });
+  if (error) throw new Error(error.message);
+  if (data !== true) {
     throw new Error(
-      "SERVICE_CONFLICT: os serviços selecionados não podem ser combinados no mesmo atendimento",
+      "BOOKING_BLOCKED: esta agenda está temporariamente indisponível. Fale com o estabelecimento.",
     );
   }
 }
 
-export async function resolveSelection(
-  db: Db,
-  businessId: string,
-  serviceIds: string[],
-): Promise<ResolvedSelection> {
-  await assertNoServiceConflicts(db, businessId, serviceIds);
-  const { data } = await db
-    .from("services")
-    .select("id, name, price_cents, duration_minutes, allows_parallel")
-    .eq("business_id", businessId)
-    .eq("active", true)
-    .is("deleted_at", null)
-    .in("id", serviceIds);
-  const rows = data ?? [];
-  if (rows.length !== new Set(serviceIds).size) {
-    throw new Error("SERVICE_NOT_AVAILABLE: um dos serviços selecionados não está disponível");
-  }
-  return {
-    services: rows,
-    durationMinutes: totalDuration(rows),
-    priceCents: totalPriceCents(rows),
-    blocksAgenda: blocksAgenda(rows),
-  };
+/** YYYY-MM-DD for the gateway's due date, offset by whole days. */
+export function dueDateString(from: Date, addDays = 0): string {
+  const d = new Date(from.getTime() + addDays * 86400000);
+  return d.toISOString().slice(0, 10);
 }
 
-export async function busyIntervals(
+/**
+ * Records a raw gateway event. Returns false when the event was already
+ * processed (idempotency), so the caller can stop early.
+ */
+export async function recordEventOnce(
   db: Db,
-  professionalId: string,
-  date: string,
-  timeZone: string,
-  excludeAppointmentId?: string,
-): Promise<BusyInterval[]> {
-  // Widen by a day on both sides so timezone conversion never clips an appointment.
-  const from = new Date(`${date}T00:00:00Z`);
-  from.setUTCDate(from.getUTCDate() - 1);
-  const to = new Date(`${date}T00:00:00Z`);
-  to.setUTCDate(to.getUTCDate() + 2);
-  void timeZone;
-  const { data } = await db
-    .from("appointments")
-    .select("id, starts_at, ends_at, status, blocks_agenda")
-    .eq("professional_id", professionalId)
-    .gte("starts_at", from.toISOString())
-    .lt("starts_at", to.toISOString())
-    .not("status", "in", "(CANCELED,NO_SHOW,RESCHEDULED)");
-  const rows = excludeAppointmentId
-    ? (data ?? []).filter((a) => a.id !== excludeAppointmentId)
-    : (data ?? []);
-  return rows.filter((a) => a.blocks_agenda).map((a) => ({ start: a.starts_at, end: a.ends_at }));
-}
-
-export interface DaySlots {
-  professionalId: string;
-  professionalName: string;
-  slots: { label: string; startsAt: string; endsAt: string }[];
-}
-
-export async function availabilityForDay(
-  db: Db,
-  business: BookingBusiness,
-  serviceIds: string[],
-  date: string,
-  professionalId: string | null,
-  now: Date,
-  excludeAppointmentId?: string,
-): Promise<{ durationMinutes: number; priceCents: number; byProfessional: DaySlots[] }> {
-  const selection = await resolveSelection(db, business.id, serviceIds);
-
-  // Booking window guard: never offer past days or days beyond max_advance_days.
-  const today = localDateOf(now, business.timezone);
-  const maxDate = localDateOf(
-    new Date(now.getTime() + business.max_advance_days * 86400000),
-    business.timezone,
-  );
-  if (date < today || date > maxDate) {
-    return {
-      durationMinutes: selection.durationMinutes,
-      priceCents: selection.priceCents,
-      byProfessional: [],
-    };
-  }
-
-  const catalog = await loadPublicCatalog(db, business.id);
-  const weekday = weekdayOf(date);
-
-  const bh = catalog.businessHours.find((h) => h.weekday === weekday);
-  const businessWindow = bh && !bh.closed ? { startsAt: bh.opens_at, endsAt: bh.closes_at } : null;
-
-  const candidates = catalog.professionals.filter((p) => {
-    if (professionalId && p.id !== professionalId) return false;
-    // The professional must perform every selected service.
-    return serviceIds.every((sid) =>
-      catalog.links.some((l) => l.professional_id === p.id && l.service_id === sid),
-    );
+  provider: string,
+  event: NormalizedWebhookEvent,
+): Promise<boolean> {
+  const { error } = await db.from("payment_events").insert({
+    provider,
+    external_id: event.externalId,
+    event_type: event.rawEventName,
+    business_id: event.businessId,
+    payload: event.raw as never,
   });
-
-  const byProfessional: DaySlots[] = [];
-  for (const professional of candidates) {
-    const ph = catalog.professionalHours.find(
-      (h) => h.professional_id === professional.id && h.weekday === weekday,
-    );
-    const professionalWindow =
-      ph && ph.enabled ? { startsAt: ph.starts_at, endsAt: ph.ends_at } : null;
-    const breakWindow =
-      ph && ph.enabled && ph.lunch_starts_at && ph.lunch_ends_at
-        ? { startsAt: ph.lunch_starts_at, endsAt: ph.lunch_ends_at }
-        : null;
-    const busy = await busyIntervals(
-      db,
-      professional.id,
-      date,
-      business.timezone,
-      excludeAppointmentId,
-    );
-    const slots = computeSlots({
-      date,
-      timeZone: business.timezone,
-      businessWindow,
-      professionalWindow,
-      breakWindow,
-      durationMinutes: selection.durationMinutes,
-      slotIntervalMinutes: business.slot_interval_minutes,
-      minNoticeMinutes: business.min_notice_minutes,
-      busy,
-      now: now.toISOString(),
-    });
-    byProfessional.push({
-      professionalId: professional.id,
-      professionalName: professional.name,
-      slots,
-    });
+  if (error) {
+    // 23505 = unique violation → duplicate delivery.
+    if (error.code === "23505") return false;
+    throw new Error(error.message);
   }
-
-  return {
-    durationMinutes: selection.durationMinutes,
-    priceCents: selection.priceCents,
-    byProfessional,
-  };
+  return true;
 }
 
-export async function assertBookableAppointment(
+export async function markEventProcessed(
   db: Db,
-  business: BookingBusiness,
-  input: {
-    professionalId: string;
-    serviceIds: string[];
-    startsAt: Date;
-    now: Date;
-    excludeAppointmentId?: string;
-  },
-): Promise<ResolvedSelection> {
-  if (input.serviceIds.length === 0) {
-    throw new Error("SERVICE_NOT_AVAILABLE: selecione ao menos um serviço");
-  }
-  const professional = await db
-    .from("professionals")
-    .select("id")
-    .eq("id", input.professionalId)
-    .eq("business_id", business.id)
-    .eq("active", true)
-    .is("deleted_at", null)
-    .maybeSingle();
-  if (!professional.data) throw new Error("PROFESSIONAL_NOT_AVAILABLE: profissional indisponível");
+  provider: string,
+  externalId: string,
+  result?: string,
+) {
+  await db
+    .from("payment_events")
+    .update({ processed_at: new Date().toISOString(), result: result ?? "OK" })
+    .eq("provider", provider)
+    .eq("external_id", externalId);
+}
 
-  const selection = await resolveSelection(db, business.id, input.serviceIds);
-  const links = await db
-    .from("professional_services")
-    .select("service_id")
-    .eq("business_id", business.id)
-    .eq("professional_id", input.professionalId)
-    .in("service_id", input.serviceIds);
-  if ((links.data ?? []).length !== new Set(input.serviceIds).size) {
-    throw new Error("PROFESSIONAL_SERVICE_MISMATCH: profissional não executa todos os serviços");
-  }
+/**
+ * Removes the de-duplication row when processing failed, so the gateway's
+ * retry is treated as a NEW event instead of being swallowed as a duplicate.
+ */
+export async function discardEvent(db: Db, provider: string, externalId: string) {
+  await db.from("payment_events").delete().eq("provider", provider).eq("external_id", externalId);
+}
 
-  const date = localDateOf(input.startsAt, business.timezone);
-  const availability = await availabilityForDay(
-    db,
-    business,
-    input.serviceIds,
-    date,
-    input.professionalId,
-    input.now,
-    input.excludeAppointmentId,
+async function upsertPayment(
+  db: Db,
+  subscription: SubscriptionRow,
+  event: NormalizedWebhookEvent,
+  status: string,
+) {
+  if (!event.providerPaymentId) return;
+  await db.from("payments").upsert(
+    {
+      business_id: subscription.business_id,
+      subscription_id: subscription.id,
+      provider: subscription.provider,
+      provider_payment_id: event.providerPaymentId,
+      provider_event_id: event.externalId,
+      amount_cents: event.amountCents ?? subscription.amount_cents ?? 0,
+      status,
+      payment_method: event.method ?? subscription.payment_method,
+      invoice_url: event.invoiceUrl,
+      paid_at: status === "PAID" ? (event.paidAt ?? new Date().toISOString()) : null,
+      due_at: event.dueDate ? new Date(`${event.dueDate}T12:00:00Z`).toISOString() : null,
+    },
+    { onConflict: "provider,provider_payment_id" },
   );
-  const offered = availability.byProfessional
-    .find((professionalSlots) => professionalSlots.professionalId === input.professionalId)
-    ?.slots.some((slot) => slot.startsAt === input.startsAt.toISOString());
-  if (!offered) throw new Error("SLOT_UNAVAILABLE: esse horário não está disponível");
-  return selection;
+}
+
+async function audit(
+  db: Db,
+  businessId: string | null,
+  action: string,
+  data: Record<string, unknown>,
+) {
+  await db.from("audit_logs").insert({
+    business_id: businessId,
+    actor_user_id: null,
+    action,
+    entity: "subscription",
+    entity_id: businessId,
+    data: data as never,
+  });
+}
+
+async function resolveSubscription(db: Db, event: NormalizedWebhookEvent) {
+  if (event.providerSubscriptionId) {
+    const byProvider = await loadSubscriptionByProviderId(db, event.providerSubscriptionId);
+    if (byProvider) return byProvider;
+  }
+  if (event.businessId) return loadSubscriptionByBusiness(db, event.businessId);
+  return null;
+}
+
+/**
+ * Applies a normalized gateway event to the subscription state machine.
+ *
+ * payment.confirmed → ACTIVE, period rolled forward, pending plan change applied
+ * payment.overdue   → PAST_DUE with a grace deadline (agenda keeps working)
+ * payment.refunded  → SUSPENDED (agenda blocked immediately)
+ * subscription.canceled → CANCELED at the end of the paid period
+ */
+export async function applyBillingEvent(db: Db, event: NormalizedWebhookEvent) {
+  const subscription = await resolveSubscription(db, event);
+  if (!subscription) return { handled: false as const, reason: "SUBSCRIPTION_NOT_FOUND" };
+
+  switch (event.type) {
+    case "payment.confirmed": {
+      // A confirmed payment starts a new paid period and applies any change
+      // the owner scheduled for the next cycle.
+      const targetPlanId = subscription.pending_plan_id ?? subscription.plan_id;
+      const targetInterval = subscription.pending_billing_interval ?? subscription.billing_interval;
+      const plan = await loadPlanById(db, targetPlanId);
+      const start = new Date();
+      const end = addPeriod(start, targetInterval);
+
+      await db
+        .from("subscriptions")
+        .update({
+          status: "ACTIVE",
+          plan_id: targetPlanId,
+          billing_interval: targetInterval,
+          pending_plan_id: null,
+          pending_billing_interval: null,
+          payment_method: event.method ?? subscription.payment_method,
+          amount_cents: plan ? planPriceCents(plan, targetInterval) : subscription.amount_cents,
+          current_period_start: start.toISOString(),
+          current_period_end: end.toISOString(),
+          grace_expires_at: null,
+          last_payment_at: event.paidAt ?? start.toISOString(),
+          trial_ends_at: null,
+        })
+        .eq("id", subscription.id);
+
+      await upsertPayment(db, subscription, event, "PAID");
+      await db.from("transactions").insert({
+        business_id: subscription.business_id,
+        type: "SUBSCRIPTION",
+        amount_cents: event.amountCents ?? subscription.amount_cents ?? 0,
+        description: `Assinatura ${plan?.name ?? ""} (${targetInterval === "ANNUAL" ? "anual" : "mensal"})`,
+        occurred_at: event.paidAt ?? start.toISOString(),
+      });
+      await audit(db, subscription.business_id, "billing.payment_confirmed", {
+        plan: plan?.code ?? null,
+        interval: targetInterval,
+        amount_cents: event.amountCents,
+      });
+      return { handled: true as const, state: "ACTIVE" };
+    }
+
+    case "payment.overdue": {
+      const days = await graceDays(db);
+      await db
+        .from("subscriptions")
+        .update({
+          status: "PAST_DUE",
+          grace_expires_at: new Date(Date.now() + days * 86400000).toISOString(),
+        })
+        .eq("id", subscription.id);
+      await upsertPayment(db, subscription, event, "OVERDUE");
+      await audit(db, subscription.business_id, "billing.payment_overdue", { grace_days: days });
+      return { handled: true as const, state: "PAST_DUE" };
+    }
+
+    case "payment.refunded": {
+      await db
+        .from("subscriptions")
+        .update({ status: "SUSPENDED", grace_expires_at: null })
+        .eq("id", subscription.id);
+      await upsertPayment(db, subscription, event, "REFUNDED");
+      await audit(db, subscription.business_id, "billing.payment_refunded", {});
+      return { handled: true as const, state: "SUSPENDED" };
+    }
+
+    case "subscription.canceled": {
+      // The gateway stopped future charges. Access is kept until the paid
+      // period ends; the daily reconciliation flips the status at that moment.
+      const periodOver = new Date(subscription.current_period_end).getTime() <= Date.now();
+      await db
+        .from("subscriptions")
+        .update({
+          status: periodOver ? "CANCELED" : subscription.status,
+          cancel_at_period_end: true,
+          canceled_at: subscription.canceled_at ?? new Date().toISOString(),
+          pending_plan_id: null,
+          pending_billing_interval: null,
+        })
+        .eq("id", subscription.id);
+      await audit(db, subscription.business_id, "billing.subscription_canceled", {
+        effective_at: subscription.current_period_end,
+        immediate: periodOver,
+      });
+      return { handled: true as const, state: periodOver ? "CANCELED" : subscription.status };
+    }
+
+    case "payment.pending": {
+      await upsertPayment(db, subscription, event, "PENDING");
+      return { handled: true as const, state: subscription.status };
+    }
+
+    default:
+      return { handled: false as const, reason: "UNSUPPORTED_EVENT" };
+  }
+}
+
+/**
+ * Periodic reconciliation. The whole transition set lives in the database
+ * function `reconcile_subscriptions()` (also scheduled daily by the database
+ * itself), so the HTTP cron endpoint and the internal scheduler can never
+ * drift apart: expired trials/periods → PAST_DUE, expired grace → SUSPENDED,
+ * cancellations → CANCELED at period end. Every change is audited.
+ */
+export async function reconcileSubscriptions(db: Db) {
+  const { data, error } = await db.rpc("reconcile_subscriptions");
+  if (error) throw new Error(error.message);
+  const result = (data ?? {}) as { lapsed?: number; suspended?: number; canceled?: number };
+  return {
+    pastDue: result.lapsed ?? 0,
+    suspended: result.suspended ?? 0,
+    canceled: result.canceled ?? 0,
+  };
 }
