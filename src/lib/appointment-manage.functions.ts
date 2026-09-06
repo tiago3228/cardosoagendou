@@ -20,6 +20,7 @@ export const getAppointmentByManageToken = createServerFn({ method: "GET" })
     return appointment as {
       id: string;
       business_name: string;
+      business_slug: string;
       client_name: string;
       starts_at: string;
       ends_at: string;
@@ -39,5 +40,16 @@ export const confirmAppointmentPresence = createServerFn({ method: "POST" })
       _presence: data.presence,
     });
     if (error) throw new Error(`PRESENCE_FAILED: ${error.message}`);
+    return result;
+  });
+
+export const cancelAppointmentByManageToken = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => tokenSchema.parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: result, error } = await supabaseAdmin.rpc("appointment_cancel_by_token", {
+      _token_hash: hashToken(data.token),
+    });
+    if (error) throw new Error(`CANCEL_FAILED: ${error.message}`);
     return result;
   });

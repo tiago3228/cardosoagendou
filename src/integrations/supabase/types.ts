@@ -1424,6 +1424,10 @@ export type Database = {
         };
         Returns: string;
       };
+      appointment_cancel_by_token: {
+        Args: { _token_hash: string };
+        Returns: Json;
+      };
       appointment_manage_by_token: {
         Args: { _token_hash: string };
         Returns: Json;

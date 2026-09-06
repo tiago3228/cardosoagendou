@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   getAppointmentByManageToken,
   confirmAppointmentPresence,
+  cancelAppointmentByManageToken,
 } from "@/lib/appointment-manage.functions";
 
 export const Route = createFileRoute("/agendamento/$token")({
@@ -45,6 +46,23 @@ function ManageAppointmentPage() {
         error instanceof Error
           ? error.message.replace(/^[A-Z_]+:\s*/, "")
           : "Não foi possível atualizar.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function cancelAppointment() {
+    if (!window.confirm("Deseja realmente cancelar este agendamento?")) return;
+    setBusy(true);
+    try {
+      await cancelAppointmentByManageToken({ data: { token } });
+      setMessage("Agendamento cancelado.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message.replace(/^[A-Z_]+:\s*/, "")
+          : "Não foi possível cancelar.",
       );
     } finally {
       setBusy(false);
@@ -96,9 +114,20 @@ function ManageAppointmentPage() {
           </p>
         ) : null}
         {message ? <p className="mt-4 text-sm text-[#D1A66C]">{message}</p> : null}
+        <div className="mt-5 grid gap-2">
+          <Button asChild variant="outline" disabled={busy || !appointment.allow_reschedule}>
+            <a href={`/${appointment.business_slug}`}>Reagendar</a>
+          </Button>
+          <Button
+            variant="ghost"
+            disabled={busy || !appointment.allow_cancel || appointment.status !== "CONFIRMED"}
+            onClick={() => void cancelAppointment()}
+          >
+            Cancelar agendamento
+          </Button>
+        </div>
         <p className="mt-6 text-xs leading-5 text-[#9C948A]">
-          Para cancelar ou reagendar, entre em contato com o estabelecimento enquanto essas opções
-          não estiverem disponíveis neste link.
+          As ações respeitam a antecedência configurada pelo estabelecimento.
         </p>
       </section>
     </main>

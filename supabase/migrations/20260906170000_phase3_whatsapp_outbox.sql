@@ -116,7 +116,7 @@ CREATE OR REPLACE FUNCTION public.appointment_manage_by_token(_token_hash text)
 RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
 AS $$
   SELECT jsonb_build_object(
-    'id', a.id, 'business_id', a.business_id, 'business_name', b.name,
+    'id', a.id, 'business_id', a.business_id, 'business_name', b.name, 'business_slug', b.slug,
     'client_name', a.client_name, 'starts_at', a.starts_at, 'ends_at', a.ends_at,
     'status', a.status, 'presence_status', a.presence_status,
     'professional_id', a.professional_id,
@@ -150,3 +150,23 @@ BEGIN
 END;
 $$;
 GRANT EXECUTE ON FUNCTION public.appointment_presence_by_token(text, text) TO anon, authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.appointment_cancel_by_token(_token_hash text)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
+AS $$
+DECLARE row_data record;
+BEGIN
+  SELECT * INTO row_data FROM public.appointments
+   WHERE manage_token_hash = _token_hash
+     AND (manage_token_expires_at IS NULL OR manage_token_expires_at > now())
+   FOR UPDATE;
+  IF row_data.id IS NULL THEN RAISE EXCEPTION 'MANAGE_LINK_INVALID'; END IF;
+  IF row_data.status IN ('CANCELED','COMPLETED','NO_SHOW') THEN RAISE EXCEPTION 'APPOINTMENT_NOT_CANCELABLE'; END IF;
+  IF row_data.starts_at < now() + interval '1 hour' THEN RAISE EXCEPTION 'CANCEL_NOTICE_REQUIRED'; END IF;
+  UPDATE public.appointments SET status = 'CANCELED', cancel_reason = 'Cancelado pelo cliente' WHERE id = row_data.id;
+  PERFORM public.enqueue_message(row_data.business_id, row_data.id, 'CLIENT_CANCELED', row_data.client_whatsapp,
+    jsonb_build_object('appointment_id', row_data.id), 'canceled:' || row_data.id::text);
+  RETURN jsonb_build_object('id', row_data.id, 'status', 'CANCELED');
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.appointment_cancel_by_token(text) TO anon, authenticated, service_role;
