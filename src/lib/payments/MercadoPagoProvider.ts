@@ -104,7 +104,7 @@ export class MercadoPagoProvider implements PaymentProvider {
       } catch {
         /* keep raw text */
       }
-      throw new Error(`GATEWAY_ERROR: ${detail}`);
+      throw new Error(`GATEWAY_ERROR: HTTP ${response.status}: ${detail}`);
     }
     return (text ? JSON.parse(text) : {}) as T;
   }
