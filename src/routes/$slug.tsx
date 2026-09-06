@@ -18,6 +18,7 @@ import {
   getAvailability,
   getPublicBusiness,
 } from "@/lib/booking.functions";
+import { rescheduleAppointmentByManageToken } from "@/lib/appointment-manage.functions";
 import { formatBRL, formatDuration, normalizeInstagramUrl, whatsappLink } from "@/lib/format";
 import { businessTypeConfig } from "@/lib/business-types";
 import { Button } from "@/components/ui/button";
@@ -91,9 +92,11 @@ function BookingPage() {
 
   const fetchAvailability = useServerFn(getAvailability);
   const book = useServerFn(createPublicAppointment);
+  const reschedule = useServerFn(rescheduleAppointmentByManageToken);
 
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [professionalId, setProfessionalId] = useState<string | null>(null);
   const [date, setDate] = useState(todayISO());
   const [slots, setSlots] = useState<
@@ -110,6 +113,10 @@ function BookingPage() {
   const [notes, setNotes] = useState("");
   const [policyAccepted, setPolicyAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [rescheduleToken] = useState(() => {
+    if (typeof window === "undefined") return null;
+    return new URLSearchParams(window.location.search).get("reschedule");
+  });
   const [confirmed, setConfirmed] = useState<{
     startsAt: string;
     totalPriceCents: number;
@@ -123,6 +130,10 @@ function BookingPage() {
   );
   const totalMinutes = chosenServices.reduce((sum, s) => sum + s.duration_minutes, 0);
   const totalCents = chosenServices.reduce((sum, s) => sum + s.price_cents, 0);
+  const chosenProducts = (data!.products ?? []).filter((product) =>
+    selectedProducts.includes(product.id),
+  );
+  const productsTotalCents = chosenProducts.reduce((sum, product) => sum + product.price_cents, 0);
   const chosenProfessionalName =
     data!.professionals.find((professional) => professional.id === chosen?.professionalId)?.name ??
     "Profissional disponível";
@@ -134,6 +145,9 @@ function BookingPage() {
         `Olá! Acabei de agendar em ${business.name}.`,
         `Profissional: ${chosenProfessionalName}`,
         `Serviços: ${chosenServices.map((service) => service.name).join(", ")}`,
+        ...(chosenProducts.length > 0
+          ? [`Produtos: ${chosenProducts.map((product) => product.name).join(", ")}`]
+          : []),
         `Data e horário: ${new Date(confirmed.startsAt).toLocaleString("pt-BR", {
           dateStyle: "full",
           timeStyle: "short",
@@ -220,22 +234,32 @@ function BookingPage() {
     if (!chosen) return;
     setBusy(true);
     try {
-      const result = await book({
-        data: {
-          slug,
-          professionalId: chosen.professionalId,
-          serviceIds: selected,
-          startsAt: chosen.startsAt,
-          clientName,
-          whatsapp,
-          notes: notes || undefined,
-          policyAccepted,
-          idempotencyKey: idempotencyKey.current ?? (idempotencyKey.current = crypto.randomUUID()),
-        },
-      });
+      const result = rescheduleToken
+        ? await reschedule({
+            data: {
+              token: rescheduleToken,
+              professionalId: chosen.professionalId,
+              startsAt: chosen.startsAt,
+            },
+          })
+        : await book({
+            data: {
+              slug,
+              professionalId: chosen.professionalId,
+              serviceIds: selected,
+              productIds: selectedProducts,
+              startsAt: chosen.startsAt,
+              clientName,
+              whatsapp,
+              notes: notes || undefined,
+              policyAccepted,
+              idempotencyKey:
+                idempotencyKey.current ?? (idempotencyKey.current = crypto.randomUUID()),
+            },
+          });
       setConfirmed({
         startsAt: result.startsAt,
-        totalPriceCents: result.totalPriceCents,
+        totalPriceCents: Number(result.totalPriceCents),
         manageToken: result.manageToken,
       });
       setStep(4);
@@ -509,20 +533,46 @@ function BookingPage() {
               {(data!.products ?? []).length > 0 ? (
                 <div className="mt-8">
                   <h3 className="font-display text-lg font-bold text-[#F2EDE4]">
-                    Produtos disponíveis
+                    Produtos para retirar no estabelecimento
                   </h3>
+                  <p className="mt-1 text-sm text-[#9C948A]">
+                    Opcional. O estoque só será baixado quando a venda for registrada pelo
+                    estabelecimento.
+                  </p>
                   <ul className="mt-3 grid gap-2 sm:grid-cols-2">
                     {(data!.products ?? []).map((product) => (
                       <li
                         key={product.id}
-                        className="flex items-center gap-3 rounded-xl border border-[#35302A] bg-[#1E1B17] p-3"
+                        className={`rounded-xl border bg-[#1E1B17] p-3 transition ${selectedProducts.includes(product.id) ? "border-[#B4884F]" : "border-[#35302A]"}`}
                       >
-                        <span>
-                          <span className="block font-medium text-[#F2EDE4]">{product.name}</span>
-                          <span className="text-sm text-[#D1A66C]">
-                            {formatBRL(product.price_cents)}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedProducts((previous) =>
+                              previous.includes(product.id)
+                                ? previous.filter((id) => id !== product.id)
+                                : [...previous, product.id],
+                            )
+                          }
+                          className="flex w-full items-center gap-3 text-left"
+                        >
+                          {product.image_url ? (
+                            <img
+                              src={product.image_url}
+                              alt=""
+                              className="size-12 rounded-lg object-cover"
+                            />
+                          ) : null}
+                          <span className="min-w-0 flex-1">
+                            <span className="block font-medium text-[#F2EDE4]">{product.name}</span>
+                            <span className="text-sm text-[#D1A66C]">
+                              {formatBRL(product.price_cents)}
+                            </span>
                           </span>
-                        </span>
+                          {selectedProducts.includes(product.id) ? (
+                            <Check className="size-5 text-[#D1A66C]" aria-hidden />
+                          ) : null}
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -597,21 +647,38 @@ function BookingPage() {
                   dateStyle: "full",
                   timeStyle: "short",
                 })}{" "}
-                · {formatDuration(totalMinutes)} · {formatBRL(totalCents)}
+                · {formatDuration(totalMinutes)} · {formatBRL(totalCents + productsTotalCents)}
               </p>
+              {chosenProducts.length > 0 ? (
+                <p className="mt-2 text-sm text-[#D1A66C]">
+                  Produtos: {chosenProducts.map((product) => product.name).join(", ")} ·{" "}
+                  {formatBRL(productsTotalCents)}
+                </p>
+              ) : null}
+              {rescheduleToken ? (
+                <p className="mt-2 rounded-lg border border-[#B4884F]/40 bg-[#262220] p-3 text-sm text-[#D1A66C]">
+                  Escolha o novo horário. Os dados e produtos do agendamento original serão
+                  preservados.
+                </p>
+              ) : null}
               <form onSubmit={confirm} className="mt-5 space-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="nome">Nome completo</Label>
                   <Input
                     id="nome"
-                    required
+                    required={!rescheduleToken}
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
                   />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="zap">WhatsApp</Label>
-                  <WhatsappInput id="zap" required value={whatsapp} onChange={setWhatsapp} />
+                  <WhatsappInput
+                    id="zap"
+                    required={!rescheduleToken}
+                    value={whatsapp}
+                    onChange={setWhatsapp}
+                  />
                 </div>
 
                 <div className="space-y-1.5">
@@ -622,7 +689,7 @@ function BookingPage() {
                   <label className="flex items-start gap-3 rounded-xl border border-[#35302A] bg-[#1E1B17] p-4 text-sm text-[#F2EDE4]">
                     <input
                       type="checkbox"
-                      required
+                      required={!rescheduleToken}
                       checked={policyAccepted}
                       onChange={(e) => setPolicyAccepted(e.target.checked)}
                       className="mt-0.5 size-4 accent-[#B4884F]"
@@ -658,6 +725,11 @@ function BookingPage() {
                 <br />
                 Total: {formatBRL(confirmed.totalPriceCents)}
               </p>
+              {chosenProducts.length > 0 ? (
+                <p className="mt-3 text-sm text-[#D1A66C]">
+                  Produtos solicitados: {chosenProducts.map((product) => product.name).join(", ")}
+                </p>
+              ) : null}
               <Button
                 asChild
                 variant="outline"

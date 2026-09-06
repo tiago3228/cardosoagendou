@@ -249,7 +249,7 @@ export async function busyIntervals(
     .eq("professional_id", professionalId)
     .gte("starts_at", from.toISOString())
     .lt("starts_at", to.toISOString())
-    .not("status", "in", "(CANCELED,NO_SHOW)");
+    .not("status", "in", "(CANCELED,NO_SHOW,RESCHEDULED)");
   const rows = excludeAppointmentId
     ? (data ?? []).filter((a) => a.id !== excludeAppointmentId)
     : (data ?? []);

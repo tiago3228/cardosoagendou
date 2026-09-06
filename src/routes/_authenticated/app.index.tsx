@@ -38,6 +38,7 @@ const STATUS_LABEL: Record<string, string> = {
   COMPLETED: "Concluído",
   CANCELED: "Cancelado",
   NO_SHOW: "Não compareceu",
+  RESCHEDULED: "Reagendado",
 };
 
 const STATUS_STYLE: Record<string, string> = {
@@ -47,6 +48,7 @@ const STATUS_STYLE: Record<string, string> = {
   COMPLETED: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
   CANCELED: "bg-destructive/15 text-destructive",
   NO_SHOW: "bg-muted text-muted-foreground",
+  RESCHEDULED: "bg-muted text-muted-foreground",
 };
 
 const FILTERS = [
@@ -132,7 +134,7 @@ function AgendaPage() {
       return items.filter((a) => ["PENDING", "CONFIRMED", "IN_PROGRESS"].includes(a.status));
     if (filter === "COMPLETED") return items.filter((a) => a.status === "COMPLETED");
     if (filter === "CANCELED")
-      return items.filter((a) => ["CANCELED", "NO_SHOW"].includes(a.status));
+      return items.filter((a) => ["CANCELED", "NO_SHOW", "RESCHEDULED"].includes(a.status));
     return items;
   }, [items, filter]);
 
@@ -236,6 +238,7 @@ function AgendaPage() {
 
       <PlanBenefitsBanner
         currentPlanCode={(panel.subscription?.plans as { code?: string } | null)?.code ?? null}
+        currentStatus={panel.subscription?.status ?? null}
       />
 
       <div className="mt-6 flex gap-2 overflow-x-auto pb-1">
@@ -265,6 +268,10 @@ function AgendaPage() {
         {visible.map((appointment) => {
           const professional = appointment.professionals as { name?: string } | null;
           const services = (appointment.appointment_services ?? []) as { service_name: string }[];
+          const products = (appointment.appointment_products ?? []) as {
+            product_name: string;
+            quantity: number;
+          }[];
           const e164 = normalizeBrWhatsapp(appointment.client_whatsapp ?? "");
           const time = new Date(appointment.starts_at).toLocaleTimeString("pt-BR", {
             hour: "2-digit",
@@ -293,6 +300,12 @@ function AgendaPage() {
                     <p className="mt-0.5 truncate text-sm text-muted-foreground">
                       {services.map((s) => s.service_name).join(" + ")}
                     </p>
+                    {products.length > 0 ? (
+                      <p className="mt-1 truncate text-xs text-primary">
+                        Produtos:{" "}
+                        {products.map((p) => `${p.product_name} (${p.quantity}x)`).join(", ")}
+                      </p>
+                    ) : null}
                   </div>
                   <span
                     className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${

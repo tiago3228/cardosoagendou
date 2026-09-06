@@ -73,27 +73,36 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
     });
     const manageToken = crypto.randomUUID() + crypto.randomUUID();
 
-    const { data: created, error } = await supabaseAdmin.rpc("create_appointment_atomic", {
-      _business_id: business.id,
-      _professional_id: data.professionalId,
-      _service_ids: data.serviceIds,
-      _starts_at: startsAt.toISOString(),
-      _client_name: data.clientName,
-      _client_whatsapp: whatsapp,
-      _status: "PENDING",
-      _notes: data.notes ?? null,
-      _source: "public_booking",
-      _idempotency_key: data.idempotencyKey ?? null,
-      _policy_accepted: data.policyAccepted,
-      _policy_text: business.booking_policy,
-      _manage_token: manageToken,
-    });
+    const { data: created, error } = await supabaseAdmin.rpc(
+      "create_appointment_atomic_with_products",
+      {
+        _business_id: business.id,
+        _professional_id: data.professionalId,
+        _service_ids: data.serviceIds,
+        _product_ids: data.productIds,
+        _starts_at: startsAt.toISOString(),
+        _client_name: data.clientName,
+        _client_whatsapp: whatsapp,
+        _status: "PENDING",
+        _notes: data.notes ?? null,
+        _source: "public_booking",
+        _idempotency_key: data.idempotencyKey ?? null,
+        _policy_accepted: data.policyAccepted,
+        _policy_text: business.booking_policy,
+        _manage_token: manageToken,
+      },
+    );
     if (error || !created) {
       const message = error?.message ?? "";
       if (message.includes("DOUBLE_BOOKING")) {
         throw new Error("SLOT_UNAVAILABLE: esse horário acabou de ser reservado");
       }
-      if (message.includes("Could not find the function public.create_appointment_atomic")) {
+      if (
+        message.includes("Could not find the function public.create_appointment_atomic") ||
+        message.includes(
+          "Could not find the function public.create_appointment_atomic_with_products",
+        )
+      ) {
         throw new Error(
           "BOOKING_MIGRATION_REQUIRED: o banco ainda não recebeu a migration de integridade de agendamentos",
         );
@@ -118,5 +127,6 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
       durationMinutes: result.duration_minutes,
       totalPriceCents: result.total_price_cents,
       manageToken,
+      productIds: data.productIds,
     };
   });

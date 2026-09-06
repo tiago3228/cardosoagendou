@@ -83,17 +83,24 @@ export const provisionBusiness = createServerFn({ method: "POST" })
       .select("id, trial_days")
       .eq("code", "BASIC")
       .maybeSingle();
-    if (plan.data) {
-      const trialEnd = new Date(Date.now() + plan.data.trial_days * 86400000);
-      await supabaseAdmin.from("subscriptions").insert({
-        business_id: businessId,
-        plan_id: plan.data.id,
-        status: "TRIALING",
-        billing_interval: "MONTHLY",
-        current_period_start: new Date().toISOString(),
-        current_period_end: trialEnd.toISOString(),
-        trial_ends_at: trialEnd.toISOString(),
-      });
+    if (plan.error || !plan.data) {
+      throw new Error(
+        `TRIAL_PLAN_NOT_FOUND: ${plan.error?.message ?? "plano BASIC não encontrado"}`,
+      );
+    }
+    const periodStart = new Date();
+    const trialEnd = new Date(periodStart.getTime() + 30 * 86400000);
+    const subscription = await supabaseAdmin.from("subscriptions").insert({
+      business_id: businessId,
+      plan_id: plan.data.id,
+      status: "TRIALING",
+      billing_interval: "MONTHLY",
+      current_period_start: periodStart.toISOString(),
+      current_period_end: trialEnd.toISOString(),
+      trial_ends_at: trialEnd.toISOString(),
+    });
+    if (subscription.error) {
+      throw new Error(`TRIAL_CREATE_FAILED: ${subscription.error.message}`);
     }
 
     const professional = await supabaseAdmin

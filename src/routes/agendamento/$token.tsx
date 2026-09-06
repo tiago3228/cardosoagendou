@@ -122,7 +122,9 @@ function ManageAppointmentPage() {
             disabled={busy || !appointment.allow_reschedule}
             className="!border-[#B4884F] !bg-[#F2EDE4] !text-[#1E1B17] hover:!bg-[#E7D7C2] hover:!text-[#1E1B17]"
           >
-            <a href={`/${appointment.business_slug}`}>Reagendar</a>
+            <a href={`/${appointment.business_slug}?reschedule=${encodeURIComponent(token)}`}>
+              Reagendar
+            </a>
           </Button>
           <Button
             variant="ghost"

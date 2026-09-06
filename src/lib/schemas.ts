@@ -33,6 +33,7 @@ export const publicBookingSchema = z.object({
   slug: z.string().trim().min(1).max(60),
   professionalId: z.string().uuid(),
   serviceIds: z.array(z.string().uuid()).min(1).max(10),
+  productIds: z.array(z.string().uuid()).max(20).default([]),
   startsAt: z.string().datetime({ offset: true }),
   clientName: z.string().trim().min(2, "Informe seu nome").max(80),
   whatsapp: whatsappSchema,

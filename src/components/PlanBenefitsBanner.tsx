@@ -17,18 +17,26 @@ const BENEFITS: Record<string, string[]> = {
 };
 
 /** Dashboard banner comparing the current plan with what the next ones unlock. */
-export function PlanBenefitsBanner({ currentPlanCode }: { currentPlanCode: string | null }) {
+export function PlanBenefitsBanner({
+  currentPlanCode,
+  currentStatus,
+}: {
+  currentPlanCode: string | null;
+  currentStatus?: string | null;
+}) {
   const plans = useQuery({ queryKey: ["public-plans"], queryFn: () => listPlans() });
   const list = plans.data ?? [];
   if (list.length === 0) return null;
 
+  const isTrial = currentStatus === "TRIALING";
   const currentIndex = list.findIndex((p) => p.code === currentPlanCode);
 
   return (
     <section className="mt-6 rounded-xl border border-border bg-secondary/30 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 font-display text-lg font-bold text-foreground">
-          <Crown className="size-4 text-primary" aria-hidden /> Benefícios da sua assinatura
+          <Crown className="size-4 text-primary" aria-hidden />
+          {isTrial ? "Teste completo — 30 dias" : "Benefícios da sua assinatura"}
         </h2>
         <Button asChild size="sm" variant="outline">
           <Link to="/app/assinatura">Ver planos</Link>
@@ -38,7 +46,8 @@ export function PlanBenefitsBanner({ currentPlanCode }: { currentPlanCode: strin
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         {list.map((plan, index) => {
           const isCurrent = plan.code === currentPlanCode;
-          const isUpgrade = currentIndex >= 0 && index > currentIndex;
+          const available = isTrial || isCurrent;
+          const isUpgrade = !isTrial && currentIndex >= 0 && index > currentIndex;
           return (
             <div
               key={plan.id}
@@ -46,9 +55,9 @@ export function PlanBenefitsBanner({ currentPlanCode }: { currentPlanCode: strin
             >
               <div className="flex items-center justify-between gap-2">
                 <p className="font-semibold text-card-foreground">{plan.name}</p>
-                {isCurrent ? (
+                {isCurrent || isTrial ? (
                   <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-medium text-primary-foreground">
-                    Seu plano
+                    {isTrial ? "Disponível no teste" : "Seu plano"}
                   </span>
                 ) : null}
               </div>
@@ -61,7 +70,7 @@ export function PlanBenefitsBanner({ currentPlanCode }: { currentPlanCode: strin
                     key={benefit}
                     className="flex items-start gap-1.5 text-xs text-muted-foreground"
                   >
-                    {isCurrent ? (
+                    {available ? (
                       <Check className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden />
                     ) : (
                       <Lock className="mt-0.5 size-3 shrink-0" aria-hidden />

@@ -60,6 +60,64 @@ export type Database = {
           },
         ];
       };
+      appointment_products: {
+        Row: {
+          appointment_id: string;
+          business_id: string;
+          created_at: string;
+          id: string;
+          image_url: string | null;
+          price_cents: number;
+          product_id: string | null;
+          product_name: string;
+          quantity: number;
+        };
+        Insert: {
+          appointment_id: string;
+          business_id: string;
+          created_at?: string;
+          id?: string;
+          image_url?: string | null;
+          price_cents: number;
+          product_id?: string | null;
+          product_name: string;
+          quantity?: number;
+        };
+        Update: {
+          appointment_id?: string;
+          business_id?: string;
+          created_at?: string;
+          id?: string;
+          image_url?: string | null;
+          price_cents?: number;
+          product_id?: string | null;
+          product_name?: string;
+          quantity?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "appointment_products_appointment_id_fkey";
+            columns: ["appointment_id"];
+            isOneToOne: false;
+            referencedRelation: "appointments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "appointment_products_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "appointment_products_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       appointments: {
         Row: {
           blocks_agenda: boolean;
@@ -78,6 +136,8 @@ export type Database = {
           policy_text_snapshot: string | null;
           presence_status: string | null;
           professional_id: string;
+          rescheduled_from_id: string | null;
+          rescheduled_to_id: string | null;
           snapshot: Json;
           starts_at: string;
           status: Database["public"]["Enums"]["appointment_status"];
@@ -101,6 +161,8 @@ export type Database = {
           policy_text_snapshot?: string | null;
           presence_status?: string | null;
           professional_id: string;
+          rescheduled_from_id?: string | null;
+          rescheduled_to_id?: string | null;
           snapshot?: Json;
           starts_at: string;
           status?: Database["public"]["Enums"]["appointment_status"];
@@ -124,6 +186,8 @@ export type Database = {
           policy_text_snapshot?: string | null;
           presence_status?: string | null;
           professional_id?: string;
+          rescheduled_from_id?: string | null;
+          rescheduled_to_id?: string | null;
           snapshot?: Json;
           starts_at?: string;
           status?: Database["public"]["Enums"]["appointment_status"];
@@ -1415,6 +1479,38 @@ export type Database = {
         };
         Returns: Json;
       };
+      create_appointment_atomic_with_products: {
+        Args: {
+          _business_id: string;
+          _client_name: string;
+          _client_whatsapp: string;
+          _idempotency_key?: string | null;
+          _manage_token?: string | null;
+          _notes?: string | null;
+          _policy_accepted?: boolean;
+          _policy_text?: string | null;
+          _product_ids: string[];
+          _professional_id: string;
+          _service_ids: string[];
+          _source?: string;
+          _starts_at: string;
+          _status?: Database["public"]["Enums"]["appointment_status"];
+        };
+        Returns: Json;
+      };
+      reschedule_appointment_by_token: {
+        Args: {
+          _manage_token: string;
+          _professional_id: string;
+          _starts_at: string;
+          _token_hash: string;
+        };
+        Returns: Json;
+      };
+      business_can_select_products: {
+        Args: { _business_id: string };
+        Returns: boolean;
+      };
       enqueue_message: {
         Args: {
           _appointment_id: string;
@@ -1471,7 +1567,13 @@ export type Database = {
     Enums: {
       app_role: "master" | "owner" | "professional";
       appointment_status:
-        "PENDING" | "CONFIRMED" | "IN_PROGRESS" | "COMPLETED" | "CANCELED" | "NO_SHOW";
+        | "PENDING"
+        | "CONFIRMED"
+        | "IN_PROGRESS"
+        | "COMPLETED"
+        | "CANCELED"
+        | "NO_SHOW"
+        | "RESCHEDULED";
       billing_interval: "MONTHLY" | "ANNUAL";
       business_type:
         | "BARBERSHOP"
@@ -1617,6 +1719,7 @@ export const Constants = {
         "COMPLETED",
         "CANCELED",
         "NO_SHOW",
+        "RESCHEDULED",
       ],
       billing_interval: ["MONTHLY", "ANNUAL"],
       business_type: [
