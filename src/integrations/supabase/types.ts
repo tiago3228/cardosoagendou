@@ -68,6 +68,7 @@ export type Database = {
       }
       appointments: {
         Row: {
+          blocks_agenda: boolean
           business_id: string
           cancel_reason: string | null
           client_id: string | null
@@ -86,6 +87,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          blocks_agenda?: boolean
           business_id: string
           cancel_reason?: string | null
           client_id?: string | null
@@ -104,6 +106,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          blocks_agenda?: boolean
           business_id?: string
           cancel_reason?: string | null
           client_id?: string | null
@@ -1030,6 +1033,7 @@ export type Database = {
       services: {
         Row: {
           active: boolean
+          allows_parallel: boolean
           business_id: string
           category: string | null
           created_at: string
@@ -1044,6 +1048,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          allows_parallel?: boolean
           business_id: string
           category?: string | null
           created_at?: string
@@ -1058,6 +1063,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          allows_parallel?: boolean
           business_id?: string
           category?: string | null
           created_at?: string
