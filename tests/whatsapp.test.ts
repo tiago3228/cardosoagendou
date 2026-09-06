@@ -6,6 +6,27 @@ import {
   isValidManageToken,
   messageDedupeKey,
 } from "../src/lib/whatsapp.ts";
+import { normalizeBrWhatsapp, whatsappLink } from "../src/lib/format.ts";
+
+test("normalizes accepted Brazilian WhatsApp formats to E.164", () => {
+  const expected = "+5531999999999";
+  assert.equal(normalizeBrWhatsapp("(31) 99999-9999"), expected);
+  assert.equal(normalizeBrWhatsapp("31 99999-9999"), expected);
+  assert.equal(normalizeBrWhatsapp("31999999999"), expected);
+  assert.equal(normalizeBrWhatsapp("+55 31 99999-9999"), expected);
+  assert.equal(normalizeBrWhatsapp("31 8888-8888"), "+553188888888");
+  assert.equal(normalizeBrWhatsapp("31 1234-5678"), "+553112345678");
+  assert.equal(normalizeBrWhatsapp("31 123"), null);
+});
+
+test("generates an official wa.me link and URL-encodes the message", () => {
+  const link = whatsappLink("(31) 99999-9999", "Olá! Seu horário está confirmado.");
+  assert.equal(
+    link,
+    "https://wa.me/5531999999999?text=Ol%C3%A1!%20Seu%20hor%C3%A1rio%20est%C3%A1%20confirmado.",
+  );
+  assert.equal(whatsappLink("número inválido", "teste"), "");
+});
 
 test("confirmation uses a stable dedupe key", () => {
   assert.equal(messageDedupeKey("APPOINTMENT_CONFIRMED", "a1"), "appointment_confirmed:a1");

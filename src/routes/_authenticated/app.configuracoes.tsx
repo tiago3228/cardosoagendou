@@ -4,7 +4,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery } from "./app";
-import { instagramHandle, normalizeInstagramUrl, WEEKDAY_LABELS } from "@/lib/format";
+import {
+  instagramHandle,
+  normalizeBrWhatsapp,
+  normalizeInstagramUrl,
+  WEEKDAY_LABELS,
+} from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WhatsappInput } from "@/components/ui/whatsapp-input";
@@ -46,7 +51,7 @@ function SettingsPage() {
         .update({
           name: form.name.trim(),
           description: form.description.trim() || null,
-          whatsapp: form.whatsapp.trim() || null,
+          whatsapp: normalizeBrWhatsapp(form.whatsapp),
           email: form.email.trim() || null,
           address: form.address.trim() || null,
           booking_policy: form.booking_policy.trim() || null,
@@ -139,6 +144,12 @@ function SettingsPage() {
           if (form.instagram_url.trim() && !normalizeInstagramUrl(form.instagram_url)) {
             toast.error("Instagram inválido", {
               description: "Informe um perfil do Instagram, como @seuperfil.",
+            });
+            return;
+          }
+          if (form.whatsapp.trim() && !normalizeBrWhatsapp(form.whatsapp)) {
+            toast.error("WhatsApp inválido", {
+              description: "Informe um número brasileiro válido com DDD, como (31) 99999-9999.",
             });
             return;
           }

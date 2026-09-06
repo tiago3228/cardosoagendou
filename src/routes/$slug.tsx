@@ -123,6 +123,24 @@ function BookingPage() {
   );
   const totalMinutes = chosenServices.reduce((sum, s) => sum + s.duration_minutes, 0);
   const totalCents = chosenServices.reduce((sum, s) => sum + s.price_cents, 0);
+  const chosenProfessionalName =
+    data!.professionals.find((professional) => professional.id === chosen?.professionalId)?.name ??
+    "Profissional disponível";
+  const manageUrl = confirmed
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/agendamento/${confirmed.manageToken}`
+    : "";
+  const confirmationWhatsappMessage = confirmed
+    ? [
+        `Olá! Acabei de agendar em ${business.name}.`,
+        `Profissional: ${chosenProfessionalName}`,
+        `Serviços: ${chosenServices.map((service) => service.name).join(", ")}`,
+        `Data e horário: ${new Date(confirmed.startsAt).toLocaleString("pt-BR", {
+          dateStyle: "full",
+          timeStyle: "short",
+        })}`,
+        `Gerenciar agendamento: ${manageUrl}`,
+      ].join("\n")
+    : "";
   const mapLink = business.address
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(business.address)}`
     : null;
@@ -299,7 +317,7 @@ function BookingPage() {
               rel="noreferrer"
               className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[#B4884F] bg-[#B4884F] px-4 py-3 text-sm font-semibold text-[#14120F]"
             >
-              <MessageCircle className="size-4" aria-hidden /> Falar com o estabelecimento
+              <MessageCircle className="size-4" aria-hidden /> Conversar pelo WhatsApp
             </a>
           ) : null}
           {normalizeInstagramUrl(business.instagram_url) ? (
@@ -654,14 +672,11 @@ function BookingPage() {
                   className="mt-6 !border-[#B4884F] !bg-[#F2EDE4] !text-[#1E1B17] hover:!bg-[#E7D7C2] hover:!text-[#1E1B17]"
                 >
                   <a
-                    href={whatsappLink(
-                      business.whatsapp,
-                      `Olá! Acabei de agendar em ${business.name}.`,
-                    )}
+                    href={whatsappLink(business.whatsapp, confirmationWhatsappMessage)}
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Falar no WhatsApp
+                    Conversar pelo WhatsApp
                   </a>
                 </Button>
               ) : null}

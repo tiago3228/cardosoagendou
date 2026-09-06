@@ -328,7 +328,21 @@ function AgendaPage() {
                       <a
                         href={whatsappLink(
                           e164,
-                          `Olá, ${appointment.client_name}! Confirmando seu horário às ${time}.`,
+                          [
+                            `Olá, ${appointment.client_name}!`,
+                            appointment.status === "CONFIRMED"
+                              ? "Seu agendamento foi confirmado."
+                              : "Estou entrando em contato sobre seu agendamento.",
+                            `Data e horário: ${new Date(appointment.starts_at).toLocaleString(
+                              "pt-BR",
+                              {
+                                dateStyle: "full",
+                                timeStyle: "short",
+                              },
+                            )}`,
+                            `Serviços: ${services.map((service) => service.service_name).join(", ")}`,
+                            `Profissional: ${professional?.name ?? "não informado"}`,
+                          ].join("\n"),
                         )}
                         target="_blank"
                         rel="noreferrer"

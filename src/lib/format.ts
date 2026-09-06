@@ -63,7 +63,9 @@ export function formatWhatsapp(e164: string | null | undefined): string {
 }
 
 export function whatsappLink(e164: string | null | undefined, message?: string): string {
-  const digits = (e164 ?? "").replace(/\D+/g, "");
+  const normalized = normalizeBrWhatsapp(e164 ?? "");
+  if (!normalized) return "";
+  const digits = normalized.replace(/\D+/g, "");
   const base = `https://wa.me/${digits}`;
   return message ? `${base}?text=${encodeURIComponent(message)}` : base;
 }

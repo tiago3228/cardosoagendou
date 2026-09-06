@@ -16,7 +16,7 @@ export const setAppointmentStatus = createServerFn({ method: "POST" })
     const current = await context.supabase
       .from("appointments")
       .select(
-        "id, business_id, professional_id, status, total_price_cents, starts_at, client_name, client_whatsapp",
+        "id, business_id, professional_id, status, total_price_cents, starts_at, client_name, client_whatsapp, businesses:business_id (name), professionals:professional_id (name), appointment_services (service_name)",
       )
       .eq("id", data.appointmentId)
       .maybeSingle();
@@ -49,8 +49,13 @@ export const setAppointmentStatus = createServerFn({ method: "POST" })
         _payload: {
           appointment_id: current.data.id,
           business_id: current.data.business_id,
+          business_name: (current.data.businesses as { name?: string } | null)?.name ?? null,
           client_name: current.data.client_name,
           starts_at: current.data.starts_at,
+          professional_name: (current.data.professionals as { name?: string } | null)?.name ?? null,
+          service_names: (
+            (current.data.appointment_services ?? []) as { service_name: string }[]
+          ).map((service) => service.service_name),
         },
         _dedupe_key: `confirmed:${current.data.id}`,
       });
