@@ -2,7 +2,15 @@ import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useRef, useState } from "react";
-import { Check, ChevronLeft, Clock, MapPin } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  ChevronLeft,
+  Clock,
+  MapPin,
+  MessageCircle,
+  Navigation,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   createPublicAppointment,
@@ -111,6 +119,9 @@ function BookingPage() {
   );
   const totalMinutes = chosenServices.reduce((sum, s) => sum + s.duration_minutes, 0);
   const totalCents = chosenServices.reduce((sum, s) => sum + s.price_cents, 0);
+  const mapLink = business.address
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(business.address)}`
+    : null;
 
   /** Warns when two services of the same category are picked (usually a mistake). */
   const categoryConflict = useMemo(() => {
@@ -215,335 +226,396 @@ function BookingPage() {
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-lg bg-background pb-32">
-      <div className="border-b border-border px-5 py-6">
-        {business.logo_url ? (
-          <img
-            src={business.logo_url}
-            alt={`Logo de ${business.name}`}
-            className="size-14 rounded-full object-cover"
-          />
-        ) : null}
-        <h1 className="mt-3 font-display text-2xl font-bold text-foreground">{business.name}</h1>
-        <p className="text-sm text-muted-foreground">{config.label}</p>
-        {business.description ? (
-          <p className="mt-2 text-sm text-muted-foreground">{business.description}</p>
-        ) : null}
-        {business.address ? (
-          <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
-            <MapPin className="size-4" aria-hidden /> {business.address}
-          </p>
-        ) : null}
-      </div>
-
-      <div className="px-5 py-6">
-        {step > 0 && step < 4 ? (
-          <button
-            onClick={() => setStep((s) => s - 1)}
-            className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground"
-          >
-            <ChevronLeft className="size-4" aria-hidden /> Voltar
-          </button>
-        ) : null}
-
-        {step === 0 ? (
-          <section>
-            <h2 className="font-display text-xl font-bold">1. Escolha os serviços</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Pode escolher mais de um — somamos a duração automaticamente.
-            </p>
-            <ul className="mt-4 space-y-2">
-              {data!.services.map((service) => {
-                const active = selected.includes(service.id);
-                const blocked = blockedService(service.id);
-                return (
-                  <li key={service.id}>
-                    <button
-                      disabled={blocked}
-                      aria-disabled={blocked}
-                      onClick={() =>
-                        setSelected((prev) =>
-                          prev.includes(service.id)
-                            ? prev.filter((id) => id !== service.id)
-                            : [...prev, service.id],
-                        )
-                      }
-                      className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition ${active ? "border-primary bg-primary/5" : "border-border bg-card"} ${blocked ? "cursor-not-allowed opacity-50" : ""}`}
-                    >
-                      <span>
-                        <span className="block font-medium text-card-foreground">
-                          {service.name}
-                        </span>
-                        <span className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground">
-                          <Clock className="size-3.5" aria-hidden />
-                          {formatDuration(service.duration_minutes)} ·{" "}
-                          {formatBRL(service.price_cents)}
-                        </span>
-                        {blocked ? (
-                          <span className="mt-1 block text-xs text-muted-foreground">
-                            Indisponível junto dos serviços já selecionados
-                          </span>
-                        ) : null}
-                        {service.allows_parallel ? (
-                          <span className="mt-1 block text-xs text-muted-foreground">
-                            Pode ocorrer atendimento simultâneo durante parte do serviço
-                          </span>
-                        ) : null}
-                      </span>
-                      {active ? <Check className="size-5 text-primary" aria-hidden /> : null}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-            {hardConflict ? (
-              <p className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-                {hardConflict.message}
-                {hardConflict.reason ? ` ${hardConflict.reason}` : ""}
+    <main className="min-h-screen bg-[#0B0A08] text-[#F2EDE4]">
+      <div className="mx-auto min-h-screen max-w-[460px] overflow-hidden bg-[#14120F] pb-32 shadow-2xl">
+        <div className="h-1 bg-[linear-gradient(90deg,#B4884F_0%,#B4884F_60%,transparent_60%,transparent_70%,#B4884F_70%,#B4884F_100%)]" />
+        <div className="border-b border-[#35302A] px-5 py-6">
+          {business.cover_url ? (
+            <img
+              src={business.cover_url}
+              alt=""
+              className="mb-5 h-32 w-full rounded-2xl object-cover opacity-80"
+            />
+          ) : null}
+          <div className="flex items-center gap-4">
+            {business.logo_url ? (
+              <img
+                src={business.logo_url}
+                alt={`Logo de ${business.name}`}
+                className="size-16 rounded-full border border-[#B4884F] object-cover"
+              />
+            ) : (
+              <div className="flex size-16 shrink-0 items-center justify-center rounded-full border border-[#B4884F] font-display text-2xl font-bold text-[#D1A66C]">
+                {business.name.slice(0, 1).toUpperCase()}
+              </div>
+            )}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#B4884F]">
+                {config.label}
               </p>
-            ) : null}
-            {categoryConflict ? (
-              <p className="mt-4 rounded-lg border border-border bg-secondary/40 p-3 text-sm text-muted-foreground">
-                Atenção: você selecionou mais de um serviço de <strong>{categoryConflict}</strong>.
-                Confirme se realmente deseja os dois no mesmo horário.
-              </p>
-            ) : null}
-            {data!.services.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">
-                Este negócio ainda não publicou serviços.
-              </p>
-            ) : null}
+              <h1 className="mt-1 font-display text-3xl font-bold uppercase tracking-wide text-[#F2EDE4]">
+                {business.name}
+              </h1>
+            </div>
+          </div>
+          {business.description ? (
+            <p className="mt-4 text-sm leading-6 text-[#9C948A]">{business.description}</p>
+          ) : null}
+          {business.address ? (
+            <a
+              href={mapLink ?? undefined}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-4 flex items-start gap-2 text-sm text-[#9C948A] transition hover:text-[#D1A66C]"
+            >
+              <MapPin className="mt-0.5 size-4 shrink-0 text-[#B4884F]" aria-hidden />
+              <span className="flex-1">{business.address}</span>
+              {mapLink ? (
+                <Navigation className="size-4 shrink-0 text-[#B4884F]" aria-hidden />
+              ) : null}
+            </a>
+          ) : null}
+          {business.whatsapp ? (
+            <a
+              href={whatsappLink(
+                business.whatsapp,
+                `Olá! Vim pela página do Agendou e gostaria de tirar uma dúvida sobre ${business.name}.`,
+              )}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#D1A66C]"
+            >
+              <MessageCircle className="size-4" aria-hidden /> Falar com o estabelecimento
+            </a>
+          ) : null}
+        </div>
 
-            {(data!.products ?? []).length > 0 ? (
-              <div className="mt-8">
-                <h3 className="font-display text-lg font-bold">Produtos disponíveis</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Peça no local durante o seu atendimento.
+        <div className="px-5 py-6">
+          {step > 0 && step < 4 ? (
+            <button
+              onClick={() => setStep((s) => s - 1)}
+              className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground"
+            >
+              <ChevronLeft className="size-4" aria-hidden /> Voltar
+            </button>
+          ) : null}
+
+          {step === 0 ? (
+            <section>
+              <div className="mb-7 rounded-2xl border border-[#35302A] bg-[#1E1B17] p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#B4884F]">
+                  Agendamento online
                 </p>
-                <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-                  {(data!.products ?? []).map((product) => (
-                    <li
-                      key={product.id}
-                      className="flex items-center gap-3 rounded-xl border border-border bg-card p-3"
+                <h2 className="mt-2 font-display text-3xl font-bold uppercase text-[#F2EDE4]">
+                  Agendar horário
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-[#9C948A]">
+                  Escolha seu serviço e encontre um horário que funciona para você.
+                </p>
+                <div className="mt-4 flex items-center gap-2 text-xs text-[#9C948A]">
+                  <Clock className="size-4 text-[#B4884F]" aria-hidden /> Disponibilidade em tempo
+                  real
+                </div>
+              </div>
+              <h2 className="font-display text-xl font-bold uppercase tracking-wide">
+                1. Escolha os serviços
+              </h2>
+              <p className="mt-1 text-sm text-[#9C948A]">
+                Pode escolher mais de um — somamos a duração automaticamente.
+              </p>
+              <ul className="mt-4 space-y-2">
+                {data!.services.map((service) => {
+                  const active = selected.includes(service.id);
+                  const blocked = blockedService(service.id);
+                  return (
+                    <li key={service.id}>
+                      <button
+                        disabled={blocked}
+                        aria-disabled={blocked}
+                        onClick={() =>
+                          setSelected((prev) =>
+                            prev.includes(service.id)
+                              ? prev.filter((id) => id !== service.id)
+                              : [...prev, service.id],
+                          )
+                        }
+                        className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition ${active ? "border-[#B4884F] bg-[#262220]" : "border-[#35302A] bg-[#1E1B17]"} ${blocked ? "cursor-not-allowed opacity-50" : ""}`}
+                      >
+                        <span>
+                          <span className="block font-medium text-card-foreground">
+                            {service.name}
+                          </span>
+                          <span className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground">
+                            <Clock className="size-3.5" aria-hidden />
+                            {formatDuration(service.duration_minutes)} ·{" "}
+                            {formatBRL(service.price_cents)}
+                          </span>
+                          {blocked ? (
+                            <span className="mt-1 block text-xs text-muted-foreground">
+                              Indisponível junto dos serviços já selecionados
+                            </span>
+                          ) : null}
+                          {service.allows_parallel ? (
+                            <span className="mt-1 block text-xs text-muted-foreground">
+                              Pode ocorrer atendimento simultâneo durante parte do serviço
+                            </span>
+                          ) : null}
+                        </span>
+                        {active ? <Check className="size-5 text-primary" aria-hidden /> : null}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              {hardConflict ? (
+                <p className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                  {hardConflict.message}
+                  {hardConflict.reason ? ` ${hardConflict.reason}` : ""}
+                </p>
+              ) : null}
+              {categoryConflict ? (
+                <p className="mt-4 rounded-lg border border-border bg-secondary/40 p-3 text-sm text-muted-foreground">
+                  Atenção: você selecionou mais de um serviço de <strong>{categoryConflict}</strong>
+                  . Confirme se realmente deseja os dois no mesmo horário.
+                </p>
+              ) : null}
+              {data!.services.length === 0 ? (
+                <p className="mt-4 text-sm text-muted-foreground">
+                  Este negócio ainda não publicou serviços.
+                </p>
+              ) : null}
+
+              {(data!.products ?? []).length > 0 ? (
+                <div className="mt-8">
+                  <h3 className="font-display text-lg font-bold">Produtos disponíveis</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Peça no local durante o seu atendimento.
+                  </p>
+                  <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {(data!.products ?? []).map((product) => (
+                      <li
+                        key={product.id}
+                        className="flex items-center gap-3 rounded-xl border border-border bg-card p-3"
+                      >
+                        {product.image_url ? (
+                          <img
+                            src={product.image_url}
+                            alt={product.name}
+                            className="size-12 rounded-lg object-cover"
+                          />
+                        ) : null}
+                        <span>
+                          <span className="block font-medium text-card-foreground">
+                            {product.name}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {formatBRL(product.price_cents)}
+                          </span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
+
+          {step === 1 ? (
+            <section>
+              <h2 className="font-display text-xl font-bold">2. Escolha o profissional</h2>
+              <ul className="mt-4 space-y-2">
+                <li>
+                  <button
+                    onClick={() => {
+                      setProfessionalId(null);
+                      setStep(2);
+                      void loadSlots(date, null);
+                    }}
+                    className="w-full rounded-xl border border-border bg-card p-4 text-left font-medium"
+                  >
+                    Qualquer profissional disponível
+                  </button>
+                </li>
+                {eligibleProfessionals.map((professional) => (
+                  <li key={professional.id}>
+                    <button
+                      onClick={() => {
+                        setProfessionalId(professional.id);
+                        setStep(2);
+                        void loadSlots(date, professional.id);
+                      }}
+                      className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left"
                     >
-                      {product.image_url ? (
+                      {professional.photo_url ? (
                         <img
-                          src={product.image_url}
-                          alt={product.name}
-                          className="size-12 rounded-lg object-cover"
+                          src={professional.photo_url}
+                          alt={professional.name}
+                          className="size-10 rounded-full object-cover"
                         />
                       ) : null}
                       <span>
                         <span className="block font-medium text-card-foreground">
-                          {product.name}
+                          {professional.name}
                         </span>
-                        <span className="text-sm text-muted-foreground">
-                          {formatBRL(product.price_cents)}
-                        </span>
+                        {professional.bio ? (
+                          <span className="text-sm text-muted-foreground">{professional.bio}</span>
+                        ) : null}
                       </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-          </section>
-        ) : null}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
 
-        {step === 1 ? (
-          <section>
-            <h2 className="font-display text-xl font-bold">2. Escolha o profissional</h2>
-            <ul className="mt-4 space-y-2">
-              <li>
-                <button
-                  onClick={() => {
-                    setProfessionalId(null);
-                    setStep(2);
-                    void loadSlots(date, null);
-                  }}
-                  className="w-full rounded-xl border border-border bg-card p-4 text-left font-medium"
-                >
-                  Qualquer profissional disponível
-                </button>
-              </li>
-              {eligibleProfessionals.map((professional) => (
-                <li key={professional.id}>
+          {step === 2 ? (
+            <section>
+              <h2 className="font-display text-xl font-bold">3. Escolha o horário</h2>
+              <div className="-mx-5 mt-4 flex gap-2 overflow-x-auto px-5 pb-2">
+                {days.map((day) => (
                   <button
+                    key={day}
                     onClick={() => {
-                      setProfessionalId(professional.id);
-                      setStep(2);
-                      void loadSlots(date, professional.id);
+                      setDate(day);
+                      void loadSlots(day, professionalId);
                     }}
-                    className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left"
+                    className={`shrink-0 rounded-xl border px-4 py-2 text-sm ${day === date ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}
                   >
-                    {professional.photo_url ? (
-                      <img
-                        src={professional.photo_url}
-                        alt={professional.name}
-                        className="size-10 rounded-full object-cover"
-                      />
-                    ) : null}
-                    <span>
-                      <span className="block font-medium text-card-foreground">
-                        {professional.name}
-                      </span>
-                      {professional.bio ? (
-                        <span className="text-sm text-muted-foreground">{professional.bio}</span>
-                      ) : null}
-                    </span>
+                    {new Date(`${day}T12:00:00`).toLocaleDateString("pt-BR", {
+                      weekday: "short",
+                      day: "2-digit",
+                      month: "2-digit",
+                    })}
                   </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
+                ))}
+              </div>
 
-        {step === 2 ? (
-          <section>
-            <h2 className="font-display text-xl font-bold">3. Escolha o horário</h2>
-            <div className="-mx-5 mt-4 flex gap-2 overflow-x-auto px-5 pb-2">
-              {days.map((day) => (
-                <button
-                  key={day}
-                  onClick={() => {
-                    setDate(day);
-                    void loadSlots(day, professionalId);
-                  }}
-                  className={`shrink-0 rounded-xl border px-4 py-2 text-sm ${day === date ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}
-                >
-                  {new Date(`${day}T12:00:00`).toLocaleDateString("pt-BR", {
-                    weekday: "short",
-                    day: "2-digit",
-                    month: "2-digit",
-                  })}
-                </button>
-              ))}
-            </div>
-
-            {loadingSlots ? (
-              <p className="mt-6 text-sm text-muted-foreground">Carregando horários...</p>
-            ) : slots.every((p) => p.slots.length === 0) ? (
-              <p className="mt-6 text-sm text-muted-foreground">
-                Nenhum horário livre neste dia. Tente outra data.
-              </p>
-            ) : (
-              slots
-                .filter((p) => p.slots.length > 0)
-                .map((p) => (
-                  <div key={p.professionalId} className="mt-6">
-                    <h3 className="text-sm font-semibold text-muted-foreground">
-                      {p.professionalName}
-                    </h3>
-                    <div className="mt-2 grid grid-cols-3 gap-2">
-                      {p.slots.map((slot) => (
-                        <button
-                          key={`${p.professionalId}-${slot.startsAt}`}
-                          onClick={() => {
-                            setChosen({
-                              startsAt: slot.startsAt,
-                              professionalId: p.professionalId,
-                            });
-                            setStep(3);
-                          }}
-                          className="rounded-lg border border-border bg-card py-2 text-sm font-medium"
-                        >
-                          {slot.label}
-                        </button>
-                      ))}
+              {loadingSlots ? (
+                <p className="mt-6 text-sm text-muted-foreground">Carregando horários...</p>
+              ) : slots.every((p) => p.slots.length === 0) ? (
+                <p className="mt-6 text-sm text-muted-foreground">
+                  Nenhum horário livre neste dia. Tente outra data.
+                </p>
+              ) : (
+                slots
+                  .filter((p) => p.slots.length > 0)
+                  .map((p) => (
+                    <div key={p.professionalId} className="mt-6">
+                      <h3 className="text-sm font-semibold text-muted-foreground">
+                        {p.professionalName}
+                      </h3>
+                      <div className="mt-2 grid grid-cols-3 gap-2">
+                        {p.slots.map((slot) => (
+                          <button
+                            key={`${p.professionalId}-${slot.startsAt}`}
+                            onClick={() => {
+                              setChosen({
+                                startsAt: slot.startsAt,
+                                professionalId: p.professionalId,
+                              });
+                              setStep(3);
+                            }}
+                            className="rounded-lg border border-border bg-card py-2 text-sm font-medium"
+                          >
+                            {slot.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))
-            )}
-          </section>
-        ) : null}
+                  ))
+              )}
+            </section>
+          ) : null}
 
-        {step === 3 && chosen ? (
-          <section>
-            <h2 className="font-display text-xl font-bold">4. Seus dados</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {new Date(chosen.startsAt).toLocaleString("pt-BR", {
-                dateStyle: "full",
-                timeStyle: "short",
-              })}{" "}
-              · {formatDuration(totalMinutes)} · {formatBRL(totalCents)}
-            </p>
-            <form onSubmit={confirm} className="mt-5 space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="nome">Nome completo</Label>
-                <Input
-                  id="nome"
-                  required
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="zap">WhatsApp</Label>
-                <WhatsappInput id="zap" required value={whatsapp} onChange={setWhatsapp} />
-              </div>
+          {step === 3 && chosen ? (
+            <section>
+              <h2 className="font-display text-xl font-bold">4. Seus dados</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {new Date(chosen.startsAt).toLocaleString("pt-BR", {
+                  dateStyle: "full",
+                  timeStyle: "short",
+                })}{" "}
+                · {formatDuration(totalMinutes)} · {formatBRL(totalCents)}
+              </p>
+              <form onSubmit={confirm} className="mt-5 space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="nome">Nome completo</Label>
+                  <Input
+                    id="nome"
+                    required
+                    value={clientName}
+                    onChange={(e) => setClientName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="zap">WhatsApp</Label>
+                  <WhatsappInput id="zap" required value={whatsapp} onChange={setWhatsapp} />
+                </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="obs">Observações (opcional)</Label>
-                <Input id="obs" value={notes} onChange={(e) => setNotes(e.target.value)} />
+                <div className="space-y-1.5">
+                  <Label htmlFor="obs">Observações (opcional)</Label>
+                  <Input id="obs" value={notes} onChange={(e) => setNotes(e.target.value)} />
+                </div>
+                <Button type="submit" className="w-full" disabled={busy}>
+                  {busy ? "Confirmando..." : "Confirmar agendamento"}
+                </Button>
+                {business.booking_policy ? (
+                  <p className="text-xs text-muted-foreground">{business.booking_policy}</p>
+                ) : null}
+              </form>
+            </section>
+          ) : null}
+
+          {step === 4 && confirmed ? (
+            <section className="text-center">
+              <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10">
+                <Check className="size-7 text-primary" aria-hidden />
               </div>
-              <Button type="submit" className="w-full" disabled={busy}>
-                {busy ? "Confirmando..." : "Confirmar agendamento"}
-              </Button>
-              {business.booking_policy ? (
-                <p className="text-xs text-muted-foreground">{business.booking_policy}</p>
+              <h2 className="mt-4 font-display text-2xl font-bold">Agendamento enviado!</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {new Date(confirmed.startsAt).toLocaleString("pt-BR", {
+                  dateStyle: "full",
+                  timeStyle: "short",
+                })}
+                <br />
+                Total: {formatBRL(confirmed.totalPriceCents)}
+              </p>
+              {business.whatsapp ? (
+                <Button asChild variant="outline" className="mt-6">
+                  <a
+                    href={whatsappLink(
+                      business.whatsapp,
+                      `Olá! Acabei de agendar em ${business.name}.`,
+                    )}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Falar no WhatsApp
+                  </a>
+                </Button>
               ) : null}
-            </form>
-          </section>
-        ) : null}
+            </section>
+          ) : null}
+        </div>
 
-        {step === 4 && confirmed ? (
-          <section className="text-center">
-            <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10">
-              <Check className="size-7 text-primary" aria-hidden />
+        {step === 0 && selected.length > 0 ? (
+          <div className="fixed inset-x-0 bottom-0 mx-auto max-w-lg border-t border-border bg-card/95 p-4 backdrop-blur">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">
+                {selected.length} serviço(s) · {formatDuration(totalMinutes)}
+              </span>
+              <span className="font-semibold">{formatBRL(totalCents)}</span>
             </div>
-            <h2 className="mt-4 font-display text-2xl font-bold">Agendamento enviado!</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {new Date(confirmed.startsAt).toLocaleString("pt-BR", {
-                dateStyle: "full",
-                timeStyle: "short",
-              })}
-              <br />
-              Total: {formatBRL(confirmed.totalPriceCents)}
-            </p>
-            {business.whatsapp ? (
-              <Button asChild variant="outline" className="mt-6">
-                <a
-                  href={whatsappLink(
-                    business.whatsapp,
-                    `Olá! Acabei de agendar em ${business.name}.`,
-                  )}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Falar no WhatsApp
-                </a>
-              </Button>
-            ) : null}
-          </section>
+            <Button
+              className="mt-3 w-full"
+              disabled={hardConflict !== null}
+              onClick={() => setStep(1)}
+            >
+              {hardConflict ? "Ajuste a seleção para continuar" : "Continuar"}
+            </Button>
+          </div>
         ) : null}
       </div>
-
-      {step === 0 && selected.length > 0 ? (
-        <div className="fixed inset-x-0 bottom-0 mx-auto max-w-lg border-t border-border bg-card/95 p-4 backdrop-blur">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
-              {selected.length} serviço(s) · {formatDuration(totalMinutes)}
-            </span>
-            <span className="font-semibold">{formatBRL(totalCents)}</span>
-          </div>
-          <Button
-            className="mt-3 w-full"
-            disabled={hardConflict !== null}
-            onClick={() => setStep(1)}
-          >
-            {hardConflict ? "Ajuste a seleção para continuar" : "Continuar"}
-          </Button>
-        </div>
-      ) : null}
     </main>
   );
 }
