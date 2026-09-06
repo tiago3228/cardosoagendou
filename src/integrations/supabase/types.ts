@@ -76,6 +76,7 @@ export type Database = {
           notes: string | null;
           policy_accepted_at: string | null;
           policy_text_snapshot: string | null;
+          presence_status: string | null;
           professional_id: string;
           snapshot: Json;
           starts_at: string;
@@ -98,6 +99,7 @@ export type Database = {
           notes?: string | null;
           policy_accepted_at?: string | null;
           policy_text_snapshot?: string | null;
+          presence_status?: string | null;
           professional_id: string;
           snapshot?: Json;
           starts_at: string;
@@ -120,6 +122,7 @@ export type Database = {
           notes?: string | null;
           policy_accepted_at?: string | null;
           policy_text_snapshot?: string | null;
+          presence_status?: string | null;
           professional_id?: string;
           snapshot?: Json;
           starts_at?: string;

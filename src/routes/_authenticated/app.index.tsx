@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Check,
@@ -82,6 +82,7 @@ function AgendaPage() {
   const agenda = useQuery({
     queryKey: ["agenda", date],
     queryFn: () => fetchAgenda({ data: dayBounds(date) }),
+    refetchInterval: 10000,
   });
 
   const revenue = useQuery({
@@ -103,6 +104,22 @@ function AgendaPage() {
         description: error.message.replace(/^[A-Z_]+:\s*/, ""),
       }),
   });
+
+  const presenceByAppointment = useRef(new Map<string, string | null>());
+  useEffect(() => {
+    if (!agenda.data) return;
+    for (const appointment of agenda.data) {
+      const previous = presenceByAppointment.current.get(appointment.id);
+      if (previous !== undefined && previous !== appointment.presence_status) {
+        if (appointment.presence_status === "CONFIRMED") {
+          toast.success(`${appointment.client_name} confirmou presença`);
+        } else if (appointment.presence_status === "DECLINED") {
+          toast.warning(`${appointment.client_name} informou que não poderá comparecer`);
+        }
+      }
+      presenceByAppointment.current.set(appointment.id, appointment.presence_status);
+    }
+  }, [agenda.data]);
 
   // Official public domain first, so the shared link never points at a preview host.
   const origin =
@@ -294,6 +311,15 @@ function AgendaPage() {
                     <Clock className="size-3.5" aria-hidden /> {professional?.name}
                   </span>
                   <span>{formatWhatsapp(appointment.client_whatsapp)}</span>
+                  {appointment.presence_status === "CONFIRMED" ? (
+                    <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                      Presença confirmada
+                    </span>
+                  ) : appointment.presence_status === "DECLINED" ? (
+                    <span className="font-medium text-amber-700 dark:text-amber-300">
+                      Cliente não poderá comparecer
+                    </span>
+                  ) : null}
                 </p>
 
                 <div className="mt-3 flex flex-wrap gap-2">
