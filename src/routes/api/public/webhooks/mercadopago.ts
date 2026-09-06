@@ -30,7 +30,7 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           const detail = error instanceof Error ? error.message : String(error);
           // Simulated/test deliveries carry fake resource ids (e.g. "123456"), so the
           // authoritative read 404s. Acknowledge instead of failing the delivery test.
-          if (/not found|404|resource with id/i.test(detail)) {
+          if (/HTTP 40[34]|not found|resource with id/i.test(detail)) {
             console.warn("[billing] webhook resource not found (test delivery?)", detail);
             return Response.json({ received: true, ignored: "resource_not_found" });
           }
