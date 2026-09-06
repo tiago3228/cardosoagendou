@@ -60,10 +60,10 @@ BEGIN
   END IF;
 
   IF _idempotency_key IS NOT NULL THEN
-    SELECT id, starts_at, ends_at, total_price_cents, duration_minutes, status
+    SELECT a.id, a.starts_at, a.ends_at, a.total_price_cents, a.duration_minutes, a.status
       INTO existing
-      FROM public.appointments
-     WHERE business_id = _business_id AND idempotency_key = _idempotency_key;
+      FROM public.appointments AS a
+     WHERE a.business_id = _business_id AND a.idempotency_key = _idempotency_key;
     IF existing.id IS NOT NULL THEN
       RETURN jsonb_build_object(
         'id', existing.id,
@@ -149,7 +149,7 @@ BEGIN
     _idempotency_key, blocks,
     CASE WHEN COALESCE(_policy_accepted, false) THEN now() ELSE NULL END,
     CASE WHEN COALESCE(_policy_accepted, false) THEN COALESCE(_policy_text, biz.booking_policy) ELSE NULL END,
-    CASE WHEN _manage_token IS NOT NULL THEN encode(digest(_manage_token, 'sha256'), 'hex') ELSE NULL END,
+    CASE WHEN _manage_token IS NOT NULL THEN encode(digest(convert_to(_manage_token, 'UTF8'), 'sha256'::text), 'hex') ELSE NULL END,
     CASE WHEN _manage_token IS NOT NULL THEN now() + interval '90 days' ELSE NULL END,
     jsonb_build_object(
       'source', _source,
@@ -203,10 +203,10 @@ BEGIN
 EXCEPTION
   WHEN unique_violation THEN
     IF _idempotency_key IS NOT NULL THEN
-      SELECT id, starts_at, ends_at, total_price_cents, duration_minutes, status
+      SELECT a.id, a.starts_at, a.ends_at, a.total_price_cents, a.duration_minutes, a.status
         INTO existing
-        FROM public.appointments
-       WHERE business_id = _business_id AND idempotency_key = _idempotency_key;
+        FROM public.appointments AS a
+       WHERE a.business_id = _business_id AND a.idempotency_key = _idempotency_key;
       IF existing.id IS NOT NULL THEN
         RETURN jsonb_build_object(
           'id', existing.id,

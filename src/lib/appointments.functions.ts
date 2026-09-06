@@ -89,7 +89,9 @@ export const setAppointmentStatus = createServerFn({ method: "POST" })
           : []),
       ];
       const financial = await context.supabase.from("transactions").insert(rows);
-      if (financial.error && financial.error.code !== "23505") {
+      // Transactions are an optional reports feature. A missing feature/RLS access
+      // must not turn an already completed appointment into a visible error.
+      if (financial.error && !["23505", "42501"].includes(financial.error.code ?? "")) {
         throw new Error(`FINANCIAL_UPDATE_FAILED: ${financial.error.message}`);
       }
     }

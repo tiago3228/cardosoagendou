@@ -640,11 +640,19 @@ function BookingPage() {
                 <br />
                 Total: {formatBRL(confirmed.totalPriceCents)}
               </p>
-              <Button asChild variant="outline" className="mt-6 w-full">
+              <Button
+                asChild
+                variant="outline"
+                className="mt-6 w-full !border-[#B4884F] !bg-[#F2EDE4] !text-[#1E1B17] hover:!bg-[#E7D7C2] hover:!text-[#1E1B17]"
+              >
                 <a href={`/agendamento/${confirmed.manageToken}`}>Gerenciar meu agendamento</a>
               </Button>
               {business.whatsapp ? (
-                <Button asChild variant="outline" className="mt-6">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="mt-6 !border-[#B4884F] !bg-[#F2EDE4] !text-[#1E1B17] hover:!bg-[#E7D7C2] hover:!text-[#1E1B17]"
+                >
                   <a
                     href={whatsappLink(
                       business.whatsapp,

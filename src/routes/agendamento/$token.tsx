@@ -103,6 +103,7 @@ function ManageAppointmentPage() {
             disabled={busy || appointment.status !== "CONFIRMED"}
             variant="outline"
             onClick={() => void updatePresence("DECLINED")}
+            className="!border-[#B4884F] !bg-[#F2EDE4] !text-[#1E1B17] hover:!bg-[#E7D7C2] hover:!text-[#1E1B17]"
           >
             <XCircle className="mr-2 size-4" />
             Não poderei comparecer
@@ -115,7 +116,12 @@ function ManageAppointmentPage() {
         ) : null}
         {message ? <p className="mt-4 text-sm text-[#D1A66C]">{message}</p> : null}
         <div className="mt-5 grid gap-2">
-          <Button asChild variant="outline" disabled={busy || !appointment.allow_reschedule}>
+          <Button
+            asChild
+            variant="outline"
+            disabled={busy || !appointment.allow_reschedule}
+            className="!border-[#B4884F] !bg-[#F2EDE4] !text-[#1E1B17] hover:!bg-[#E7D7C2] hover:!text-[#1E1B17]"
+          >
             <a href={`/${appointment.business_slug}`}>Reagendar</a>
           </Button>
           <Button
