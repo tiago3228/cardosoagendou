@@ -321,8 +321,8 @@ function BookingPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0B0A08] text-[#F2EDE4]">
-      <div className="mx-auto min-h-screen max-w-[460px] overflow-hidden bg-[#14120F] pb-32 shadow-2xl">
+    <main className="min-h-screen text-[#F2EDE4]" style={{ backgroundColor: business.secondary_color ?? "#0B0A08" }}>
+      <div className="mx-auto min-h-screen max-w-[460px] overflow-hidden pb-32 shadow-2xl" style={{ backgroundColor: business.secondary_color ?? "#14120F" }}>
         <div className="h-1 bg-[linear-gradient(90deg,#B4884F_0%,#B4884F_60%,transparent_60%,transparent_70%,#B4884F_70%,#B4884F_100%)]" />
         <div className="border-b border-[#35302A] px-5 py-6">
           {business.cover_url ? (

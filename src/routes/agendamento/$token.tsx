@@ -19,6 +19,8 @@ function ManageAppointmentPage() {
   const { token } = Route.useParams();
   const appointment = Route.useLoaderData();
   const [currentStatus, setCurrentStatus] = useState(appointment?.status ?? null);
+  const [allowCancel, setAllowCancel] = useState(appointment?.allow_cancel ?? false);
+  const [allowReschedule, setAllowReschedule] = useState(appointment?.allow_reschedule ?? false);
   const [presence, setPresence] = useState(appointment?.presence_status ?? null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -34,6 +36,11 @@ function ManageAppointmentPage() {
           const next = payload.new as { status?: string; presence_status?: string | null };
           if (next.status) setCurrentStatus(next.status);
           if (next.presence_status !== undefined) setPresence(next.presence_status);
+          void getAppointmentByManageToken({ data: { token } }).then((fresh) => {
+            if (!fresh) return;
+            setAllowCancel(fresh.allow_cancel);
+            setAllowReschedule(fresh.allow_reschedule);
+          });
         },
       )
       .subscribe();
@@ -137,7 +144,7 @@ function ManageAppointmentPage() {
           <Button
             asChild
             variant="outline"
-            disabled={busy || !appointment.allow_reschedule}
+            disabled={busy || !allowReschedule}
             className="!border-[#B4884F] !bg-[#F2EDE4] !text-[#1E1B17] hover:!bg-[#E7D7C2] hover:!text-[#1E1B17]"
           >
             <a href={`/${appointment.business_slug}?reschedule=${encodeURIComponent(token)}`}>
@@ -146,7 +153,7 @@ function ManageAppointmentPage() {
           </Button>
           <Button
             variant="ghost"
-            disabled={busy || !appointment.allow_cancel || currentStatus !== "CONFIRMED"}
+            disabled={busy || !allowCancel || currentStatus !== "CONFIRMED"}
             onClick={() => void cancelAppointment()}
           >
             Cancelar agendamento
