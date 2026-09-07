@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { availabilitySchema, publicBookingSchema } from "./schemas";
 
@@ -28,7 +29,12 @@ export const getPublicBusiness = createServerFn({ method: "GET" })
       };
     }
     const catalog = await loadPublicCatalogBySlug(db, data.slug);
-    return { business, ...catalog, acceptsBookings: true as const };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: serviceCompositions } = await (supabaseAdmin as unknown as SupabaseClient)
+      .from("service_compositions")
+      .select("composite_service_id, component_service_id")
+      .eq("business_id", found.id);
+    return { business, ...catalog, serviceCompositions: serviceCompositions ?? [], acceptsBookings: true as const };
   });
 
 /** Time slots for a day, computed from the SUM of the selected services' durations. */
