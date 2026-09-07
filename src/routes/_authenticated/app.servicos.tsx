@@ -315,7 +315,7 @@ function ServicesPage() {
             <select
               className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground"
               value={catalogSegmentId}
-              onChange={(event) => setCatalogSegmentId(event.target.value)}
+              onChange={(event) => setCatalogSegmentId(event.currentTarget.value)}
               aria-label="Segmento do catálogo"
             >
               <option value="">Selecionar segmento</option>
