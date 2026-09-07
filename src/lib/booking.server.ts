@@ -125,6 +125,12 @@ export interface ResolvedSelection {
   services: { id: string; name: string; price_cents: number; duration_minutes: number }[];
   durationMinutes: number;
   priceCents: number;
+  /**
+   * False when every selected service allows parallel work (e.g. hair
+   * straightening waiting time): the appointment does not occupy the
+   * professional's agenda, so other clients can still book that time.
+   */
+  blocksAgenda: boolean;
 }
 
 /**
@@ -159,7 +165,7 @@ export async function resolveSelection(
   await assertNoServiceConflicts(db, businessId, serviceIds);
   const { data } = await db
     .from("services")
-    .select("id, name, price_cents, duration_minutes")
+    .select("id, name, price_cents, duration_minutes, allows_parallel")
     .eq("business_id", businessId)
     .eq("active", true)
     .is("deleted_at", null)
@@ -168,10 +174,12 @@ export async function resolveSelection(
   if (rows.length !== new Set(serviceIds).size) {
     throw new Error("SERVICE_NOT_AVAILABLE: um dos serviços selecionados não está disponível");
   }
+  const services = rows.map(({ allows_parallel: _ignored, ...s }) => s);
   return {
-    services: rows,
-    durationMinutes: totalDuration(rows),
-    priceCents: totalPriceCents(rows),
+    services,
+    durationMinutes: totalDuration(services),
+    priceCents: totalPriceCents(services),
+    blocksAgenda: !(rows.length > 0 && rows.every((s) => s.allows_parallel === true)),
   };
 }
 
@@ -191,6 +199,7 @@ export async function busyIntervals(
     .from("appointments")
     .select("starts_at, ends_at, status")
     .eq("professional_id", professionalId)
+    .eq("blocks_agenda", true)
     .gte("starts_at", from.toISOString())
     .lt("starts_at", to.toISOString())
     .not("status", "in", "(CANCELED,NO_SHOW)");
