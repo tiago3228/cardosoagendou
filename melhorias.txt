@@ -1,10 +1,10 @@
-# PRÉ-INTEGRAÇÃO — SIMULAÇÃO E PLANO DE RESOLUÇÃO
+# INTEGRAÇÃO CONTROLADA — CATÁLOGO GLOBAL + ORIGIN/MAIN
 
-A auditoria Git terminou.
+A auditoria de divergência foi concluída.
 
-Estado atual:
+Estado atual conhecido:
 
-```text
+```text id="6f8q1v"
 HEAD local:
 18748f7eaa5cf715e0ade18e44c6bd96fcbc3cfe
 
@@ -15,114 +15,171 @@ merge-base:
 ed01191f0e03a2d39ab259b57eff43f33e8dde70
 ```
 
-O HEAD está detached e o working tree está limpo.
+O working tree está limpa.
 
-A auditoria identificou:
+O objetivo é criar uma nova branch de integração contendo:
 
-### Commits locais exclusivos
+### Tudo que existe no origin/main
 
-```text
-1bf8c2b
-1ac8206
-2bf7717
-0303a99
-48135b9
-de9cfff
-18748f7
-```
+incluindo:
 
-### Equivalentes no remoto
+* booking;
+* disponibilidade;
+* WhatsApp;
+* produtos;
+* reagendamento;
+* trial de 30 dias;
+* Mercado Pago;
+* pagamentos;
+* integrações;
+* correções existentes;
+* migrations remotas;
+* alterações de UI/painel.
 
-```text
-1bf8c2b ≈ c18f07a
-1ac8206 ≈ 479b409
-```
+### MAIS o catálogo global local
 
-### Cadeia de catálogo que precisa ser preservada
+incluindo:
 
-```text
-0303a99
-   ↓
-48135b9
-   ↓
-de9cfff
-   ↓
-18748f7
-```
-
-### Objetivo
-
-Integrar o catálogo local ao `origin/main` preservando também todas as funcionalidades que existem no remoto.
-
----
-
-# REGRA ABSOLUTA
-
-ESTA ETAPA É SOMENTE DE PLANEJAMENTO.
-
-NÃO ALTERE O REPOSITÓRIO.
-
-NÃO EXECUTE:
-
-* git merge
-* git rebase
-* git cherry-pick
-* git reset
-* git checkout
-* git switch
-* git restore
-* git commit
-* git push
-* git pull
-* git fetch
-
-Não altere nenhum arquivo.
-
-Não execute migrations.
-
-Não altere banco remoto.
+* 20 segmentos;
+* 300 templates;
+* exatamente 15 templates por segmento;
+* templates globais;
+* cópia independente para services;
+* serviços customizados;
+* limites por plano;
+* downgrade seguro;
+* `business_segments` protegido;
+* `professional_services` protegido por tenant;
+* `Geral` apenas legado/técnico;
+* sem sincronização template → service vivo.
 
 ---
 
-# 1. Simular a aplicação dos commits do catálogo
+# REGRA PRINCIPAL
 
-Quero descobrir exatamente o que aconteceria se partíssemos de:
+Agora está AUTORIZADO executar a integração Git na branch de integração.
 
-```text
+Porém:
+
+## NÃO fazer push.
+
+## NÃO executar migrations no banco remoto.
+
+## NÃO fazer force-push.
+
+## NÃO alterar `origin/main`.
+
+## NÃO apagar branches.
+
+## NÃO usar reset destrutivo.
+
+## NÃO escolher automaticamente "ours" ou "theirs" nos conflitos.
+
+A integração deve ser feita preservando funcionalmente os dois lados.
+
+---
+
+# ETAPA 1 — Criar branch de integração
+
+Parta de:
+
+```text id="2x3q5c"
 origin/main
 ```
 
-e tentássemos incorporar:
-
-```text
-0303a99
-48135b9
-de9cfff
-18748f7
-```
-
-Faça essa análise usando apenas comandos read-only.
-
-Se necessário, utilize:
+Crie:
 
 ```bash
-git diff origin/main 0303a99 --stat
-git diff origin/main 48135b9 --stat
-git diff origin/main de9cfff --stat
-git diff origin/main 18748f7 --stat
+git switch -c integrate-global-catalog origin/main
 ```
 
-Analise também os diffs dos arquivos críticos.
+Antes de continuar, confirme:
 
-NÃO faça cherry-pick real.
+```bash
+git status
+git branch --show-current
+git rev-parse HEAD
+```
+
+A branch deve apontar inicialmente para:
+
+```text
+f6d49436194204ecc11cd27fc832a87a7b0bf919
+```
 
 ---
 
-# 2. Analisar cada conflito
+# ETAPA 2 — Verificar teste de assinatura
 
-Para cada um destes arquivos:
+Antes de aplicar `2bf7717`, verifique se já existe:
+
+```text id="z7y8j2"
+tests/subscription-plans.test.ts
+```
+
+Se já existir e cobrir adequadamente os casos adicionados por `2bf7717`, NÃO aplique `2bf7717`.
+
+Se não existir, aplique:
+
+```bash
+git cherry-pick 2bf7717
+```
+
+Se houver conflito, pare e analise antes de continuar.
+
+---
+
+# ETAPA 3 — NÃO aplicar commits duplicados
+
+NÃO aplicar:
+
+```text id="3gk5x4"
+1bf8c2b
+1ac8206
+```
+
+Eles já possuem equivalentes funcionais no remoto:
+
+```text id="c18f07a"
+c18f07a ≈ 1bf8c2b
+
+479b409 ≈ 1ac8206
+```
+
+Não duplicar essas alterações.
+
+---
+
+# ETAPA 4 — Integrar o catálogo
+
+Aplicar nesta ordem:
+
+```bash
+git cherry-pick 0303a99
+git cherry-pick 48135b9
+git cherry-pick de9cfff
+git cherry-pick 18748f7
+```
+
+A cadeia deve permanecer:
 
 ```text
+0303a99
+   ↓
+48135b9
+   ↓
+de9cfff
+   ↓
+18748f7
+```
+
+---
+
+# ETAPA 5 — RESOLUÇÃO DOS CONFLITOS
+
+Existem seis arquivos conhecidos com conflitos:
+
+```text id="9j4n8p"
 src/lib/booking.functions.ts
 src/lib/booking.server.ts
 src/lib/subscription.functions.ts
@@ -131,131 +188,123 @@ src/routes/_authenticated/app.assinatura.tsx
 src/routes/_authenticated/app.servicos.tsx
 ```
 
-compare:
+NÃO resolva usando:
 
-```text
-origin/main
+```bash
+git checkout --ours
+git checkout --theirs
 ```
 
-contra:
+nem equivalente automático.
 
-```text
-18748f7
-```
-
-e explique exatamente:
-
-### O que existe no remoto
-
-### O que existe no local
-
-### O que precisa ser preservado do remoto
-
-### O que precisa ser preservado do local
-
-### Como unir as duas implementações
-
-Não quero apenas dizer "há conflito".
-
-Quero a orientação funcional para resolver cada conflito.
+Resolver FUNCIONALMENTE.
 
 ---
 
-# 3. Atenção especial ao booking
+## 5.1 booking.functions.ts
 
-O remoto possui alterações importantes em:
+Preservar o comportamento remoto de:
+
+* booking;
+* produtos;
+* políticas;
+* presença;
+* confirmação;
+* WhatsApp;
+* payloads existentes.
+
+Adicionar/preservar do catálogo:
+
+* informação de segmento;
+* `segment_id`;
+* `segments`;
+* compatibilidade com catálogo sem segmento.
+
+A alteração de catálogo deve ser ADITIVA.
+
+Não remover nenhum campo ou fluxo remoto.
+
+---
+
+## 5.2 booking.server.ts
+
+Preservar integralmente do remoto:
 
 * disponibilidade;
-* booking;
-* WhatsApp;
+* horários;
+* conflitos;
+* profissionais;
+* serviços;
 * produtos;
+* appointments;
+* regras de atendimento paralelo;
 * reagendamento;
-* trial.
+* demais regras recentes.
 
-O catálogo local possui alterações em:
+Adicionar do catálogo:
 
-* segmentos;
-* carregamento de serviços;
-* associação de serviços a segmentos;
-* agrupamento por segmento;
-* catálogo público.
+* segmento global;
+* `segment_id`;
+* associação business → segment;
+* agrupamento/metadata necessários ao catálogo;
+* ocultação de `Geral` como categoria comercial.
 
-Determine se é possível combinar as implementações sem perder nenhuma funcionalidade.
+Não alterar o cálculo de disponibilidade.
 
-Para:
+Não alterar duração.
 
-```text
-booking.server.ts
-booking.functions.ts
-$slug.tsx
-```
+Não alterar conflitos.
 
-explique exatamente quais funções/blocos devem vir de cada lado.
+Não alterar regras de double booking.
 
 ---
 
-# 4. Atenção especial ao subscription
+## 5.3 subscription.functions.ts
 
-Compare:
+Este é um arquivo CRÍTICO.
 
-```text
-origin/main
-```
-
-com:
-
-```text
-18748f7
-```
-
-em:
-
-```text
-src/lib/subscription.functions.ts
-```
-
-Precisamos preservar simultaneamente:
+Preservar do remoto:
 
 * Mercado Pago;
-* trial de 30 dias;
-* preços anuais;
-* Basic = 11 meses;
-* Medium = 10 meses;
-* Unlimited = 9 meses;
+* trial;
+* criação de assinatura;
+* checkout;
 * entitlements;
-* demais regras existentes no remoto;
-* limite de segmentos;
-* downgrade seguro.
+* pagamentos;
+* regras existentes.
 
-Não substitua um arquivo pelo outro.
+Preservar do catálogo:
 
-Informe como as duas implementações devem ser combinadas.
+* Basic = máximo 1 segmento;
+* Medium = máximo 2;
+* Unlimited = ilimitado;
+* Trial = ilimitado;
+* bloqueio seguro de downgrade.
+
+Também preservar:
+
+* Basic anual = 11 meses;
+* Medium anual = 10 meses;
+* Unlimited anual = 9 meses;
+* data segura de `auto_recurring.start_date`.
+
+NÃO substituir o arquivo inteiro.
 
 ---
 
-# 5. Atenção máxima ao billing
+# 5.4 billing.server.ts
 
-Compare:
+Se houver qualquer conflito ou alteração inesperada neste arquivo:
 
-```text
-origin/main
-```
-
-com:
-
-```text
-18748f7
-```
-
-em:
-
-```text
+```text id="1v7d2z"
 src/lib/billing.server.ts
 ```
 
-Confirme que a integração deve preservar:
+PARAR imediatamente e reportar.
 
-```text
+A versão final deve manter:
+
+```text id="s5j2q7"
 platformSetting
 resolveProvider
 graceDays
@@ -266,108 +315,124 @@ businessEntitlements
 assertAcceptsBookings
 ```
 
-Também confirme que nenhuma versão inteira do arquivo deve ser escolhida automaticamente.
+Não substituir o arquivo inteiro.
 
-Explique se existe alguma diferença funcional ou somente de formatação.
-
----
-
-# 6. Catálogo
-
-Confirme que a integração precisa preservar integralmente:
-
-```text
-src/lib/segments.ts
-
-20260907000000_segments_service_catalog.sql
-20260907001000_public_catalog_segments.sql
-20260907002000_catalog_structural_fix.sql
-20260907003000_complete_global_catalog.sql
-20260907004000_catalog_integrity_blockers.sql
-
-tests/segments.test.ts
-tests/catalog.test.ts
-tests/catalog-integrity.test.ts
-```
-
-E que o resultado final contenha:
-
-* 20 segmentos;
-* 300 templates;
-* exatamente 15 templates por segmento;
-* templates globais;
-* cópia independente para services;
-* sem sincronização template → service;
-* `Geral` somente legado/técnico;
-* sem fallback automático para `Geral`;
-* limites Basic/Medium/Unlimited/Trial;
-* downgrade seguro;
-* integridade de business_segments;
-* integridade de professional_services.
+A diferença conhecida entre local/remoto é somente formatação de `resolveProvider`.
 
 ---
 
-# 7. Commits de assinatura
+# 5.5 $slug.tsx
 
-Não planeje aplicar:
+Preservar do remoto:
 
-```text
-1bf8c2b
-1ac8206
-```
+* fluxo público;
+* disponibilidade;
+* produtos;
+* reagendamento;
+* cancelamento;
+* presença;
+* WhatsApp;
+* políticas;
+* links seguros.
 
-porque já existem equivalentes no remoto:
+Adicionar do catálogo:
 
-```text
-c18f07a
-479b409
-```
+* agrupamento por segmento;
+* `segment_id`;
+* informações de segmento necessárias para apresentação.
 
-Verifique, entretanto, se:
+A seleção dos serviços deve continuar utilizando os IDs reais existentes.
 
-```text
-2bf7717
-```
+Não alterar o payload de booking sem necessidade.
 
-é necessário.
-
-Confirme se:
-
-```text
-tests/subscription-plans.test.ts
-```
-
-já existe no estado `origin/main`.
+Não alterar a lógica de disponibilidade.
 
 ---
 
-# 8. Migrations
+# 5.6 app.assinatura.tsx
 
-Monte a árvore completa das migrations que deverão existir no resultado final.
+Preservar:
 
-Separe:
+* checkout;
+* PIX;
+* Mercado Pago;
+* mensal/anual;
+* estado da assinatura.
 
-### Migrations remotas
+Adicionar/preservar:
 
 ```text
+Medium = 🔥 MAIS ASSINADO
+Unlimited = 👑 MAIS COMPLETO
+```
+
+E:
+
+```text
+Basic = 1 segmento
+Medium = até 2 segmentos
+Unlimited = ilimitado
+Trial = ilimitado
+```
+
+Serviços continuam ilimitados em todos os planos.
+
+---
+
+# 5.7 app.servicos.tsx
+
+Este é um dos conflitos mais importantes.
+
+Preservar do remoto:
+
+* serviços;
+* preço;
+* duração;
+* ativação/desativação;
+* edição;
+* exclusão;
+* `allows_parallel`;
+* funcionalidades existentes.
+
+Preservar do catálogo:
+
+* segmentos;
+* templates;
+* seleção de segmentos;
+* cópia de templates;
+* serviços customizados;
+* associação de profissionais;
+* remoção de profissionais;
+* limites;
+* `Geral` como legado/técnico.
+
+O resultado precisa conter simultaneamente:
+
+```text
+segment_id
+allows_parallel
+professional associations
+catalog templates
+custom services
+```
+
+Não substituir a tela inteira por uma das versões.
+
+---
+
+# ETAPA 6 — Migrations
+
+Após a integração dos arquivos, confirme que todas estas migrations estão presentes:
+
+```text id="8x0d5v"
 20260906140000_phase2a_instagram.sql
 20260906150000_phase0_booking_integrity.sql
 20260906170000_phase3_whatsapp_outbox.sql
 20260906190000_trial_30_days_all_features.sql
 20260906195900_add_rescheduled_status.sql
 20260906200000_products_and_reschedule_atomic.sql
-```
-
-### Migrations de assinatura
-
-```text
 20260906210000_update_annual_plan_discounts.sql
 20260906220000_fix_basic_annual_discount.sql
-```
-
-### Migrations do catálogo
-
-```text
 20260907000000_segments_service_catalog.sql
 20260907001000_public_catalog_segments.sql
 20260907002000_catalog_structural_fix.sql
@@ -375,98 +440,187 @@ Separe:
 20260907004000_catalog_integrity_blockers.sql
 ```
 
-Verifique se a ordem acima é tecnicamente coerente com as referências reais existentes nos arquivos.
+NÃO execute nenhuma migration.
 
-Não execute nenhuma migration.
+Somente validar presença, ordem e conteúdo.
 
 ---
 
-# 9. Verificar risco de duplicação
+# ETAPA 7 — Validar catálogo
 
-Confirme se os seguintes pares são funcionalmente equivalentes:
+Depois da integração, verificar estaticamente:
 
-```text
-1bf8c2b ↔ c18f07a
-1ac8206 ↔ 479b409
+* 20 segmentos;
+* 300 templates;
+* 15 por segmento;
+* nomes corretos;
+* durações corretas;
+* `segments` global;
+* `service_templates` global;
+* cópia independente;
+* ausência de sincronização;
+* `Geral` legado;
+* nenhum fallback automático;
+* limites por plano;
+* downgrade;
+* triggers de integridade.
+
+---
+
+# ETAPA 8 — Validar funcionalidades remotas
+
+Verificar que continuam presentes:
+
+* booking;
+* disponibilidade;
+* WhatsApp;
+* produtos;
+* reagendamento;
+* trial;
+* Instagram;
+* Mercado Pago;
+* pagamentos;
+* configurações;
+* painel.
+
+---
+
+# ETAPA 9 — Testes
+
+Executar:
+
+```bash
+npm test
+npx tsc --noEmit
+npm run lint
+npm run build
+git diff --check
 ```
 
-Se forem equivalentes, eles não devem ser reaplicados.
+Se existirem testes específicos, executar também:
 
-Também verifique se algum outro commit local já está representado funcionalmente no remoto.
+```text
+tests/segments.test.ts
+tests/catalog.test.ts
+tests/catalog-integrity.test.ts
+tests/subscription-plans.test.ts
+tests/availability.test.ts
+tests/whatsapp.test.ts
+tests/instagram.test.ts
+```
 
----
+Se algum teste falhar:
 
-# 10. Estratégia de integração
-
-Depois de toda a análise, apresente uma estratégia concreta.
-
-Quero responder às seguintes perguntas:
-
-1. É seguro criar branch a partir de `origin/main`?
-2. Devemos integrar `0303a99 → 48135b9 → de9cfff → 18748f7`?
-3. Precisamos realmente aplicar `2bf7717`?
-4. Existe algum commit intermediário local necessário para o catálogo funcionar?
-5. Quais conflitos precisam ser resolvidos manualmente?
-6. Qual arquivo é o mais perigoso?
-7. Qual migration deve entrar primeiro?
-8. Em qual momento devemos rodar testes?
-9. Em qual momento podemos criar o commit de integração?
-10. Quando será seguro fazer push?
+1. identificar causa;
+2. corrigir;
+3. executar novamente;
+4. não ignorar falha.
 
 ---
 
-# 11. Resultado final obrigatório
+# ETAPA 10 — Auditoria final do resultado
+
+Verificar:
+
+```bash
+git status
+git log --oneline --decorate --graph -30
+git diff origin/main...HEAD --stat
+```
+
+Também verificar:
+
+```bash
+git diff --check
+```
+
+Confirmar que:
+
+* working tree limpa;
+* nenhum arquivo crítico foi perdido;
+* nenhum arquivo remoto importante desapareceu;
+* migrations locais estão presentes;
+* migrations remotas estão presentes;
+* testes estão presentes.
+
+---
+
+# ETAPA 11 — NÃO criar commit final ainda
+
+Depois que tudo estiver funcionando:
+
+NÃO criar ainda um commit manual adicional.
+
+NÃO fazer push.
+
+NÃO fazer merge.
+
+NÃO abrir PR.
+
+Pare e apresente o relatório.
+
+---
+
+# RELATÓRIO FINAL OBRIGATÓRIO
 
 Entregue:
 
-## A. Arquitetura final esperada
+## 1. Branch criada
 
-Mostre graficamente:
+## 2. Commits aplicados
 
-```text
-origin/main
-      +
-catálogo local
-      =
-resultado esperado
-```
+## 3. Commits não aplicados e motivo
 
-## B. Commits que DEVEM ser preservados
+## 4. Conflitos encontrados
 
-Liste os hashes.
+Para cada conflito:
 
-## C. Commits que NÃO devem ser reaplicados
+* arquivo;
+* conflito;
+* decisão tomada;
+* funcionalidades preservadas do remoto;
+* funcionalidades preservadas do catálogo.
 
-Liste os hashes.
+## 5. Billing
 
-## D. Conflitos
+Confirme explicitamente:
 
-Tabela:
+* `platformSetting` presente;
+* Mercado Pago preservado;
+* trial preservado;
+* entitlements preservados.
 
-| Arquivo | Remoto | Local | Estratégia |
-| ------- | ------ | ----- | ---------- |
+## 6. Booking
 
-## E. Migrations finais
+Confirme:
 
-Lista em ordem.
+* disponibilidade;
+* produtos;
+* reagendamento;
+* WhatsApp;
+* booking;
+* conflitos/double booking.
 
-## F. Riscos
+## 7. Catálogo
 
-Classifique:
+Confirme:
 
-* 🔴 alto
-* 🟠 médio
-* 🟢 baixo
+* 20 segmentos;
+* 300 templates;
+* 15 por segmento;
+* cópia independente;
+* `Geral` legado;
+* limites;
+* downgrade;
+* integridade multi-tenant.
 
-## G. Sequência exata de integração
+## 8. Migrations
 
-Somente comandos/ações que deverão ser executados FUTURAMENTE.
+Liste todas as 13 migrations na ordem final.
 
-Não execute nenhum deles agora.
+## 9. Testes
 
-## H. Testes obrigatórios após integração
-
-Liste exatamente:
+Informe resultado de:
 
 ```text
 npm test
@@ -476,30 +630,51 @@ npm run build
 git diff --check
 ```
 
-e quaisquer testes adicionais que considerar necessários.
+## 10. Git final
 
-## I. Veredito
+Informe:
 
-Escolha uma:
+* branch atual;
+* HEAD;
+* origin/main;
+* working tree;
+* commits à frente/atrás.
 
-🟢 pronto para integração
+## 11. Riscos restantes
 
-🟡 integração possível, mas requer resolução manual
+Classifique:
 
-🔴 não integrar ainda
+🔴 alto
+🟠 médio
+🟢 baixo
+
+## 12. Veredito
+
+Escolha:
+
+🟢 INTEGRAÇÃO CONCLUÍDA — PRONTA PARA AUDITORIA FINAL
+
+ou
+
+🟡 INTEGRAÇÃO CONCLUÍDA — REQUER CORREÇÕES
+
+ou
+
+🔴 INTEGRAÇÃO NÃO CONCLUÍDA
 
 ---
 
-IMPORTANTE:
+### REGRA FINAL
 
-Esta tarefa é exclusivamente de análise.
+O objetivo desta etapa é somente chegar a uma branch de integração local funcional.
 
-Ao terminar:
+NÃO fazer:
 
-```text
-git status
-```
+* push;
+* force-push;
+* merge em main;
+* PR;
+* migration remota;
+* publicação.
 
-deve continuar mostrando working tree limpa.
-
-Não altere absolutamente nada.
+Somente depois de minha revisão do relatório será autorizada qualquer publicação.
