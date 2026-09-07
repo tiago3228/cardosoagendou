@@ -233,9 +233,12 @@ function ServicesPage() {
       }
       return Number(data ?? 0);
     },
-    onSuccess: (count) => {
+    onSuccess: async (count) => {
       setSelectedTemplateIds([]);
-      queryClient.invalidateQueries({ queryKey: ["services", businessId] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["services", businessId] }),
+        queryClient.invalidateQueries({ queryKey: ["professional-services", businessId] }),
+      ]);
       toast.success(`${count} serviço(s) adicionado(s)`);
     },
     onError: (error: Error) =>
@@ -261,8 +264,9 @@ function ServicesPage() {
         if (error) throw new Error(error.message);
       }
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["professional-services", businessId] }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["professional-services", businessId] });
+    },
     onError: (error: Error) =>
       toast.error("Não foi possível atualizar os profissionais", { description: error.message }),
   });
