@@ -376,14 +376,11 @@ export type Database = {
       }
       businesses: {
         Row: {
-          cancellation_deadline_hours: number
-          primary_color: string
-          secondary_color: string
-
           active: boolean
           address: string | null
           booking_policy: string | null
           business_type: Database["public"]["Enums"]["business_type"]
+          cancellation_deadline_hours: number
           cover_url: string | null
           created_at: string
           description: string | null
@@ -394,8 +391,10 @@ export type Database = {
           max_advance_days: number
           min_notice_minutes: number
           name: string
+          primary_color: string
           reminder_enabled: boolean
           reminder_minutes: number
+          secondary_color: string
           show_address: boolean
           show_whatsapp: boolean
           slot_interval_minutes: number
@@ -406,14 +405,11 @@ export type Database = {
           whatsapp_notifications_enabled: boolean
         }
         Insert: {
-          cancellation_deadline_hours?: number
-          primary_color?: string
-          secondary_color?: string
-
           active?: boolean
           address?: string | null
           booking_policy?: string | null
           business_type?: Database["public"]["Enums"]["business_type"]
+          cancellation_deadline_hours?: number
           cover_url?: string | null
           created_at?: string
           description?: string | null
@@ -424,8 +420,10 @@ export type Database = {
           max_advance_days?: number
           min_notice_minutes?: number
           name: string
+          primary_color?: string
           reminder_enabled?: boolean
           reminder_minutes?: number
+          secondary_color?: string
           show_address?: boolean
           show_whatsapp?: boolean
           slot_interval_minutes?: number
@@ -436,14 +434,11 @@ export type Database = {
           whatsapp_notifications_enabled?: boolean
         }
         Update: {
-          cancellation_deadline_hours?: number
-          primary_color?: string
-          secondary_color?: string
-
           active?: boolean
           address?: string | null
           booking_policy?: string | null
           business_type?: Database["public"]["Enums"]["business_type"]
+          cancellation_deadline_hours?: number
           cover_url?: string | null
           created_at?: string
           description?: string | null
@@ -454,8 +449,10 @@ export type Database = {
           max_advance_days?: number
           min_notice_minutes?: number
           name?: string
+          primary_color?: string
           reminder_enabled?: boolean
           reminder_minutes?: number
+          secondary_color?: string
           show_address?: boolean
           show_whatsapp?: boolean
           slot_interval_minutes?: number
