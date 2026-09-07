@@ -72,7 +72,7 @@ export const getAgenda = createServerFn({ method: "POST" })
     const appointments = await context.supabase
       .from("appointments")
       .select(
-        "id, starts_at, ends_at, status, client_name, client_whatsapp, total_price_cents, duration_minutes, notes, professional_id, professionals:professional_id (name), appointment_services (service_name, price_cents, duration_minutes)",
+        "id, starts_at, ends_at, status, client_name, client_whatsapp, total_price_cents, duration_minutes, notes, blocks_agenda, professional_id, professionals:professional_id (name), appointment_services (service_name, price_cents, duration_minutes)",
       )
       .gte("starts_at", data.from)
       .lt("starts_at", data.to)
