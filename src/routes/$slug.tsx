@@ -594,8 +594,15 @@ function BookingPage() {
                         key={product.id}
                         className={`rounded-xl border bg-[#1E1B17] p-3 transition ${selectedProducts.includes(product.id) ? "border-[#B4884F]" : "border-[#35302A]"}`}
                       >
-                        <button
-                          type="button"
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              event.currentTarget.click();
+                            }
+                          }}
                           onClick={() => {
                             const alreadySelected = selectedProducts.includes(product.id);
                             setSelectedProducts((previous) =>
@@ -631,7 +638,7 @@ function BookingPage() {
                           {selectedProducts.includes(product.id) ? (
                             <Check className="size-5 text-[#D1A66C]" aria-hidden />
                           ) : null}
-                        </button>
+                        </div>
                       </li>
                     ))}
                   </ul>
