@@ -261,6 +261,12 @@ function InstallAppSection() {
                 return;
               }
               setHint(true);
+              toast.info(
+                outcome === "dismissed"
+                  ? "Sem problemas — veja abaixo como criar o atalho manualmente."
+                  : "Seu navegador não abre a instalação automática",
+                { description: manualHint, duration: 8000 },
+              );
             }}
           >
             Instalar Agendou Pro
