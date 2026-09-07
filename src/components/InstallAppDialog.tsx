@@ -41,11 +41,15 @@ export function InstallAppDialog() {
       toast.success("Atalho criado! Abra o Agendou Pro pelo ícone do app.");
       return;
     }
+    setShowHint(true);
     if (outcome === "dismissed") {
-      setShowHint(true);
+      toast.info("Sem problemas — veja abaixo como criar o atalho manualmente.");
       return;
     }
-    setShowHint(true);
+    toast.info("Seu navegador não abre a instalação automática", {
+      description: manualHint,
+      duration: 8000,
+    });
   };
 
   if (!open) return null;
