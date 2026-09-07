@@ -56,7 +56,7 @@ export async function loadPublicBusinessBySlug(
 }
 
 export interface PublicCatalog {
-  services: { id: string; name: string; description: string | null; category: string | null; price_cents: number; duration_minutes: number; image_url: string | null }[];
+  services: { id: string; name: string; description: string | null; category: string | null; price_cents: number; duration_minutes: number; image_url: string | null; allows_parallel?: boolean }[];
   products?: { id: string; name: string; price_cents: number; stock_quantity: number; image_url: string | null }[];
   professionals: { id: string; name: string; photo_url: string | null; bio: string | null }[];
   links: { professional_id: string; service_id: string }[];
@@ -86,7 +86,9 @@ export async function loadPublicCatalog(db: Db, businessId: string) {
   const [services, professionals, links, businessHours, professionalHours] = await Promise.all([
     db
       .from("services")
-      .select("id, name, description, category, price_cents, duration_minutes, image_url")
+      .select(
+        "id, name, description, category, price_cents, duration_minutes, image_url, allows_parallel",
+      )
       .eq("business_id", businessId)
       .eq("active", true)
       .is("deleted_at", null)
