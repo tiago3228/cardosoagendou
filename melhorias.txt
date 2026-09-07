@@ -1,61 +1,11 @@
-## AUDITORIA GIT — NÃO ALTERAR O REPOSITÓRIO
+# PRÉ-INTEGRAÇÃO — SIMULAÇÃO E PLANO DE RESOLUÇÃO
 
-Estamos no commit local:
+A auditoria Git terminou.
 
-`18748f7eaa5cf715e0ade18e44c6bd96fcbc3cfe`
-
-O `origin/main` está em:
-
-`f6d49436194204ecc11cd27fc832a87a7b0bf919`
-
-O merge-base informado é:
-
-`ed01191f0e03a2d39ab259b57eff43f33e8dde70`
-
-O HEAD local está em **detached HEAD**.
-
-Quero uma auditoria completa da divergência antes de decidir como integrar o trabalho.
-
-### REGRA ABSOLUTA
-
-NÃO executar nenhuma operação que altere o histórico ou working tree.
-
-É PROIBIDO:
-
-* `git merge`
-* `git rebase`
-* `git cherry-pick`
-* `git reset`
-* `git checkout` para alterar estado
-* `git switch`
-* `git restore`
-* `git commit`
-* `git push`
-* `git pull`
-* `git fetch`
-* alterar arquivos
-* aplicar migrations no banco remoto
-
-Execute somente comandos de leitura.
-
----
-
-# 1. Estado atual
-
-Execute:
-
-```bash
-git status
-git branch -a
-git rev-parse HEAD
-git rev-parse origin/main
-git merge-base HEAD origin/main
-```
-
-Confirme se os hashes continuam exatamente:
+Estado atual:
 
 ```text
-HEAD:
+HEAD local:
 18748f7eaa5cf715e0ade18e44c6bd96fcbc3cfe
 
 origin/main:
@@ -65,412 +15,491 @@ merge-base:
 ed01191f0e03a2d39ab259b57eff43f33e8dde70
 ```
 
----
+O HEAD está detached e o working tree está limpo.
 
-# 2. Liste os commits dos dois lados
+A auditoria identificou:
 
-Execute:
-
-```bash
-git log --oneline --decorate --graph --all -50
-```
-
-Depois:
-
-```bash
-git log --oneline ed01191f0e03a2d39ab259b57eff43f33e8dde70..HEAD
-```
-
-e:
-
-```bash
-git log --oneline ed01191f0e03a2d39ab259b57eff43f33e8dde70..origin/main
-```
-
-Identifique claramente:
-
-### COMMITS LOCAIS
-
-Todos os commits presentes em `HEAD` depois do merge-base.
-
-### COMMITS REMOTOS
-
-Todos os commits presentes em `origin/main` depois do merge-base.
-
-Para cada commit, informe:
-
-* hash curto;
-* mensagem;
-* arquivos alterados;
-* resumo objetivo da alteração.
-
----
-
-# 3. Auditar os 6 commits locais
-
-Para cada commit local, execute/analise:
-
-```bash
-git show --stat --oneline <HASH>
-```
-
-e:
-
-```bash
-git show --format=fuller --stat <HASH>
-```
-
-Não precisa reproduzir diffs gigantescos.
-
-Quero saber principalmente quais arquivos foram alterados e qual funcionalidade cada commit representa.
-
-Dê atenção especial a:
+### Commits locais exclusivos
 
 ```text
-src/lib/billing.server.ts
-src/lib/subscription.functions.ts
-src/lib/booking.server.ts
-src/lib/booking.functions.ts
-src/routes/_authenticated/app.servicos.tsx
-src/routes/_authenticated/app.assinatura.tsx
-supabase/migrations/*
-tests/*
-```
-
----
-
-# 4. Auditar os 16 commits de origin/main
-
-Faça a mesma análise para TODOS os commits que estão em:
-
-```text
-origin/main
-```
-
-mas não estão no HEAD local.
-
-Para cada um informe:
-
-* hash;
-* mensagem;
-* arquivos alterados;
-* funcionalidade;
-* se parece ser correção, feature, refactor, auditoria ou outro tipo de mudança.
-
----
-
-# 5. Identificar sobreposição de arquivos
-
-Compare os arquivos modificados pelos dois lados.
-
-Quero uma tabela:
-
-| Arquivo | Alterado localmente | Alterado no origin/main | Risco            |
-| ------- | ------------------- | ----------------------- | ---------------- |
-| arquivo | sim/não             | sim/não                 | baixo/médio/alto |
-
-Dê prioridade máxima a:
-
-```text
-src/lib/billing.server.ts
-src/lib/subscription.functions.ts
-src/lib/booking.server.ts
-src/lib/booking.functions.ts
-src/routes/_authenticated/app.servicos.tsx
-src/routes/_authenticated/app.assinatura.tsx
-supabase/migrations/*
-tests/*
-```
-
----
-
-# 6. Detectar conflitos potenciais
-
-SEM executar merge ou rebase, use comandos somente de leitura para avaliar possíveis conflitos.
-
-Se possível, utilize:
-
-```bash
-git merge-tree $(git merge-base HEAD origin/main) HEAD origin/main
-```
-
-Se a versão do Git não aceitar essa sintaxe, não tente alterar nada; apenas informe.
-
-Também analise manualmente os arquivos que aparecem nos dois lados.
-
-Quero classificar:
-
-### 🔴 CONFLITO REAL
-
-As duas linhas modificaram a mesma parte lógica do arquivo e provavelmente exigiriam resolução manual.
-
-### 🟠 CONFLITO POTENCIAL
-
-Os dois lados alteraram o mesmo arquivo, mas em regiões aparentemente independentes.
-
-### 🟢 SEM CONFLITO RELEVANTE
-
-Alterações independentes ou facilmente preserváveis.
-
----
-
-# 7. Verificar especificamente o billing
-
-Isso é CRÍTICO.
-
-O arquivo:
-
-```text
-src/lib/billing.server.ts
-```
-
-foi anteriormente corrompido quando conteúdo de booking substituiu o billing.
-
-O billing correto foi restaurado no commit:
-
-```text
-ed01191
-```
-
-Depois disso, precisamos garantir que nenhum dos 16 commits de `origin/main` tenha:
-
-* sobrescrito `billing.server.ts`;
-* removido `platformSetting`;
-* alterado `resolveProvider`;
-* alterado `graceDays`;
-* alterado `loadSubscriptionByBusiness`;
-* alterado `loadSubscriptionByProviderId`;
-* alterado `loadPlanById`;
-* alterado `businessEntitlements`;
-* alterado `assertAcceptsBookings`;
-* alterado Mercado Pago;
-* alterado trial;
-* alterado preços anuais.
-
-Informe explicitamente se existe algum risco aqui.
-
----
-
-# 8. Verificar especificamente o catálogo de serviços
-
-O trabalho local recente contém:
-
-```text
+1bf8c2b
+1ac8206
+2bf7717
+0303a99
 48135b9
 de9cfff
 18748f7
 ```
 
-Esse trabalho implementou/corrigiu:
-
-* catálogo global;
-* 20 segmentos;
-* 300 templates;
-* 15 templates por segmento;
-* cópia independente de templates para services;
-* ausência de sincronização template → service;
-* `Geral` apenas como legado/técnico;
-* limites de segmentos por plano;
-* downgrade seguro;
-* associação de profissionais;
-* integridade multi-tenant;
-* trigger para `business_segments`;
-* trigger para `professional_services`.
-
-Verifique se algum commit de `origin/main` alterou as mesmas áreas.
-
-Especial atenção a:
+### Equivalentes no remoto
 
 ```text
-supabase/migrations/20260907002000_catalog_structural_fix.sql
-supabase/migrations/20260907003000_complete_global_catalog.sql
-supabase/migrations/20260907004000_catalog_integrity_blockers.sql
-
-src/lib/subscription.functions.ts
-src/routes/_authenticated/app.servicos.tsx
-tests/catalog.test.ts
-tests/catalog-integrity.test.ts
+1bf8c2b ≈ c18f07a
+1ac8206 ≈ 479b409
 ```
 
-Informe qualquer risco de perder ou sobrescrever esse trabalho.
+### Cadeia de catálogo que precisa ser preservada
+
+```text
+0303a99
+   ↓
+48135b9
+   ↓
+de9cfff
+   ↓
+18748f7
+```
+
+### Objetivo
+
+Integrar o catálogo local ao `origin/main` preservando também todas as funcionalidades que existem no remoto.
 
 ---
 
-# 9. Verificar migrations
+# REGRA ABSOLUTA
 
-Liste todas as migrations que existem em cada lado desde o merge-base.
+ESTA ETAPA É SOMENTE DE PLANEJAMENTO.
+
+NÃO ALTERE O REPOSITÓRIO.
+
+NÃO EXECUTE:
+
+* git merge
+* git rebase
+* git cherry-pick
+* git reset
+* git checkout
+* git switch
+* git restore
+* git commit
+* git push
+* git pull
+* git fetch
+
+Não altere nenhum arquivo.
+
+Não execute migrations.
+
+Não altere banco remoto.
+
+---
+
+# 1. Simular a aplicação dos commits do catálogo
+
+Quero descobrir exatamente o que aconteceria se partíssemos de:
+
+```text
+origin/main
+```
+
+e tentássemos incorporar:
+
+```text
+0303a99
+48135b9
+de9cfff
+18748f7
+```
+
+Faça essa análise usando apenas comandos read-only.
+
+Se necessário, utilize:
+
+```bash
+git diff origin/main 0303a99 --stat
+git diff origin/main 48135b9 --stat
+git diff origin/main de9cfff --stat
+git diff origin/main 18748f7 --stat
+```
+
+Analise também os diffs dos arquivos críticos.
+
+NÃO faça cherry-pick real.
+
+---
+
+# 2. Analisar cada conflito
+
+Para cada um destes arquivos:
+
+```text
+src/lib/booking.functions.ts
+src/lib/booking.server.ts
+src/lib/subscription.functions.ts
+src/routes/$slug.tsx
+src/routes/_authenticated/app.assinatura.tsx
+src/routes/_authenticated/app.servicos.tsx
+```
+
+compare:
+
+```text
+origin/main
+```
+
+contra:
+
+```text
+18748f7
+```
+
+e explique exatamente:
+
+### O que existe no remoto
+
+### O que existe no local
+
+### O que precisa ser preservado do remoto
+
+### O que precisa ser preservado do local
+
+### Como unir as duas implementações
+
+Não quero apenas dizer "há conflito".
+
+Quero a orientação funcional para resolver cada conflito.
+
+---
+
+# 3. Atenção especial ao booking
+
+O remoto possui alterações importantes em:
+
+* disponibilidade;
+* booking;
+* WhatsApp;
+* produtos;
+* reagendamento;
+* trial.
+
+O catálogo local possui alterações em:
+
+* segmentos;
+* carregamento de serviços;
+* associação de serviços a segmentos;
+* agrupamento por segmento;
+* catálogo público.
+
+Determine se é possível combinar as implementações sem perder nenhuma funcionalidade.
+
+Para:
+
+```text
+booking.server.ts
+booking.functions.ts
+$slug.tsx
+```
+
+explique exatamente quais funções/blocos devem vir de cada lado.
+
+---
+
+# 4. Atenção especial ao subscription
 
 Compare:
 
 ```text
-local HEAD
-versus
 origin/main
 ```
 
-Identifique:
+com:
 
-* migrations existentes apenas localmente;
-* migrations existentes apenas no remoto;
-* migrations que alteram as mesmas tabelas;
-* migrations potencialmente dependentes umas das outras;
-* qualquer risco de executar uma migration na ordem errada.
+```text
+18748f7
+```
+
+em:
+
+```text
+src/lib/subscription.functions.ts
+```
+
+Precisamos preservar simultaneamente:
+
+* Mercado Pago;
+* trial de 30 dias;
+* preços anuais;
+* Basic = 11 meses;
+* Medium = 10 meses;
+* Unlimited = 9 meses;
+* entitlements;
+* demais regras existentes no remoto;
+* limite de segmentos;
+* downgrade seguro.
+
+Não substitua um arquivo pelo outro.
+
+Informe como as duas implementações devem ser combinadas.
+
+---
+
+# 5. Atenção máxima ao billing
+
+Compare:
+
+```text
+origin/main
+```
+
+com:
+
+```text
+18748f7
+```
+
+em:
+
+```text
+src/lib/billing.server.ts
+```
+
+Confirme que a integração deve preservar:
+
+```text
+platformSetting
+resolveProvider
+graceDays
+loadSubscriptionByBusiness
+loadSubscriptionByProviderId
+loadPlanById
+businessEntitlements
+assertAcceptsBookings
+```
+
+Também confirme que nenhuma versão inteira do arquivo deve ser escolhida automaticamente.
+
+Explique se existe alguma diferença funcional ou somente de formatação.
+
+---
+
+# 6. Catálogo
+
+Confirme que a integração precisa preservar integralmente:
+
+```text
+src/lib/segments.ts
+
+20260907000000_segments_service_catalog.sql
+20260907001000_public_catalog_segments.sql
+20260907002000_catalog_structural_fix.sql
+20260907003000_complete_global_catalog.sql
+20260907004000_catalog_integrity_blockers.sql
+
+tests/segments.test.ts
+tests/catalog.test.ts
+tests/catalog-integrity.test.ts
+```
+
+E que o resultado final contenha:
+
+* 20 segmentos;
+* 300 templates;
+* exatamente 15 templates por segmento;
+* templates globais;
+* cópia independente para services;
+* sem sincronização template → service;
+* `Geral` somente legado/técnico;
+* sem fallback automático para `Geral`;
+* limites Basic/Medium/Unlimited/Trial;
+* downgrade seguro;
+* integridade de business_segments;
+* integridade de professional_services.
+
+---
+
+# 7. Commits de assinatura
+
+Não planeje aplicar:
+
+```text
+1bf8c2b
+1ac8206
+```
+
+porque já existem equivalentes no remoto:
+
+```text
+c18f07a
+479b409
+```
+
+Verifique, entretanto, se:
+
+```text
+2bf7717
+```
+
+é necessário.
+
+Confirme se:
+
+```text
+tests/subscription-plans.test.ts
+```
+
+já existe no estado `origin/main`.
+
+---
+
+# 8. Migrations
+
+Monte a árvore completa das migrations que deverão existir no resultado final.
+
+Separe:
+
+### Migrations remotas
+
+```text
+20260906140000_phase2a_instagram.sql
+20260906150000_phase0_booking_integrity.sql
+20260906170000_phase3_whatsapp_outbox.sql
+20260906190000_trial_30_days_all_features.sql
+20260906195900_add_rescheduled_status.sql
+20260906200000_products_and_reschedule_atomic.sql
+```
+
+### Migrations de assinatura
+
+```text
+20260906210000_update_annual_plan_discounts.sql
+20260906220000_fix_basic_annual_discount.sql
+```
+
+### Migrations do catálogo
+
+```text
+20260907000000_segments_service_catalog.sql
+20260907001000_public_catalog_segments.sql
+20260907002000_catalog_structural_fix.sql
+20260907003000_complete_global_catalog.sql
+20260907004000_catalog_integrity_blockers.sql
+```
+
+Verifique se a ordem acima é tecnicamente coerente com as referências reais existentes nos arquivos.
 
 Não execute nenhuma migration.
 
 ---
 
-# 10. Verificar se os commits locais são dependentes entre si
+# 9. Verificar risco de duplicação
 
-Determine se:
+Confirme se os seguintes pares são funcionalmente equivalentes:
 
 ```text
-48135b9
-de9cfff
-18748f7
+1bf8c2b ↔ c18f07a
+1ac8206 ↔ 479b409
 ```
 
-dependem uns dos outros.
+Se forem equivalentes, eles não devem ser reaplicados.
 
-Quero saber se eles precisam permanecer juntos como uma cadeia ou se algum deles pode ser integrado isoladamente.
-
-Também identifique se algum dos 16 commits remotos depende de alterações feitas depois do merge-base.
+Também verifique se algum outro commit local já está representado funcionalmente no remoto.
 
 ---
 
-# 11. Verificar conteúdo efetivo
+# 10. Estratégia de integração
 
-Além do histórico, compare o estado final dos arquivos importantes entre:
+Depois de toda a análise, apresente uma estratégia concreta.
+
+Quero responder às seguintes perguntas:
+
+1. É seguro criar branch a partir de `origin/main`?
+2. Devemos integrar `0303a99 → 48135b9 → de9cfff → 18748f7`?
+3. Precisamos realmente aplicar `2bf7717`?
+4. Existe algum commit intermediário local necessário para o catálogo funcionar?
+5. Quais conflitos precisam ser resolvidos manualmente?
+6. Qual arquivo é o mais perigoso?
+7. Qual migration deve entrar primeiro?
+8. Em qual momento devemos rodar testes?
+9. Em qual momento podemos criar o commit de integração?
+10. Quando será seguro fazer push?
+
+---
+
+# 11. Resultado final obrigatório
+
+Entregue:
+
+## A. Arquitetura final esperada
+
+Mostre graficamente:
 
 ```text
-HEAD
 origin/main
+      +
+catálogo local
+      =
+resultado esperado
 ```
 
-Use comandos de leitura como:
+## B. Commits que DEVEM ser preservados
 
-```bash
-git diff --stat HEAD origin/main
+Liste os hashes.
+
+## C. Commits que NÃO devem ser reaplicados
+
+Liste os hashes.
+
+## D. Conflitos
+
+Tabela:
+
+| Arquivo | Remoto | Local | Estratégia |
+| ------- | ------ | ----- | ---------- |
+
+## E. Migrations finais
+
+Lista em ordem.
+
+## F. Riscos
+
+Classifique:
+
+* 🔴 alto
+* 🟠 médio
+* 🟢 baixo
+
+## G. Sequência exata de integração
+
+Somente comandos/ações que deverão ser executados FUTURAMENTE.
+
+Não execute nenhum deles agora.
+
+## H. Testes obrigatórios após integração
+
+Liste exatamente:
+
+```text
+npm test
+npx tsc --noEmit
+npm run lint
+npm run build
+git diff --check
 ```
 
-e, para arquivos críticos:
+e quaisquer testes adicionais que considerar necessários.
 
-```bash
-git diff HEAD origin/main -- <arquivo>
-```
+## I. Veredito
 
-Não precisa mostrar diffs enormes.
+Escolha uma:
 
-Resuma as diferenças funcionais.
+🟢 pronto para integração
+
+🟡 integração possível, mas requer resolução manual
+
+🔴 não integrar ainda
 
 ---
 
-# 12. Recomendar estratégia
+IMPORTANTE:
 
-Depois de toda a análise, recomende UMA estratégia principal entre:
+Esta tarefa é exclusivamente de análise.
 
-1. merge;
-2. rebase;
-3. cherry-pick;
-4. outra estratégia segura.
+Ao terminar:
 
-NÃO EXECUTE a estratégia.
+```text
+git status
+```
 
-Explique:
+deve continuar mostrando working tree limpa.
 
-* por que essa estratégia é a mais segura;
-* quais commits devem ser preservados;
-* quais commits devem ser integrados;
-* ordem recomendada;
-* riscos;
-* arquivos que provavelmente exigirão resolução manual;
-* se recomenda criar uma branch antes da integração.
-
-Se recomendar cherry-pick, informe exatamente quais hashes deveriam ser considerados.
-
-Se recomendar merge, informe qual seria o ponto de partida.
-
-Se recomendar rebase, explique exatamente sobre qual base.
-
----
-
-# 13. Condição especial
-
-Não presuma que `origin/main` está correto só porque é o remoto.
-
-Também não presuma que os commits locais devem substituir o remoto.
-
-A decisão deve preservar:
-
-1. billing funcionando;
-2. Mercado Pago funcionando;
-3. trial de 30 dias;
-4. preços anuais corretos;
-5. booking funcionando;
-6. disponibilidade;
-7. catálogo global;
-8. 20 segmentos;
-9. 300 templates;
-10. integridade multi-tenant;
-11. migrations corretas;
-12. testes existentes.
-
----
-
-# FORMATO FINAL OBRIGATÓRIO
-
-Entregue o resultado nesta estrutura:
-
-## 1. Estado Git
-
-## 2. Merge-base
-
-## 3. Commits locais
-
-## 4. Commits remotos
-
-## 5. Arquivos sobrepostos
-
-## 6. Conflitos reais
-
-## 7. Conflitos potenciais
-
-## 8. Auditoria do billing
-
-## 9. Auditoria do catálogo
-
-## 10. Auditoria das migrations
-
-## 11. Dependências entre commits
-
-## 12. Riscos
-
-## 13. Estratégia recomendada
-
-## 14. Ordem exata da integração recomendada
-
-## 15. O que NÃO deve ser feito
-
-## 16. Veredito
-
-### IMPORTANTE
-
-Não altere absolutamente nada no repositório.
-
-Não faça merge.
-
-Não faça rebase.
-
-Não faça cherry-pick.
-
-Não faça reset.
-
-Não faça push.
-
-Não faça pull.
-
-Não faça fetch.
-
-Não execute migrations.
-
-Somente auditoria e recomendação.
+Não altere absolutamente nada.
