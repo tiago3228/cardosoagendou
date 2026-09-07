@@ -258,6 +258,12 @@ function BookingPage() {
                           <Clock className="size-3.5" aria-hidden />
                           {formatDuration(service.duration_minutes)} · {formatBRL(service.price_cents)}
                         </span>
+                        {service.allows_parallel ? (
+                          <span className="mt-1 block text-xs text-primary">
+                            Durante parte deste atendimento o profissional poderá atender outro
+                            cliente.
+                          </span>
+                        ) : null}
                         {blocked ? (
                           <span className="mt-1 block text-xs text-muted-foreground">
                             Indisponível junto dos serviços já selecionados

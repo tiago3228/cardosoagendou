@@ -285,6 +285,13 @@ function AgendaPage() {
                     {STATUS_LABEL[appointment.status]}
                   </span>
                 </div>
+                {appointment.blocks_agenda === false ? (
+                  <span className="mt-1.5 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                    Simultâneo · não ocupa a agenda
+                  </span>
+                ) : null}
+                <div className="hidden">
+                </div>
 
                 <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                   <span className="font-medium text-foreground">
