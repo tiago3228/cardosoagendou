@@ -290,8 +290,6 @@ function AgendaPage() {
                     Simultâneo · não ocupa a agenda
                   </span>
                 ) : null}
-                <div className="hidden">
-                </div>
 
                 <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                   <span className="font-medium text-foreground">
