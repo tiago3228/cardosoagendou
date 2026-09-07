@@ -87,7 +87,9 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
         _business_id: business.id,
         _professional_id: data.professionalId,
         _service_ids: data.serviceIds,
-        _product_ids: data.productIds,
+        _product_ids: data.productIds.flatMap((id) =>
+          Array.from({ length: data.productQuantities[id] ?? 1 }, () => id),
+        ),
         _starts_at: startsAt.toISOString(),
         _client_name: data.clientName,
         _client_whatsapp: whatsapp,

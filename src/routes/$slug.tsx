@@ -99,6 +99,7 @@ function BookingPage() {
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [productQuantities, setProductQuantities] = useState<Record<string, number>>({});
   const [professionalId, setProfessionalId] = useState<string | null>(null);
   const [date, setDate] = useState(todayISO());
   const [slots, setSlots] = useState<
@@ -162,7 +163,7 @@ function BookingPage() {
   const chosenProducts = (data!.products ?? []).filter((product) =>
     selectedProducts.includes(product.id),
   );
-  const productsTotalCents = chosenProducts.reduce((sum, product) => sum + product.price_cents, 0);
+  const productsTotalCents = chosenProducts.reduce((sum, product) => sum + product.price_cents * (productQuantities[product.id] ?? 1), 0);
   const chosenProfessionalName =
     data!.professionals.find((professional) => professional.id === chosen?.professionalId)?.name ??
     "Profissional disponível";
@@ -290,6 +291,7 @@ function BookingPage() {
               professionalId: chosen.professionalId,
               serviceIds: selected,
               productIds: selectedProducts,
+              productQuantities,
               startsAt: chosen.startsAt,
               clientName,
               whatsapp,
@@ -351,6 +353,7 @@ function BookingPage() {
               </h1>
             </div>
           </div>
+          {business.primary_color ? <style>{`:root { --public-primary: ${business.primary_color}; --public-secondary: ${business.secondary_color}; }`}</style> : null}
           {business.description ? (
             <p className="mt-4 text-sm leading-6 text-[#9C948A]">{business.description}</p>
           ) : null}
@@ -373,6 +376,7 @@ function BookingPage() {
               ) : null}
             </a>
           ) : null}
+          <p className="mt-4 rounded-xl border border-[#B4884F] bg-[#1E1B17] p-3 text-sm text-[#D1A66C]">Cancelamentos fora de {business.cancellation_deadline_hours ?? 1} hora(s) do horário estão sujeitos a multa de 10% do valor total dos serviços.</p>
           {business.whatsapp ? (
             <a
               href={whatsappLink(
@@ -592,13 +596,15 @@ function BookingPage() {
                       >
                         <button
                           type="button"
-                          onClick={() =>
+                          onClick={() => {
+                            const alreadySelected = selectedProducts.includes(product.id);
                             setSelectedProducts((previous) =>
-                              previous.includes(product.id)
+                              alreadySelected
                                 ? previous.filter((id) => id !== product.id)
                                 : [...previous, product.id],
-                            )
-                          }
+                            );
+                            setProductQuantities((current) => ({ ...current, [product.id]: alreadySelected ? 1 : (current[product.id] ?? 1) }));
+                          }}
                           className="flex w-full items-center gap-3 text-left"
                         >
                           {product.image_url ? (
@@ -611,8 +617,16 @@ function BookingPage() {
                           <span className="min-w-0 flex-1">
                             <span className="block font-medium text-[#F2EDE4]">{product.name}</span>
                             <span className="text-sm text-[#D1A66C]">
-                              {formatBRL(product.price_cents)}
+                              {formatBRL(product.price_cents)} · Estoque: {product.stock_quantity}
                             </span>
+                            {selectedProducts.includes(product.id) ? (
+                              <span className="mt-2 flex items-center gap-2 text-sm" onClick={(event) => event.stopPropagation()}>
+                                <span>Qtd.</span>
+                                <button type="button" className="rounded border border-[#B4884F] px-2" onClick={() => setProductQuantities((current) => ({ ...current, [product.id]: Math.max(1, (current[product.id] ?? 1) - 1) }))}>−</button>
+                                <span>{productQuantities[product.id] ?? 1}</span>
+                                <button type="button" className="rounded border border-[#B4884F] px-2" disabled={(productQuantities[product.id] ?? 1) >= product.stock_quantity} onClick={() => setProductQuantities((current) => ({ ...current, [product.id]: Math.min(product.stock_quantity, (current[product.id] ?? 1) + 1) }))}>+</button>
+                              </span>
+                            ) : null}
                           </span>
                           {selectedProducts.includes(product.id) ? (
                             <Check className="size-5 text-[#D1A66C]" aria-hidden />

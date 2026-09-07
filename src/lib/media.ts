@@ -4,7 +4,7 @@ const BUCKET = "business-media";
 /** Long-lived signed link so the photo also renders on the public booking page. */
 const LINK_TTL_SECONDS = 60 * 60 * 24 * 365 * 10;
 
-export type MediaFolder = "profissionais" | "produtos";
+export type MediaFolder = "profissionais" | "produtos" | "logo";
 
 /**
  * Uploads an image to the tenant folder of the private media bucket and returns

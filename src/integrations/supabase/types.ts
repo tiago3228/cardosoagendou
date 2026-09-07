@@ -325,6 +325,9 @@ export type Database = {
           active: boolean
           address: string | null
           booking_policy: string | null
+          cancellation_deadline_hours: number
+          primary_color: string
+          secondary_color: string
           business_type: Database["public"]["Enums"]["business_type"]
           cover_url: string | null
           created_at: string
@@ -351,6 +354,9 @@ export type Database = {
           active?: boolean
           address?: string | null
           booking_policy?: string | null
+          cancellation_deadline_hours?: number
+          primary_color?: string
+          secondary_color?: string
           business_type?: Database["public"]["Enums"]["business_type"]
           cover_url?: string | null
           created_at?: string
@@ -377,6 +383,9 @@ export type Database = {
           active?: boolean
           address?: string | null
           booking_policy?: string | null
+          cancellation_deadline_hours?: number
+          primary_color?: string
+          secondary_color?: string
           business_type?: Database["public"]["Enums"]["business_type"]
           cover_url?: string | null
           created_at?: string

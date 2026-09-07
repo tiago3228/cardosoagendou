@@ -29,10 +29,13 @@ export interface BookingBusiness {
   slot_interval_minutes: number;
   min_notice_minutes: number;
   max_advance_days: number;
+  cancellation_deadline_hours: number;
+  primary_color: string;
+  secondary_color: string;
 }
 
 const BUSINESS_COLUMNS =
-  "id, slug, name, business_type, description, logo_url, cover_url, whatsapp, address, booking_policy, timezone, slot_interval_minutes, min_notice_minutes, max_advance_days";
+  "id, slug, name, business_type, description, logo_url, cover_url, whatsapp, address, booking_policy, timezone, slot_interval_minutes, min_notice_minutes, max_advance_days, cancellation_deadline_hours, primary_color, secondary_color";
 
 export async function loadBusinessBySlug(db: Db, slug: string): Promise<BookingBusiness | null> {
   const { data } = await db
