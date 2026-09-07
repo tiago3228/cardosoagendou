@@ -132,7 +132,7 @@ function PanelLayout() {
               navigate({ to: "/auth" });
             }}
           >
-            <LogOut className="size-4" aria-hidden />
+            <LogOut className="size-4" aria-hidden /> Sair
           </Button>
         </header>
         <div className="mx-auto max-w-5xl px-5 py-6">
