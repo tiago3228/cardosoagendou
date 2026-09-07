@@ -1,494 +1,476 @@
-Faça uma AUDITORIA TÉCNICA FINAL E SOMENTE LEITURA do commit:
+## AUDITORIA GIT — NÃO ALTERAR O REPOSITÓRIO
+
+Estamos no commit local:
 
 `18748f7eaa5cf715e0ade18e44c6bd96fcbc3cfe`
 
-Mensagem:
+O `origin/main` está em:
 
-`Fix catalog tenant integrity blockers`
+`f6d49436194204ecc11cd27fc832a87a7b0bf919`
 
-Este commit foi criado para corrigir os dois blockers encontrados na auditoria do `de9cfff`:
+O merge-base informado é:
 
-1. associação de `business_segments` a segmentos globais inativos;
-2. ausência de isolamento estrutural entre `professional_services`, `professionals` e `services`.
+`ed01191f0e03a2d39ab259b57eff43f33e8dde70`
 
-## REGRA ABSOLUTA
+O HEAD local está em **detached HEAD**.
 
-NÃO altere nenhum arquivo.
+Quero uma auditoria completa da divergência antes de decidir como integrar o trabalho.
 
-NÃO crie correções.
+### REGRA ABSOLUTA
 
-NÃO faça novo commit.
+NÃO executar nenhuma operação que altere o histórico ou working tree.
 
-NÃO faça push.
+É PROIBIDO:
 
-NÃO faça merge.
+* `git merge`
+* `git rebase`
+* `git cherry-pick`
+* `git reset`
+* `git checkout` para alterar estado
+* `git switch`
+* `git restore`
+* `git commit`
+* `git push`
+* `git pull`
+* `git fetch`
+* alterar arquivos
+* aplicar migrations no banco remoto
 
-NÃO faça rebase.
-
-NÃO execute migrations no banco remoto.
-
-NÃO altere o banco de produção.
-
-Esta etapa é somente auditoria.
-
----
-
-# 1. VALIDAR O COMMIT
-
-Confirme:
-
-* HEAD;
-* hash completo;
-* mensagem;
-* commit pai;
-* branch;
-* detached HEAD;
-* working tree;
-* arquivos alterados;
-* diff exato do commit.
-
-O commit esperado é:
-
-`18748f7eaa5cf715e0ade18e44c6bd96fcbc3cfe`
-
-Pai esperado:
-
-`de9cfff4e0bf342ea03d5a0c98a5f97742611455`
-
-Arquivos esperados:
-
-```text
-supabase/migrations/20260907004000_catalog_integrity_blockers.sql
-tests/catalog-integrity.test.ts
-```
-
-Confirme que nenhum outro arquivo foi alterado.
+Execute somente comandos de leitura.
 
 ---
 
-# 2. AUDITAR A MIGRATION
-
-Analise integralmente:
-
-`supabase/migrations/20260907004000_catalog_integrity_blockers.sql`
-
-Verifique:
-
-* BEGIN/COMMIT;
-* ausência de operações destrutivas;
-* ausência de DELETE;
-* ausência de DROP;
-* ausência de TRUNCATE;
-* ausência de alteração de dados de services;
-* ausência de alteração de appointments;
-* ausência de alteração de billing;
-* ausência de alteração de preços;
-* ausência de alteração de duração de serviços reais.
-
-Verifique também:
-
-* funções criadas;
-* triggers criados;
-* ordem de criação;
-* segurança;
-* `SECURITY DEFINER`, se utilizado;
-* `search_path`;
-* possibilidade de SQL injection;
-* permissões;
-* comportamento em INSERT;
-* comportamento em UPDATE.
-
----
-
-# 3. VALIDAR `business_segments`
-
-Analise diretamente:
-
-`public.validate_business_segment_global()`
-
-e o trigger:
-
-`business_segments_validate_global`
-
-Confirme exatamente:
-
-### Deve rejeitar
-
-* `segment_id` inexistente;
-* segmento global inativo;
-* tentativa de reativar associação para segmento inativo.
-
-### Deve permitir
-
-* segmento global ativo;
-* associação válida respeitando limite do plano;
-* associações históricas já existentes mesmo que posteriormente o segmento tenha sido desativado, quando essa for a regra definida pela implementação.
-
-### Deve continuar impedindo
-
-* duplicidade `(business_id, segment_id)`;
-* associação indevida entre tenants.
-
-Verifique se a proteção ocorre realmente no PostgreSQL.
-
-Não aceite proteção somente na aplicação.
-
----
-
-# 4. ANALISAR INTERAÇÃO COM `Geral`
-
-Este ponto é importante.
-
-Confirme o estado real do bucket técnico `Geral`.
-
-Verifique:
-
-* `Geral` continua apenas como legado;
-* não aparece como segmento comercial;
-* não pode ser selecionado como novo segmento comercial;
-* novos serviços não recebem `Geral` automaticamente;
-* serviços históricos não são apagados;
-* a nova trigger não destrói ou invalida dados legados.
-
-Confirme também que a nova validação não criou uma regressão para serviços antigos.
-
----
-
-# 5. VALIDAR `professional_services`
-
-Analise integralmente:
-
-`public.validate_professional_service_tenant()`
-
-e:
-
-`professional_services_validate_tenant`
-
-A regra obrigatória é:
-
-```text
-professionals.business_id
-=
-professional_services.business_id
-
-services.business_id
-=
-professional_services.business_id
-```
-
-Teste conceitualmente todos os cenários:
-
-### Deve permitir
-
-```text
-Business A
-Professional A
-Service A
-Link A
-```
-
-### Deve rejeitar
-
-```text
-Business A
-Professional A
-Service B
-```
-
-```text
-Business A
-Professional B
-Service A
-```
-
-```text
-Business B
-Professional A
-Service A
-```
-
-Também deve rejeitar:
-
-* professional inexistente;
-* service inexistente.
-
----
-
-# 6. PROCURAR BYPASS
-
-Não basta verificar se o trigger funciona.
-
-Procure se existe alguma forma de contornar a validação por:
-
-* INSERT direto;
-* UPDATE;
-* RPC;
-* SECURITY DEFINER;
-* função existente;
-* endpoint;
-* service role;
-* operação usada pela aplicação.
-
-Verifique se o trigger cobre tanto:
-
-```text
-INSERT
-```
-
-quanto:
-
-```text
-UPDATE
-```
-
-especialmente alterações de:
-
-* `business_id`;
-* `professional_id`;
-* `service_id`.
-
----
-
-# 7. RLS
-
-Analise as policies existentes de:
-
-* `business_segments`;
-* `professional_services`;
-* `professionals`;
-* `services`.
-
-Verifique se o RLS e os triggers trabalham juntos corretamente.
-
-Importante:
-
-RLS não deve ser considerado substituto do trigger.
-
-O trigger deve continuar impedindo inconsistências mesmo em chamadas autenticadas que consigam chegar ao INSERT/UPDATE.
-
----
-
-# 8. SECURITY DEFINER
-
-Se as funções forem `SECURITY DEFINER`, audite especialmente:
-
-* `SET search_path`;
-* referências qualificadas com `public.`;
-* possibilidade de manipulação de objetos;
-* privilégio excessivo;
-* possibilidade de um usuário chamar a função diretamente para ultrapassar regras de negócio.
-
-Se não forem `SECURITY DEFINER`, explique por que a função continua funcionando corretamente com RLS.
-
----
-
-# 9. IDEMPOTÊNCIA
-
-Verifique se a migration pode ser aplicada com segurança dentro do sistema de migrations do Supabase.
-
-Verifique:
-
-* CREATE OR REPLACE;
-* DROP TRIGGER IF EXISTS, se necessário;
-* DROP FUNCTION IF EXISTS, se necessário;
-* conflitos com funções/triggers existentes;
-* nomes duplicados;
-* dependências.
-
-Não altere a migration.
-
-Apenas reporte riscos.
-
----
-
-# 10. DADOS EXISTENTES
-
-Como não existe conexão com o banco remoto neste ambiente, NÃO invente resultados.
-
-Separe claramente:
-
-### O que foi comprovado pelo código/migration
-
-de:
-
-### O que ainda precisa ser verificado no banco real.
-
-Identifique quais queries deveriam ser executadas futuramente para detectar:
-
-* `professional_services` cross-tenant;
-* `business_segments` apontando para segmentos inexistentes;
-* associações para segmentos inativos;
-* outras inconsistências relevantes.
-
-NÃO execute essas queries em produção agora.
-
-Apenas forneça as queries de diagnóstico no relatório, se forem úteis.
-
----
-
-# 11. TESTES
-
-Analise:
-
-`tests/catalog-integrity.test.ts`
-
-Verifique se os testes realmente comprovam o comportamento ou se são apenas testes estáticos de texto.
-
-Classifique cada teste como:
-
-* estrutural;
-* estático;
-* unitário;
-* integração real.
-
-Não considere teste estático equivalente a teste real de PostgreSQL.
-
----
-
-# 12. REGRESSÃO
-
-Verifique se a correção pode afetar:
-
-* criação de serviço;
-* edição de serviço;
-* associação profissional;
-* remoção de associação;
-* disponibilidade;
-* booking;
-* appointments;
-* catálogo público;
-* serviços históricos.
-
-Confirme novamente:
-
-`src/lib/billing.server.ts`
-
-não foi alterado.
-
----
-
-# 13. CATÁLOGO
-
-Confirme que este commit não alterou indevidamente o trabalho já validado:
-
-* 20 segmentos;
-* 300 templates;
-* 15 por segmento;
-* nomes;
-* durações;
-* cópia independente;
-* templates globais;
-* `Geral`.
-
----
-
-# 14. VALIDAÇÕES LOCAIS
+# 1. Estado atual
 
 Execute:
 
-```powershell
-npm test
-npx tsc --noEmit
-npm run lint
-npm run build
-git diff --check
-```
-
-Reporte exatamente os resultados.
-
----
-
-# 15. GIT — NÃO ALTERAR
-
-Apenas inspecione:
-
-```powershell
+```bash
 git status
-git log --oneline --decorate -20
+git branch -a
 git rev-parse HEAD
 git rev-parse origin/main
 git merge-base HEAD origin/main
-git log --oneline HEAD..origin/main
-git log --oneline origin/main..HEAD
 ```
 
-NÃO faça:
+Confirme se os hashes continuam exatamente:
 
-* merge;
-* rebase;
-* reset;
-* cherry-pick;
-* push;
-* force-push.
+```text
+HEAD:
+18748f7eaa5cf715e0ade18e44c6bd96fcbc3cfe
 
-Queremos apenas saber exatamente como está a divergência.
+origin/main:
+f6d49436194204ecc11cd27fc832a87a7b0bf919
 
----
-
-# 16. VEREDITO
-
-Classifique:
-
-### 🟢 APROVADO
-
-Se os dois blockers estiverem estruturalmente corrigidos e não houver outro problema relevante.
-
-### 🟡 APROVADO COM RESSALVAS
-
-Somente se houver apenas pontos de validação futura sem risco técnico imediato.
-
-### 🔴 NÃO APROVADO
-
-Se existir qualquer falha estrutural, de segurança, isolamento ou regressão.
+merge-base:
+ed01191f0e03a2d39ab259b57eff43f33e8dde70
+```
 
 ---
 
-# FORMATO FINAL
+# 2. Liste os commits dos dois lados
 
-## AUDITORIA — 18748f7
+Execute:
 
-### 1. Status
+```bash
+git log --oneline --decorate --graph --all -50
+```
 
-### 2. Commit
+Depois:
 
-### 3. Migration
+```bash
+git log --oneline ed01191f0e03a2d39ab259b57eff43f33e8dde70..HEAD
+```
 
-### 4. `business_segments`
+e:
 
-### 5. `professional_services`
+```bash
+git log --oneline ed01191f0e03a2d39ab259b57eff43f33e8dde70..origin/main
+```
 
-### 6. RLS
+Identifique claramente:
 
-### 7. SECURITY DEFINER
+### COMMITS LOCAIS
 
-### 8. Geral
+Todos os commits presentes em `HEAD` depois do merge-base.
 
-### 9. Dados existentes
+### COMMITS REMOTOS
 
-Separar comprovado de não comprovado.
+Todos os commits presentes em `origin/main` depois do merge-base.
 
-### 10. Testes
+Para cada commit, informe:
 
-Tabela:
+* hash curto;
+* mensagem;
+* arquivos alterados;
+* resumo objetivo da alteração.
 
-| Validação        | Resultado |
-| ---------------- | --------- |
-| npm test         |           |
-| TypeScript       |           |
-| lint             |           |
-| build            |           |
-| git diff --check |           |
+---
 
-### 11. Regressão
+# 3. Auditar os 6 commits locais
 
-### 12. Git
+Para cada commit local, execute/analise:
 
-### 13. BLOCKERS
+```bash
+git show --stat --oneline <HASH>
+```
 
-### 14. WARNINGS
+e:
 
-### 15. VEREDITO FINAL
+```bash
+git show --format=fuller --stat <HASH>
+```
 
-🟢 / 🟡 / 🔴
+Não precisa reproduzir diffs gigantescos.
 
-NÃO faça nenhuma alteração durante a auditoria.
+Quero saber principalmente quais arquivos foram alterados e qual funcionalidade cada commit representa.
+
+Dê atenção especial a:
+
+```text
+src/lib/billing.server.ts
+src/lib/subscription.functions.ts
+src/lib/booking.server.ts
+src/lib/booking.functions.ts
+src/routes/_authenticated/app.servicos.tsx
+src/routes/_authenticated/app.assinatura.tsx
+supabase/migrations/*
+tests/*
+```
+
+---
+
+# 4. Auditar os 16 commits de origin/main
+
+Faça a mesma análise para TODOS os commits que estão em:
+
+```text
+origin/main
+```
+
+mas não estão no HEAD local.
+
+Para cada um informe:
+
+* hash;
+* mensagem;
+* arquivos alterados;
+* funcionalidade;
+* se parece ser correção, feature, refactor, auditoria ou outro tipo de mudança.
+
+---
+
+# 5. Identificar sobreposição de arquivos
+
+Compare os arquivos modificados pelos dois lados.
+
+Quero uma tabela:
+
+| Arquivo | Alterado localmente | Alterado no origin/main | Risco            |
+| ------- | ------------------- | ----------------------- | ---------------- |
+| arquivo | sim/não             | sim/não                 | baixo/médio/alto |
+
+Dê prioridade máxima a:
+
+```text
+src/lib/billing.server.ts
+src/lib/subscription.functions.ts
+src/lib/booking.server.ts
+src/lib/booking.functions.ts
+src/routes/_authenticated/app.servicos.tsx
+src/routes/_authenticated/app.assinatura.tsx
+supabase/migrations/*
+tests/*
+```
+
+---
+
+# 6. Detectar conflitos potenciais
+
+SEM executar merge ou rebase, use comandos somente de leitura para avaliar possíveis conflitos.
+
+Se possível, utilize:
+
+```bash
+git merge-tree $(git merge-base HEAD origin/main) HEAD origin/main
+```
+
+Se a versão do Git não aceitar essa sintaxe, não tente alterar nada; apenas informe.
+
+Também analise manualmente os arquivos que aparecem nos dois lados.
+
+Quero classificar:
+
+### 🔴 CONFLITO REAL
+
+As duas linhas modificaram a mesma parte lógica do arquivo e provavelmente exigiriam resolução manual.
+
+### 🟠 CONFLITO POTENCIAL
+
+Os dois lados alteraram o mesmo arquivo, mas em regiões aparentemente independentes.
+
+### 🟢 SEM CONFLITO RELEVANTE
+
+Alterações independentes ou facilmente preserváveis.
+
+---
+
+# 7. Verificar especificamente o billing
+
+Isso é CRÍTICO.
+
+O arquivo:
+
+```text
+src/lib/billing.server.ts
+```
+
+foi anteriormente corrompido quando conteúdo de booking substituiu o billing.
+
+O billing correto foi restaurado no commit:
+
+```text
+ed01191
+```
+
+Depois disso, precisamos garantir que nenhum dos 16 commits de `origin/main` tenha:
+
+* sobrescrito `billing.server.ts`;
+* removido `platformSetting`;
+* alterado `resolveProvider`;
+* alterado `graceDays`;
+* alterado `loadSubscriptionByBusiness`;
+* alterado `loadSubscriptionByProviderId`;
+* alterado `loadPlanById`;
+* alterado `businessEntitlements`;
+* alterado `assertAcceptsBookings`;
+* alterado Mercado Pago;
+* alterado trial;
+* alterado preços anuais.
+
+Informe explicitamente se existe algum risco aqui.
+
+---
+
+# 8. Verificar especificamente o catálogo de serviços
+
+O trabalho local recente contém:
+
+```text
+48135b9
+de9cfff
+18748f7
+```
+
+Esse trabalho implementou/corrigiu:
+
+* catálogo global;
+* 20 segmentos;
+* 300 templates;
+* 15 templates por segmento;
+* cópia independente de templates para services;
+* ausência de sincronização template → service;
+* `Geral` apenas como legado/técnico;
+* limites de segmentos por plano;
+* downgrade seguro;
+* associação de profissionais;
+* integridade multi-tenant;
+* trigger para `business_segments`;
+* trigger para `professional_services`.
+
+Verifique se algum commit de `origin/main` alterou as mesmas áreas.
+
+Especial atenção a:
+
+```text
+supabase/migrations/20260907002000_catalog_structural_fix.sql
+supabase/migrations/20260907003000_complete_global_catalog.sql
+supabase/migrations/20260907004000_catalog_integrity_blockers.sql
+
+src/lib/subscription.functions.ts
+src/routes/_authenticated/app.servicos.tsx
+tests/catalog.test.ts
+tests/catalog-integrity.test.ts
+```
+
+Informe qualquer risco de perder ou sobrescrever esse trabalho.
+
+---
+
+# 9. Verificar migrations
+
+Liste todas as migrations que existem em cada lado desde o merge-base.
+
+Compare:
+
+```text
+local HEAD
+versus
+origin/main
+```
+
+Identifique:
+
+* migrations existentes apenas localmente;
+* migrations existentes apenas no remoto;
+* migrations que alteram as mesmas tabelas;
+* migrations potencialmente dependentes umas das outras;
+* qualquer risco de executar uma migration na ordem errada.
+
+Não execute nenhuma migration.
+
+---
+
+# 10. Verificar se os commits locais são dependentes entre si
+
+Determine se:
+
+```text
+48135b9
+de9cfff
+18748f7
+```
+
+dependem uns dos outros.
+
+Quero saber se eles precisam permanecer juntos como uma cadeia ou se algum deles pode ser integrado isoladamente.
+
+Também identifique se algum dos 16 commits remotos depende de alterações feitas depois do merge-base.
+
+---
+
+# 11. Verificar conteúdo efetivo
+
+Além do histórico, compare o estado final dos arquivos importantes entre:
+
+```text
+HEAD
+origin/main
+```
+
+Use comandos de leitura como:
+
+```bash
+git diff --stat HEAD origin/main
+```
+
+e, para arquivos críticos:
+
+```bash
+git diff HEAD origin/main -- <arquivo>
+```
+
+Não precisa mostrar diffs enormes.
+
+Resuma as diferenças funcionais.
+
+---
+
+# 12. Recomendar estratégia
+
+Depois de toda a análise, recomende UMA estratégia principal entre:
+
+1. merge;
+2. rebase;
+3. cherry-pick;
+4. outra estratégia segura.
+
+NÃO EXECUTE a estratégia.
+
+Explique:
+
+* por que essa estratégia é a mais segura;
+* quais commits devem ser preservados;
+* quais commits devem ser integrados;
+* ordem recomendada;
+* riscos;
+* arquivos que provavelmente exigirão resolução manual;
+* se recomenda criar uma branch antes da integração.
+
+Se recomendar cherry-pick, informe exatamente quais hashes deveriam ser considerados.
+
+Se recomendar merge, informe qual seria o ponto de partida.
+
+Se recomendar rebase, explique exatamente sobre qual base.
+
+---
+
+# 13. Condição especial
+
+Não presuma que `origin/main` está correto só porque é o remoto.
+
+Também não presuma que os commits locais devem substituir o remoto.
+
+A decisão deve preservar:
+
+1. billing funcionando;
+2. Mercado Pago funcionando;
+3. trial de 30 dias;
+4. preços anuais corretos;
+5. booking funcionando;
+6. disponibilidade;
+7. catálogo global;
+8. 20 segmentos;
+9. 300 templates;
+10. integridade multi-tenant;
+11. migrations corretas;
+12. testes existentes.
+
+---
+
+# FORMATO FINAL OBRIGATÓRIO
+
+Entregue o resultado nesta estrutura:
+
+## 1. Estado Git
+
+## 2. Merge-base
+
+## 3. Commits locais
+
+## 4. Commits remotos
+
+## 5. Arquivos sobrepostos
+
+## 6. Conflitos reais
+
+## 7. Conflitos potenciais
+
+## 8. Auditoria do billing
+
+## 9. Auditoria do catálogo
+
+## 10. Auditoria das migrations
+
+## 11. Dependências entre commits
+
+## 12. Riscos
+
+## 13. Estratégia recomendada
+
+## 14. Ordem exata da integração recomendada
+
+## 15. O que NÃO deve ser feito
+
+## 16. Veredito
+
+### IMPORTANTE
+
+Não altere absolutamente nada no repositório.
+
+Não faça merge.
+
+Não faça rebase.
+
+Não faça cherry-pick.
+
+Não faça reset.
+
+Não faça push.
+
+Não faça pull.
+
+Não faça fetch.
+
+Não execute migrations.
+
+Somente auditoria e recomendação.
