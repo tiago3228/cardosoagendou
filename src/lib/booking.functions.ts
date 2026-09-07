@@ -22,6 +22,7 @@ export const getPublicBusiness = createServerFn({ method: "GET" })
         links: [],
         businessHours: [],
         professionalHours: [],
+        serviceCompositions: [],
         serviceConflicts: [],
         acceptsBookings: false as const,
       };
@@ -97,6 +98,9 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
       const message = error?.message ?? "";
       if (message.includes("DOUBLE_BOOKING")) {
         throw new Error("SLOT_UNAVAILABLE: esse horário acabou de ser reservado");
+      }
+      if (message.includes("SERVICE_COMPOSITION_CONFLICT")) {
+        throw new Error("SERVICE_COMPOSITION_CONFLICT");
       }
       if (
         message.includes("Could not find the function public.create_appointment_atomic") ||

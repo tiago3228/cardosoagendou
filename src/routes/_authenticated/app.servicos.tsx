@@ -26,6 +26,8 @@ interface EditForm {
   duration: string;
   segment_id: string;
   allows_parallel: boolean;
+  is_composite: boolean;
+  component_ids: string[];
 }
 
 function replaceInitialZeroPrice(current: string, next: string): string {
@@ -48,6 +50,8 @@ function ServicesPage() {
     duration: "30",
     segment_id: "",
     allows_parallel: false,
+    is_composite: false,
+    component_ids: [] as string[],
   });
   const [edit, setEdit] = useState<EditForm | null>(null);
   const [catalogSegmentId, setCatalogSegmentId] = useState("");
@@ -127,13 +131,25 @@ function ServicesPage() {
       const { data, error } = await db
         .from("services")
         .select(
-          "id, name, category, price_cents, duration_minutes, active, segment_id, allows_parallel",
+          "id, name, category, price_cents, duration_minutes, active, segment_id, allows_parallel, is_composite",
         )
         .eq("business_id", businessId)
         .is("deleted_at", null)
         .order("name");
       if (error) throw new Error(error.message);
       return data;
+    },
+  });
+
+  const compositions = useQuery({
+    queryKey: ["service-compositions", businessId],
+    queryFn: async () => {
+      const { data, error } = await db
+        .from("service_compositions")
+        .select("composite_service_id, component_service_id")
+        .eq("business_id", businessId);
+      if (error) throw new Error(error.message);
+      return data ?? [];
     },
   });
 
@@ -281,7 +297,7 @@ function ServicesPage() {
       if (!Number.isFinite(price) || price < 0) throw new Error("Preço inválido");
       if (!Number.isFinite(duration) || duration < 5)
         throw new Error("Duração mínima de 5 minutos");
-      const { error } = await db.from("services").insert({
+      const { data: created, error } = await db.from("services").insert({
         business_id: businessId,
         name: form.name.trim(),
         category: form.category.trim() || null,
@@ -289,8 +305,16 @@ function ServicesPage() {
         duration_minutes: duration,
         ...(form.segment_id ? { segment_id: form.segment_id } : {}),
         allows_parallel: form.allows_parallel,
-      });
+        is_composite: false,
+      }).select("id").single();
       if (error) throw new Error(error.message);
+      const { error: compositionError } = await db.rpc("save_service_composition" as never, {
+        _business_id: businessId,
+        _service_id: created.id,
+        _is_composite: form.is_composite,
+        _component_ids: form.component_ids,
+      } as never);
+      if (compositionError) throw new Error(compositionError.message);
     },
     onSuccess: () => {
       setForm({
@@ -300,6 +324,8 @@ function ServicesPage() {
         duration: "30",
         segment_id: "",
         allows_parallel: false,
+        is_composite: false,
+        component_ids: [],
       });
       toast.success("Serviço criado");
       queryClient.invalidateQueries({ queryKey: ["services", businessId] });
@@ -354,11 +380,19 @@ function ServicesPage() {
         .eq("id", input.id)
         .eq("business_id", businessId);
       if (error) throw new Error(error.message);
+      const { error: compositionError } = await db.rpc("save_service_composition" as never, {
+        _business_id: businessId,
+        _service_id: input.id,
+        _is_composite: input.is_composite,
+        _component_ids: input.component_ids,
+      } as never);
+      if (compositionError) throw new Error(compositionError.message);
     },
     onSuccess: () => {
       setEdit(null);
       toast.success("Serviço atualizado");
       queryClient.invalidateQueries({ queryKey: ["services", businessId] });
+      queryClient.invalidateQueries({ queryKey: ["service-compositions", businessId] });
     },
     onError: (error: Error) =>
       toast.error("Não foi possível atualizar", { description: userFacingError(error) }),
@@ -618,6 +652,38 @@ function ServicesPage() {
           />
           Permite atendimento simultâneo
         </label>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground sm:col-span-2">
+          <input
+            type="checkbox"
+            checked={form.is_composite}
+            onChange={(event) =>
+              setForm({ ...form, is_composite: event.target.checked, component_ids: [] })
+            }
+          />
+          Serviço composto/conjunto
+        </label>
+        {form.is_composite ? (
+          <label className="space-y-1.5 text-sm text-muted-foreground sm:col-span-2">
+            <span className="block">Serviços componentes</span>
+            <select
+              multiple
+              className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+              value={form.component_ids}
+              onChange={(event) =>
+                setForm({
+                  ...form,
+                  component_ids: Array.from(event.target.selectedOptions, (option) => option.value),
+                })
+              }
+            >
+              {(services.data ?? [])
+                .filter((service: { is_composite: boolean }) => !service.is_composite)
+                .map((service: { id: string; name: string }) => (
+                <option key={service.id} value={service.id}>{service.name}</option>
+                ))}
+            </select>
+          </label>
+        ) : null}
         <div className="sm:col-span-2">
           <Button type="submit" disabled={create.isPending}>
             <Plus className="size-4" aria-hidden /> Adicionar serviço
@@ -636,6 +702,7 @@ function ServicesPage() {
             active: boolean;
             segment_id: string | null;
             allows_parallel: boolean;
+            is_composite: boolean;
           }) => (
             <li key={service.id} className="rounded-xl border border-border bg-card p-4">
               {edit?.id === service.id ? (
@@ -708,6 +775,46 @@ function ServicesPage() {
                     />
                     Permite atendimento simultâneo
                   </label>
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground sm:col-span-2">
+                    <input
+                      type="checkbox"
+                      checked={edit!.is_composite}
+                      onChange={(event) =>
+                        setEdit({ ...edit!, is_composite: event.target.checked })
+                      }
+                    />
+                    Serviço composto/conjunto
+                  </label>
+                  {edit!.is_composite ? (
+                    <label className="space-y-1.5 text-sm text-muted-foreground sm:col-span-2">
+                      <span className="block">Serviços componentes</span>
+                      <select
+                        multiple
+                        className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                        value={edit!.component_ids}
+                        onChange={(event) =>
+                          setEdit({
+                            ...edit!,
+                            component_ids: Array.from(
+                              event.target.selectedOptions,
+                              (option) => option.value,
+                            ),
+                          })
+                        }
+                      >
+                        {(services.data ?? [])
+                          .filter(
+                            (candidate: { id: string; is_composite: boolean }) =>
+                              candidate.id !== edit!.id && !candidate.is_composite,
+                          )
+                          .map((candidate: { id: string; name: string }) => (
+                            <option key={candidate.id} value={candidate.id}>
+                              {candidate.name}
+                            </option>
+                          ))}
+                      </select>
+                    </label>
+                  ) : null}
                   <div className="flex gap-2 sm:col-span-2">
                     <Button type="submit" size="sm" disabled={update.isPending}>
                       Salvar alterações
@@ -778,6 +885,16 @@ function ServicesPage() {
                           duration: String(service.duration_minutes),
                           segment_id: service.segment_id ?? "",
                           allows_parallel: service.allows_parallel,
+                          is_composite: service.is_composite,
+                          component_ids: (compositions.data ?? [])
+                            .filter(
+                              (composition: { composite_service_id: string }) =>
+                                composition.composite_service_id === service.id,
+                            )
+                            .map(
+                              (composition: { component_service_id: string }) =>
+                                composition.component_service_id,
+                            ),
                         })
                       }
                     >

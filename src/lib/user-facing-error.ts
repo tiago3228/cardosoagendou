@@ -8,6 +8,11 @@ const TECHNICAL_CODE_MESSAGES: Record<string, string> = {
   DOUBLE_BOOKING: "Esse horário já foi reservado. Escolha outro horário.",
   SERVICE_NOT_AVAILABLE: "Um dos serviços selecionados não está mais disponível.",
   SERVICE_CONFLICT: "Os serviços selecionados não podem ser combinados no mesmo atendimento.",
+  DUPLICATE_SERVICE: "Este serviço já foi adicionado ao atendimento.",
+  SERVICE_COMPOSITION_CONFLICT: "Este serviço já faz parte de um conjunto selecionado.",
+  SERVICE_COMPOSITION_INVALID:
+    "Serviço composto inválido. Um conjunto não pode ser incluído dentro de outro conjunto.",
+  SERVICE_NOT_FOUND: "O serviço selecionado não foi encontrado.",
   PROFESSIONAL_NOT_AVAILABLE: "O profissional selecionado não está disponível.",
   PROFESSIONAL_SERVICE_MISMATCH: "O profissional não atende um dos serviços selecionados.",
   SEGMENT_NOT_FOUND: "O segmento selecionado não foi encontrado.",

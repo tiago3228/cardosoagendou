@@ -152,65 +152,50 @@ export const createManualAppointment = createServerFn({ method: "POST" })
     const whatsapp = normalizeBrWhatsapp(data.whatsapp);
     if (!whatsapp) throw new Error("WHATSAPP_INVALID: WhatsApp inválido");
 
-    const selection = await resolveSelection(context.supabase, data.businessId, data.serviceIds);
+    await resolveSelection(context.supabase, data.businessId, data.serviceIds);
     const startsAt = new Date(data.startsAt);
-    const endsAt = new Date(startsAt.getTime() + selection.durationMinutes * 60000);
 
-    const client = await context.supabase
-      .from("clients")
-      .upsert(
-        { business_id: data.businessId, name: data.clientName, whatsapp },
-        { onConflict: "business_id,whatsapp" },
-      )
-      .select("id")
-      .single();
-
-    const appointment = await context.supabase
-      .from("appointments")
-      .insert({
-        business_id: data.businessId,
-        professional_id: data.professionalId,
-        client_id: client.data?.id ?? null,
-        client_name: data.clientName,
-        client_whatsapp: whatsapp,
-        starts_at: startsAt.toISOString(),
-        ends_at: endsAt.toISOString(),
-        duration_minutes: selection.durationMinutes,
-        total_price_cents: selection.priceCents,
-        status: "CONFIRMED",
-        blocks_agenda: selection.blocksAgenda,
-        notes: data.notes ?? null,
-        snapshot: { source: "panel", services: selection.services },
-      })
-      .select("id, starts_at, ends_at, duration_minutes, total_price_cents")
-      .single();
-
-    if (appointment.error || !appointment.data) {
-      if (appointment.error?.message.includes("DOUBLE_BOOKING")) {
-        throw new Error("SLOT_UNAVAILABLE: o profissional já tem um atendimento nesse horário");
-      }
-      throw new Error(`APPOINTMENT_FAILED: ${appointment.error?.message}`);
-    }
-
-    await context.supabase.from("appointment_services").insert(
-      selection.services.map((s) => ({
-        appointment_id: appointment.data.id,
-        business_id: data.businessId,
-        service_id: s.id,
-        service_name: s.name,
-        price_cents: s.price_cents,
-        duration_minutes: s.duration_minutes,
-      })),
+    const { data: created, error: appointmentError } = await context.supabase.rpc(
+      "create_appointment_atomic_with_products",
+      {
+        _business_id: data.businessId,
+        _professional_id: data.professionalId,
+        _service_ids: data.serviceIds,
+        _product_ids: [],
+        _starts_at: startsAt.toISOString(),
+        _client_name: data.clientName,
+        _client_whatsapp: whatsapp,
+        _status: "CONFIRMED",
+        _source: "panel",
+        ...(data.notes ? { _notes: data.notes } : {}),
+      },
     );
 
-    await logAudit(context.supabase, data.businessId, context.userId, "appointment.created_manual", "appointment", appointment.data.id, {});
+    if (appointmentError || !created) {
+      const message = appointmentError?.message ?? "";
+      if (message.includes("DOUBLE_BOOKING")) {
+        throw new Error("SLOT_UNAVAILABLE: o profissional já tem um atendimento nesse horário");
+      }
+      if (message.includes("SERVICE_COMPOSITION_CONFLICT")) {
+        throw new Error("SERVICE_COMPOSITION_CONFLICT");
+      }
+      throw new Error(`APPOINTMENT_FAILED: ${message}`);
+    }
+    const result = created as {
+      id: string;
+      starts_at: string;
+      ends_at: string;
+      duration_minutes: number;
+      total_price_cents: number;
+    };
+    await logAudit(context.supabase, data.businessId, context.userId, "appointment.created_manual", "appointment", result.id, {});
 
     return {
-      id: appointment.data.id,
-      startsAt: appointment.data.starts_at,
-      endsAt: appointment.data.ends_at,
-      durationMinutes: appointment.data.duration_minutes,
-      totalPriceCents: appointment.data.total_price_cents,
+      id: result.id,
+      startsAt: result.starts_at,
+      endsAt: result.ends_at,
+      durationMinutes: result.duration_minutes,
+      totalPriceCents: result.total_price_cents,
     };
   });
 
