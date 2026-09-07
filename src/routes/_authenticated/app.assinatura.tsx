@@ -262,8 +262,29 @@ function SubscriptionPage() {
               key={plan.id}
               className={`rounded-2xl border p-5 ${isCurrent ? "border-primary bg-primary/5" : "border-border bg-card"}`}
             >
+              {plan.code === "MEDIUM" ? (
+                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-primary">
+                  🔥 MAIS ASSINADO
+                </p>
+              ) : null}
+              {plan.code === "UNLIMITED" ? (
+                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-primary">
+                  👑 MAIS COMPLETO
+                </p>
+              ) : null}
               <h2 className="font-display text-lg font-bold text-card-foreground">{plan.name}</h2>
               <p className="mt-1 text-sm text-muted-foreground">{planLimitLabel(plan)}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {plan.code === "BASIC"
+                  ? "1 segmento"
+                  : plan.code === "MEDIUM"
+                    ? "Até 2 segmentos"
+                    : "Segmentos ilimitados"}
+                {" · Serviços ilimitados"}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Serviços personalizados ilimitados
+              </p>
               <p className="mt-4 text-2xl font-bold text-foreground">
                 {formatBRL(
                   interval === "ANNUAL"

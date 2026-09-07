@@ -15,6 +15,7 @@ export const getPublicBusiness = createServerFn({ method: "GET" })
     if (acceptsBookings !== true) {
       return {
         business,
+        segments: [],
         services: [],
         products: [],
         professionals: [],

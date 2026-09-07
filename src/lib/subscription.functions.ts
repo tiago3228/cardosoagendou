@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { checkoutSchema, planChangeSchema } from "./schemas";
 
@@ -212,6 +213,22 @@ export const schedulePlanChange = createServerFn({ method: "POST" })
         throw new Error(
           `DOWNGRADE_BLOCKED: você tem ${used} profissionais ativos e o plano ${nextPlan.name} permite ${nextPlan.professional_limit}. Desative profissionais antes de mudar de plano.`,
         );
+      }
+
+      if (nextPlan.code !== "UNLIMITED") {
+        const segmentUsage = await (context.supabase as unknown as SupabaseClient)
+          .from("business_segments")
+          .select("id")
+          .eq("business_id", businessId)
+          .eq("active", true)
+          .not("segment_id", "is", null);
+        if (segmentUsage.error) throw new Error(segmentUsage.error.message);
+        const segmentLimit = nextPlan.code === "BASIC" ? 1 : 2;
+        if ((segmentUsage.data ?? []).length > segmentLimit) {
+          throw new Error(
+            `DOWNGRADE_BLOCKED: você tem ${segmentUsage.data?.length ?? 0} segmentos ativos e o plano ${nextPlan.name} permite ${segmentLimit}. Desative segmentos antes de mudar de plano.`,
+          );
+        }
       }
     }
 

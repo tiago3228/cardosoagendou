@@ -1,7 +1,7 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useRef, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   Check,
@@ -128,6 +128,33 @@ function BookingPage() {
     () => data!.services.filter((s) => selected.includes(s.id)),
     [data, selected],
   );
+  const serviceGroups = useMemo(() => {
+    type PublicService = (typeof data extends null
+      ? never
+      : NonNullable<typeof data>["services"])[number];
+    const segmentNames = new Map(
+      (data!.segments ?? []).map((segment) => [segment.id, segment.name]),
+    );
+    const groups = new Map<string, { name: string; services: PublicService[] }>();
+    data!.services
+      .filter(
+        (service) =>
+          !professionalId ||
+          data!.links.some(
+            (link) => link.professional_id === professionalId && link.service_id === service.id,
+          ),
+      )
+      .forEach((service) => {
+        const key = service.segment_id ?? "legacy";
+        const current = groups.get(key) ?? {
+          name: segmentNames.get(key) ?? "Serviços",
+          services: [],
+        };
+        current.services.push(service);
+        groups.set(key, current);
+      });
+    return [...groups.values()];
+  }, [data, professionalId]);
   const totalMinutes = chosenServices.reduce((sum, s) => sum + s.duration_minutes, 0);
   const totalCents = chosenServices.reduce((sum, s) => sum + s.price_cents, 0);
   const chosenProducts = (data!.products ?? []).filter((product) =>
@@ -458,54 +485,57 @@ function BookingPage() {
                 Pode escolher mais de um — somamos a duração automaticamente.
               </p>
               <ul className="mt-4 space-y-2">
-                {data!.services
-                  .filter(
-                    (service) =>
-                      !professionalId ||
-                      data!.links.some(
-                        (l) => l.professional_id === professionalId && l.service_id === service.id,
-                      ),
-                  )
-                  .map((service) => {
-                    const active = selected.includes(service.id);
-                    const blocked = blockedService(service.id);
-                    return (
-                      <li key={service.id}>
-                        <button
-                          disabled={blocked}
-                          aria-disabled={blocked}
-                          onClick={() =>
-                            setSelected((prev) =>
-                              prev.includes(service.id)
-                                ? prev.filter((id) => id !== service.id)
-                                : [...prev, service.id],
-                            )
-                          }
-                          className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition ${active ? "border-[#B4884F] bg-[#262220]" : "border-[#35302A] bg-[#1E1B17]"} ${blocked ? "cursor-not-allowed opacity-50" : "hover:border-[#B4884F]"}`}
-                        >
-                          <span>
-                            <span className="block font-medium text-[#F2EDE4]">{service.name}</span>
-                            <span className="mt-1 flex items-center gap-1 text-sm text-[#D1A66C]">
-                              <Clock className="size-3.5" aria-hidden />
-                              {formatDuration(service.duration_minutes)} ·{" "}
-                              {formatBRL(service.price_cents)}
+                {serviceGroups.map((group) => (
+                  <Fragment key={group.name}>
+                    <li className="pt-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#B4884F]">
+                      {group.name}
+                    </li>
+                    {group.services.map((service) => {
+                      const active = selected.includes(service.id);
+                      const blocked = blockedService(service.id);
+                      return (
+                        <li key={service.id}>
+                          <button
+                            disabled={blocked}
+                            aria-disabled={blocked}
+                            onClick={() =>
+                              setSelected((prev) =>
+                                prev.includes(service.id)
+                                  ? prev.filter((id) => id !== service.id)
+                                  : [...prev, service.id],
+                              )
+                            }
+                            className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition ${active ? "border-[#B4884F] bg-[#262220]" : "border-[#35302A] bg-[#1E1B17]"} ${blocked ? "cursor-not-allowed opacity-50" : "hover:border-[#B4884F]"}`}
+                          >
+                            <span>
+                              <span className="block font-medium text-[#F2EDE4]">
+                                {service.name}
+                              </span>
+                              <span className="mt-1 flex items-center gap-1 text-sm text-[#D1A66C]">
+                                <Clock className="size-3.5" aria-hidden />
+                                {formatDuration(service.duration_minutes)} ·{" "}
+                                {formatBRL(service.price_cents)}
+                              </span>
+                              {blocked ? (
+                                <span className="mt-1 block text-xs text-[#9C948A]">
+                                  Indisponível junto dos serviços já selecionados
+                                </span>
+                              ) : null}
+                              {service.allows_parallel ? (
+                                <span className="mt-1 block text-xs text-[#9C948A]">
+                                  Pode ocorrer atendimento simultâneo durante parte do serviço
+                                </span>
+                              ) : null}
                             </span>
-                            {blocked ? (
-                              <span className="mt-1 block text-xs text-[#9C948A]">
-                                Indisponível junto dos serviços já selecionados
-                              </span>
+                            {active ? (
+                              <Check className="size-5 text-[#D1A66C]" aria-hidden />
                             ) : null}
-                            {service.allows_parallel ? (
-                              <span className="mt-1 block text-xs text-[#9C948A]">
-                                Pode ocorrer atendimento simultâneo durante parte do serviço
-                              </span>
-                            ) : null}
-                          </span>
-                          {active ? <Check className="size-5 text-[#D1A66C]" aria-hidden /> : null}
-                        </button>
-                      </li>
-                    );
-                  })}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </Fragment>
+                ))}
               </ul>
               {hardConflict ? (
                 <p className="mt-4 rounded-lg border border-red-400/40 bg-red-950/30 p-3 text-sm text-red-200">

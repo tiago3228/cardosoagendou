@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery } from "./app";
 import { formatBRL, formatDuration } from "@/lib/format";
@@ -22,6 +23,7 @@ interface EditForm {
   category: string;
   price: string;
   duration: string;
+  segment_id: string;
 }
 
 function ServicesPage() {
@@ -29,21 +31,185 @@ function ServicesPage() {
   const businessId = panel.business!.id;
   const config = businessTypeConfig(panel.business!.business_type);
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ name: "", category: "", price: "", duration: "30" });
+  const db = supabase as unknown as SupabaseClient;
+  const [form, setForm] = useState({
+    name: "",
+    category: "",
+    price: "",
+    duration: "30",
+    segment_id: "",
+  });
   const [edit, setEdit] = useState<EditForm | null>(null);
+  const [catalogSegmentId, setCatalogSegmentId] = useState("");
+  const [expandedSegmentId, setExpandedSegmentId] = useState<string | null>(null);
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
+  const segments = useQuery({
+    queryKey: ["business-segments", businessId],
+    queryFn: async () => {
+      const { data, error } = await db
+        .from("business_segments")
+        .select("id, segment_id, name, slug, description, sort_order, active")
+        .eq("business_id", businessId)
+        .order("sort_order")
+        .order("name");
+      if (error) throw new Error(error.message);
+      return data ?? [];
+    },
+  });
+
+  const catalogSegments = useQuery({
+    queryKey: ["catalog-segments"],
+    queryFn: async () => {
+      const { data, error } = await db
+        .from("segments")
+        .select("id, name, slug, description, sort_order")
+        .eq("active", true)
+        .order("sort_order");
+      if (error) throw new Error(error.message);
+      return data ?? [];
+    },
+  });
+
+  const catalogTemplates = useQuery({
+    queryKey: ["catalog-service-templates"],
+    queryFn: async () => {
+      const { data, error } = await db
+        .from("service_templates")
+        .select("id, segment_id, name, description, category, duration_minutes")
+        .is("business_id", null)
+        .eq("active", true)
+        .order("name");
+      if (error) throw new Error(error.message);
+      return data ?? [];
+    },
+  });
+
+  const professionals = useQuery({
+    queryKey: ["professionals", businessId],
+    queryFn: async () => {
+      const { data, error } = await db
+        .from("professionals")
+        .select("id, name")
+        .eq("business_id", businessId)
+        .eq("active", true)
+        .is("deleted_at", null)
+        .order("name");
+      if (error) throw new Error(error.message);
+      return data ?? [];
+    },
+  });
+
+  const professionalServices = useQuery({
+    queryKey: ["professional-services", businessId],
+    queryFn: async () => {
+      const { data, error } = await db
+        .from("professional_services")
+        .select("professional_id, service_id")
+        .eq("business_id", businessId);
+      if (error) throw new Error(error.message);
+      return data ?? [];
+    },
+  });
 
   const services = useQuery({
     queryKey: ["services", businessId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("services")
-        .select("id, name, category, price_cents, duration_minutes, active")
+        .select("id, name, category, price_cents, duration_minutes, active, segment_id")
         .eq("business_id", businessId)
         .is("deleted_at", null)
         .order("name");
       if (error) throw new Error(error.message);
       return data;
     },
+  });
+
+  const createSegment = useMutation({
+    mutationFn: async () => {
+      const segment = (catalogSegments.data ?? []).find(
+        (item: { id: string }) => item.id === catalogSegmentId,
+      );
+      if (!segment) throw new Error("Selecione um segmento do catálogo");
+      const { error } = await db.from("business_segments").insert({
+        business_id: businessId,
+        segment_id: segment.id,
+        name: segment.name,
+        slug: segment.slug,
+        description: segment.description,
+        sort_order: segments.data?.length ?? 0,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      setCatalogSegmentId("");
+      queryClient.invalidateQueries({ queryKey: ["business-segments", businessId] });
+      toast.success("Segmento criado");
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível criar o segmento", { description: error.message }),
+  });
+
+  const toggleSegment = useMutation({
+    mutationFn: async (input: { id: string; active: boolean }) => {
+      const { error } = await db
+        .from("business_segments")
+        .update({ active: input.active })
+        .eq("id", input.id)
+        .eq("business_id", businessId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["business-segments", businessId] }),
+    onError: (error: Error) =>
+      toast.error("Não foi possível atualizar o segmento", { description: error.message }),
+  });
+
+  const copyTemplates = useMutation({
+    mutationFn: async (input: { segmentId: string; templateIds: string[] }) => {
+      if (input.templateIds.length === 0) return 0;
+      const { data, error } = await db.rpc(
+        "copy_catalog_services" as never,
+        {
+          _business_id: businessId,
+          _segment_id: input.segmentId,
+          _template_ids: input.templateIds,
+        } as never,
+      );
+      if (error) throw new Error(error.message);
+      return Number(data ?? 0);
+    },
+    onSuccess: (count) => {
+      setSelectedTemplateIds([]);
+      queryClient.invalidateQueries({ queryKey: ["services", businessId] });
+      toast.success(`${count} serviço(s) adicionado(s)`);
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível adicionar os serviços", { description: error.message }),
+  });
+
+  const toggleProfessionalService = useMutation({
+    mutationFn: async (input: { professionalId: string; serviceId: string; linked: boolean }) => {
+      if (input.linked) {
+        const { error } = await db
+          .from("professional_services")
+          .delete()
+          .eq("business_id", businessId)
+          .eq("professional_id", input.professionalId)
+          .eq("service_id", input.serviceId);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await db.from("professional_services").insert({
+          business_id: businessId,
+          professional_id: input.professionalId,
+          service_id: input.serviceId,
+        });
+        if (error) throw new Error(error.message);
+      }
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["professional-services", businessId] }),
+    onError: (error: Error) =>
+      toast.error("Não foi possível atualizar os profissionais", { description: error.message }),
   });
 
   const create = useMutation({
@@ -54,17 +220,18 @@ function ServicesPage() {
       if (!Number.isFinite(price) || price < 0) throw new Error("Preço inválido");
       if (!Number.isFinite(duration) || duration < 5)
         throw new Error("Duração mínima de 5 minutos");
-      const { error } = await supabase.from("services").insert({
+      const { error } = await db.from("services").insert({
         business_id: businessId,
         name: form.name.trim(),
         category: form.category.trim() || null,
         price_cents: price,
         duration_minutes: duration,
+        ...(form.segment_id ? { segment_id: form.segment_id } : {}),
       });
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      setForm({ name: "", category: "", price: "", duration: "30" });
+      setForm({ name: "", category: "", price: "", duration: "30", segment_id: "" });
       toast.success("Serviço criado");
       queryClient.invalidateQueries({ queryKey: ["services", businessId] });
     },
@@ -74,7 +241,7 @@ function ServicesPage() {
 
   const toggle = useMutation({
     mutationFn: async (input: { id: string; active: boolean }) => {
-      const { error } = await supabase
+      const { error } = await db
         .from("services")
         .update({ active: input.active })
         .eq("id", input.id);
@@ -85,7 +252,7 @@ function ServicesPage() {
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await db
         .from("services")
         .update({ deleted_at: new Date().toISOString(), active: false })
         .eq("id", id);
@@ -105,13 +272,14 @@ function ServicesPage() {
       if (!Number.isFinite(price) || price < 0) throw new Error("Preço inválido");
       if (!Number.isFinite(duration) || duration < 5)
         throw new Error("Duração mínima de 5 minutos");
-      const { error } = await supabase
+      const { error } = await db
         .from("services")
         .update({
           name: input.name.trim(),
           category: input.category.trim() || null,
           price_cents: price,
           duration_minutes: duration,
+          segment_id: input.segment_id,
         })
         .eq("id", input.id)
         .eq("business_id", businessId);
@@ -133,6 +301,183 @@ function ServicesPage() {
       <p className="text-sm text-muted-foreground">
         Categorias sugeridas para {config.label.toLowerCase()}: {config.categories.join(", ")}
       </p>
+
+      <section className="mt-6 rounded-xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="font-semibold text-card-foreground">Catálogo de segmentos</h2>
+            <p className="text-sm text-muted-foreground">
+              Escolha um segmento e selecione os serviços sugeridos. Serviços personalizados são
+              ilimitados em todos os planos.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <select
+              className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+              value={catalogSegmentId}
+              onChange={(event) => setCatalogSegmentId(event.target.value)}
+              aria-label="Segmento do catálogo"
+            >
+              <option value="">Selecionar segmento</option>
+              {(catalogSegments.data ?? []).map((segment: { id: string; name: string }) => (
+                <option key={segment.id} value={segment.id}>
+                  {segment.name}
+                </option>
+              ))}
+            </select>
+            <Button
+              type="button"
+              disabled={createSegment.isPending}
+              onClick={() => createSegment.mutate()}
+            >
+              <Plus className="size-4" aria-hidden /> Ativar
+            </Button>
+          </div>
+        </div>
+        <div className="mt-4 space-y-2">
+          {(segments.data ?? [])
+            .filter((segment: { slug: string }) => segment.slug !== "geral")
+            .map(
+              (segment: {
+                id: string;
+                segment_id: string | null;
+                name: string;
+                active: boolean;
+              }) => (
+                <div key={segment.id} className="rounded-lg border border-border p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      className="flex items-center gap-2 text-left font-medium text-card-foreground"
+                      onClick={() => {
+                        setExpandedSegmentId((current) =>
+                          current === segment.id ? null : segment.id,
+                        );
+                        setSelectedTemplateIds([]);
+                      }}
+                    >
+                      <ChevronDown
+                        className={`size-4 transition ${expandedSegmentId === segment.id ? "rotate-180" : ""}`}
+                        aria-hidden
+                      />
+                      {segment.name}
+                    </button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={segment.active ? "outline" : "default"}
+                      onClick={() =>
+                        toggleSegment.mutate({ id: segment.id, active: !segment.active })
+                      }
+                    >
+                      {segment.active ? "Desativar" : "Ativar"}
+                    </Button>
+                  </div>
+                  {expandedSegmentId === segment.id && segment.segment_id ? (
+                    <div className="mt-3 space-y-2 border-t border-border pt-3">
+                      {(() => {
+                        const templates = (catalogTemplates.data ?? []).filter(
+                          (template: { segment_id: string }) =>
+                            template.segment_id === segment.segment_id,
+                        );
+                        const selected = templates.filter((template: { id: string }) =>
+                          selectedTemplateIds.includes(template.id),
+                        );
+                        return (
+                          <>
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <p className="text-sm text-muted-foreground">
+                                Selecione todos, alguns ou nenhum serviço sugerido.
+                              </p>
+                              <div className="flex gap-2">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() =>
+                                    setSelectedTemplateIds((current) => [
+                                      ...new Set([
+                                        ...current,
+                                        ...templates.map((template: { id: string }) => template.id),
+                                      ]),
+                                    ])
+                                  }
+                                >
+                                  Selecionar todos
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  onClick={() =>
+                                    copyTemplates.mutate({
+                                      segmentId: segment.segment_id!,
+                                      templateIds: selected.map(
+                                        (template: { id: string }) => template.id,
+                                      ),
+                                    })
+                                  }
+                                  disabled={
+                                    !segment.active ||
+                                    selected.length === 0 ||
+                                    copyTemplates.isPending
+                                  }
+                                >
+                                  Adicionar selecionados
+                                </Button>
+                              </div>
+                            </div>
+                            {templates.map(
+                              (template: {
+                                id: string;
+                                name: string;
+                                description: string | null;
+                                duration_minutes: number;
+                              }) => {
+                                const checked = selectedTemplateIds.includes(template.id);
+                                return (
+                                  <label
+                                    key={template.id}
+                                    className="flex cursor-pointer items-center justify-between rounded-md border border-border p-2 text-sm"
+                                  >
+                                    <span>
+                                      <span className="font-medium text-card-foreground">
+                                        {template.name}
+                                      </span>
+                                      <span className="ml-2 text-muted-foreground">
+                                        {template.duration_minutes} min
+                                        {template.description ? ` · ${template.description}` : ""}
+                                      </span>
+                                    </span>
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={() =>
+                                        setSelectedTemplateIds((current) =>
+                                          checked
+                                            ? current.filter((id) => id !== template.id)
+                                            : [...current, template.id],
+                                        )
+                                      }
+                                    />
+                                  </label>
+                                );
+                              },
+                            )}
+                            {templates.length === 0 ? (
+                              <p className="text-sm text-muted-foreground">
+                                Nenhuma sugestão cadastrada.
+                              </p>
+                            ) : null}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  ) : null}
+                </div>
+              ),
+            )}
+        </div>
+      </section>
 
       <form
         className="mt-6 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2"
@@ -157,6 +502,21 @@ function ServicesPage() {
               <option key={c} value={c} />
             ))}
           </datalist>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Segmento</Label>
+          <select
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground"
+            value={form.segment_id}
+            onChange={(event) => setForm({ ...form, segment_id: event.target.value })}
+          >
+            <option value="">Sem segmento</option>
+            {(segments.data ?? []).map((segment: { id: string; name: string }) => (
+              <option key={segment.id} value={segment.id}>
+                {segment.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
@@ -184,103 +544,159 @@ function ServicesPage() {
       </form>
 
       <ul className="mt-6 space-y-2">
-        {(services.data ?? []).map((service) => (
-          <li key={service.id} className="rounded-xl border border-border bg-card p-4">
-            {edit?.id === service.id ? (
-              <form
-                className="grid gap-3 sm:grid-cols-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  update.mutate(edit);
-                }}
-              >
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label>Nome</Label>
-                  <Input
-                    value={edit.name}
-                    onChange={(e) => setEdit({ ...edit, name: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Categoria</Label>
-                  <Input
-                    value={edit.category}
-                    onChange={(e) => setEdit({ ...edit, category: e.target.value })}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label>Preço (R$)</Label>
+        {(services.data ?? []).map(
+          (service: {
+            id: string;
+            name: string;
+            category: string | null;
+            price_cents: number;
+            duration_minutes: number;
+            active: boolean;
+            segment_id: string | null;
+          }) => (
+            <li key={service.id} className="rounded-xl border border-border bg-card p-4">
+              {edit?.id === service.id ? (
+                <form
+                  className="grid gap-3 sm:grid-cols-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (edit) update.mutate(edit);
+                  }}
+                >
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>Nome</Label>
                     <Input
-                      inputMode="decimal"
-                      value={edit.price}
-                      onChange={(e) => setEdit({ ...edit, price: e.target.value })}
+                      value={edit!.name}
+                      onChange={(e) => setEdit({ ...edit!, name: e.target.value })}
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Duração (min)</Label>
+                    <Label>Categoria</Label>
                     <Input
-                      inputMode="numeric"
-                      value={edit.duration}
-                      onChange={(e) => setEdit({ ...edit, duration: e.target.value })}
+                      value={edit!.category}
+                      onChange={(e) => setEdit({ ...edit!, category: e.target.value })}
                     />
                   </div>
+                  <div className="space-y-1.5">
+                    <Label>Segmento</Label>
+                    <select
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                      value={edit!.segment_id}
+                      onChange={(event) => setEdit({ ...edit!, segment_id: event.target.value })}
+                    >
+                      <option value="">Sem segmento</option>
+                      {(segments.data ?? []).map((segment: { id: string; name: string }) => (
+                        <option key={segment.id} value={segment.id}>
+                          {segment.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label>Preço (R$)</Label>
+                      <Input
+                        inputMode="decimal"
+                        value={edit!.price}
+                        onChange={(e) => setEdit({ ...edit!, price: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Duração (min)</Label>
+                      <Input
+                        inputMode="numeric"
+                        value={edit!.duration}
+                        onChange={(e) => setEdit({ ...edit!, duration: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 sm:col-span-2">
+                    <Button type="submit" size="sm" disabled={update.isPending}>
+                      Salvar alterações
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setEdit(null)}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-card-foreground">{service.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {service.category ? `${service.category} · ` : ""}
+                      {formatDuration(service.duration_minutes)} · {formatBRL(service.price_cents)}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {(professionals.data ?? []).map(
+                        (professional: { id: string; name: string }) => {
+                          const linked = (professionalServices.data ?? []).some(
+                            (link: { professional_id: string; service_id: string }) =>
+                              link.professional_id === professional.id &&
+                              link.service_id === service.id,
+                          );
+                          return (
+                            <label
+                              key={professional.id}
+                              className="flex items-center gap-1 text-xs text-muted-foreground"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={linked}
+                                onChange={() =>
+                                  toggleProfessionalService.mutate({
+                                    professionalId: professional.id,
+                                    serviceId: service.id,
+                                    linked,
+                                  })
+                                }
+                              />
+                              {professional.name}
+                            </label>
+                          );
+                        },
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => toggle.mutate({ id: service.id, active: !service.active })}
+                    >
+                      {service.active ? "Ativo" : "Inativo"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label={`Editar ${service.name}`}
+                      onClick={() =>
+                        setEdit({
+                          id: service.id,
+                          name: service.name,
+                          category: service.category ?? "",
+                          price: (service.price_cents / 100).toFixed(2).replace(".", ","),
+                          duration: String(service.duration_minutes),
+                          segment_id: service.segment_id ?? "",
+                        })
+                      }
+                    >
+                      <Pencil className="size-4" aria-hidden />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label={`Remover ${service.name}`}
+                      onClick={() => remove.mutate(service.id)}
+                    >
+                      <Trash2 className="size-4" aria-hidden />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2 sm:col-span-2">
-                  <Button type="submit" size="sm" disabled={update.isPending}>
-                    Salvar alterações
-                  </Button>
-                  <Button type="button" size="sm" variant="ghost" onClick={() => setEdit(null)}>
-                    Cancelar
-                  </Button>
-                </div>
-              </form>
-            ) : (
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-medium text-card-foreground">{service.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {service.category ? `${service.category} · ` : ""}
-                    {formatDuration(service.duration_minutes)} · {formatBRL(service.price_cents)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => toggle.mutate({ id: service.id, active: !service.active })}
-                  >
-                    {service.active ? "Ativo" : "Inativo"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    aria-label={`Editar ${service.name}`}
-                    onClick={() =>
-                      setEdit({
-                        id: service.id,
-                        name: service.name,
-                        category: service.category ?? "",
-                        price: (service.price_cents / 100).toFixed(2).replace(".", ","),
-                        duration: String(service.duration_minutes),
-                      })
-                    }
-                  >
-                    <Pencil className="size-4" aria-hidden />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    aria-label={`Remover ${service.name}`}
-                    onClick={() => remove.mutate(service.id)}
-                  >
-                    <Trash2 className="size-4" aria-hidden />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </li>
-        ))}
+              )}
+            </li>
+          ),
+        )}
       </ul>
 
       <ConflictRules businessId={businessId} services={services.data ?? []} />

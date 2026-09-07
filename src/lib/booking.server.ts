@@ -71,6 +71,13 @@ export async function loadPublicBusinessBySlug(
 }
 
 export interface PublicCatalog {
+  segments?: {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    sort_order: number;
+  }[];
   services: {
     id: string;
     name: string;
@@ -80,6 +87,7 @@ export interface PublicCatalog {
     duration_minutes: number;
     image_url: string | null;
     allows_parallel: boolean;
+    segment_id?: string | null;
   }[];
   products?: {
     id: string;
@@ -113,6 +121,7 @@ export async function loadPublicCatalogBySlug(db: Db, slug: string): Promise<Pub
   const catalog = (data as PublicCatalog | null) ?? null;
   return (
     catalog ?? {
+      segments: [],
       services: [],
       products: [],
       professionals: [],
@@ -125,41 +134,51 @@ export async function loadPublicCatalogBySlug(db: Db, slug: string): Promise<Pub
 }
 
 export async function loadPublicCatalog(db: Db, businessId: string) {
-  const [services, professionals, links, businessHours, professionalHours] = await Promise.all([
-    db
-      .from("services")
-      .select(
-        "id, name, description, category, price_cents, duration_minutes, image_url, allows_parallel",
-      )
-      .eq("business_id", businessId)
-      .eq("active", true)
-      .is("deleted_at", null)
-      .order("category", { ascending: true })
-      .order("name", { ascending: true }),
-    db
-      .from("professionals")
-      .select("id, name, photo_url, bio")
-      .eq("business_id", businessId)
-      .eq("active", true)
-      .is("deleted_at", null)
-      .order("name", { ascending: true }),
-    db
-      .from("professional_services")
-      .select("professional_id, service_id")
-      .eq("business_id", businessId),
-    db
-      .from("business_hours")
-      .select("weekday, opens_at, closes_at, closed")
-      .eq("business_id", businessId),
-    db
-      .from("professional_hours")
-      .select(
-        "professional_id, weekday, starts_at, ends_at, enabled, lunch_starts_at, lunch_ends_at",
-      )
-      .eq("business_id", businessId),
-  ]);
+  const [segments, services, professionals, links, businessHours, professionalHours] =
+    await Promise.all([
+      (db as unknown as SupabaseClient)
+        .from("business_segments")
+        .select("id, name, slug, description, sort_order")
+        .eq("business_id", businessId)
+        .eq("active", true)
+        .neq("slug", "geral")
+        .order("sort_order")
+        .order("name"),
+      db
+        .from("services")
+        .select(
+          "id, name, description, category, price_cents, duration_minutes, image_url, allows_parallel, segment_id",
+        )
+        .eq("business_id", businessId)
+        .eq("active", true)
+        .is("deleted_at", null)
+        .order("category", { ascending: true })
+        .order("name", { ascending: true }),
+      db
+        .from("professionals")
+        .select("id, name, photo_url, bio")
+        .eq("business_id", businessId)
+        .eq("active", true)
+        .is("deleted_at", null)
+        .order("name", { ascending: true }),
+      db
+        .from("professional_services")
+        .select("professional_id, service_id")
+        .eq("business_id", businessId),
+      db
+        .from("business_hours")
+        .select("weekday, opens_at, closes_at, closed")
+        .eq("business_id", businessId),
+      db
+        .from("professional_hours")
+        .select(
+          "professional_id, weekday, starts_at, ends_at, enabled, lunch_starts_at, lunch_ends_at",
+        )
+        .eq("business_id", businessId),
+    ]);
 
   return {
+    segments: segments.data ?? [],
     services: services.data ?? [],
     professionals: professionals.data ?? [],
     links: links.data ?? [],
