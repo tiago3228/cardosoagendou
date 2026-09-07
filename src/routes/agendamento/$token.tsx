@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import {
   getAppointmentByManageToken,
   confirmAppointmentPresence,
@@ -17,9 +18,29 @@ export const Route = createFileRoute("/agendamento/$token")({
 function ManageAppointmentPage() {
   const { token } = Route.useParams();
   const appointment = Route.useLoaderData();
+  const [currentStatus, setCurrentStatus] = useState(appointment?.status ?? null);
   const [presence, setPresence] = useState(appointment?.presence_status ?? null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (!appointment?.id) return;
+    const channel = supabase
+      .channel(`appointment-status-${appointment.id}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "appointments", filter: `id=eq.${appointment.id}` },
+        (payload) => {
+          const next = payload.new as { status?: string; presence_status?: string | null };
+          if (next.status) setCurrentStatus(next.status);
+          if (next.presence_status !== undefined) setPresence(next.presence_status);
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [appointment?.id]);
 
   if (!appointment) {
     return (
@@ -83,13 +104,13 @@ function ManageAppointmentPage() {
             })}
           </div>
           <p className="mt-3 text-sm text-[#F2EDE4]">
-            Status: <strong>{appointment.status}</strong>
+            Status: <strong>{currentStatus}</strong>
           </p>
         </div>
         <h2 className="mt-6 font-display text-lg font-bold">Você vai comparecer?</h2>
         <div className="mt-3 grid gap-2">
           <Button
-            disabled={busy || appointment.status !== "CONFIRMED"}
+            disabled={busy || currentStatus !== "CONFIRMED"}
             onClick={() => void updatePresence("CONFIRMED")}
             className="bg-[#B4884F] text-[#14120F] hover:bg-[#D1A66C]"
           >
@@ -97,7 +118,7 @@ function ManageAppointmentPage() {
             Confirmar presença
           </Button>
           <Button
-            disabled={busy || appointment.status !== "CONFIRMED"}
+            disabled={busy || currentStatus !== "CONFIRMED"}
             variant="outline"
             onClick={() => void updatePresence("DECLINED")}
             className="!border-[#B4884F] !bg-[#F2EDE4] !text-[#1E1B17] hover:!bg-[#E7D7C2] hover:!text-[#1E1B17]"
@@ -125,7 +146,7 @@ function ManageAppointmentPage() {
           </Button>
           <Button
             variant="ghost"
-            disabled={busy || !appointment.allow_cancel || appointment.status !== "CONFIRMED"}
+            disabled={busy || !appointment.allow_cancel || currentStatus !== "CONFIRMED"}
             onClick={() => void cancelAppointment()}
           >
             Cancelar agendamento
