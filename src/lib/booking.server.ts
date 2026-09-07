@@ -9,6 +9,7 @@ import {
   weekdayOf,
   type BusyInterval,
 } from "./availability";
+import { serviceSelectionIssue } from "./service-compositions";
 
 export type Db = SupabaseClient<Database>;
 
@@ -98,6 +99,10 @@ export interface PublicCatalog {
   }[];
   professionals: { id: string; name: string; photo_url: string | null; bio: string | null }[];
   links: { professional_id: string; service_id: string }[];
+  serviceCompositions?: {
+    composite_service_id: string;
+    component_service_id: string;
+  }[];
   /** Owner-configured pairs of services that cannot be booked together. */
   serviceConflicts?: {
     service_id: string;
@@ -126,6 +131,7 @@ export async function loadPublicCatalogBySlug(db: Db, slug: string): Promise<Pub
       products: [],
       professionals: [],
       links: [],
+      serviceCompositions: [],
       serviceConflicts: [],
       businessHours: [],
       professionalHours: [],
@@ -210,6 +216,8 @@ export async function assertNoServiceConflicts(
   businessId: string,
   serviceIds: string[],
 ): Promise<void> {
+  if (new Set(serviceIds).size !== serviceIds.length)
+    throw new Error("DUPLICATE_SERVICE: o mesmo serviço não pode ser adicionado duas vezes");
   if (serviceIds.length < 2) return;
   const { data } = await db
     .from("service_conflicts")
@@ -220,6 +228,17 @@ export async function assertNoServiceConflicts(
   if ((data ?? []).length > 0) {
     throw new Error(
       "SERVICE_CONFLICT: os serviços selecionados não podem ser combinados no mesmo atendimento",
+    );
+  }
+  const idsFilter = serviceIds.join(",");
+  const { data: compositions } = await (db as unknown as SupabaseClient)
+    .from("service_compositions")
+    .select("composite_service_id, component_service_id")
+    .eq("business_id", businessId)
+    .or(`composite_service_id.in.(${idsFilter}),component_service_id.in.(${idsFilter})`);
+  if (serviceSelectionIssue(serviceIds, compositions ?? []) === "composition") {
+    throw new Error(
+      "SERVICE_COMPOSITION_CONFLICT: um serviço selecionado já está incluído em outro conjunto",
     );
   }
 }

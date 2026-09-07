@@ -55,6 +55,12 @@ BEGIN
     RAISE EXCEPTION 'INVALID_BOOKING: dados incompletos';
   END IF;
 
+  IF cardinality(_service_ids) <> (
+    SELECT count(DISTINCT requested.id) FROM unnest(_service_ids) requested(id)
+  ) THEN
+    RAISE EXCEPTION 'DUPLICATE_SERVICE';
+  END IF;
+
   IF auth.uid() IS NOT NULL AND NOT public.is_business_member(auth.uid(), _business_id) THEN
     RAISE EXCEPTION 'FORBIDDEN: sem acesso a este negócio';
   END IF;

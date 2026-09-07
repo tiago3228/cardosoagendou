@@ -21,6 +21,7 @@ import {
 import { rescheduleAppointmentByManageToken } from "@/lib/appointment-manage.functions";
 import { formatBRL, formatDuration, normalizeInstagramUrl, whatsappLink } from "@/lib/format";
 import { businessTypeConfig } from "@/lib/business-types";
+import { serviceSelectionIssue } from "@/lib/service-compositions";
 import { isTechnicalError, userFacingError } from "@/lib/user-facing-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -201,6 +202,10 @@ function BookingPage() {
 
   /** Owner-configured incompatibilities: these combinations are blocked, not just warned. */
   const conflictRules = data!.serviceConflicts ?? [];
+  const compositionRules = (data!.serviceCompositions ?? []) as {
+    composite_service_id: string;
+    component_service_id: string;
+  }[];
   const conflictsWith = (serviceId: string, otherId: string) =>
     conflictRules.some(
       (rule) =>
@@ -208,7 +213,16 @@ function BookingPage() {
         (rule.service_id === otherId && rule.conflicting_service_id === serviceId),
     );
   const blockedService = (serviceId: string) =>
-    !selected.includes(serviceId) && selected.some((sid) => conflictsWith(serviceId, sid));
+    !selected.includes(serviceId) &&
+    (selected.some((sid) => conflictsWith(serviceId, sid)) ||
+      serviceSelectionIssue([...selected, serviceId], compositionRules) === "composition");
+  const blockedReason = (serviceId: string) => {
+    if (selected.includes(serviceId)) return "Este serviço já foi adicionado ao atendimento.";
+    if (serviceSelectionIssue([...selected, serviceId], compositionRules) === "composition") {
+      return "Este serviço já faz parte de um conjunto selecionado.";
+    }
+    return "Indisponível junto dos serviços já selecionados";
+  };
   const hardConflict = useMemo(() => {
     for (const rule of conflictRules) {
       if (selected.includes(rule.service_id) && selected.includes(rule.conflicting_service_id)) {
@@ -519,7 +533,7 @@ function BookingPage() {
                               </span>
                               {blocked ? (
                                 <span className="mt-1 block text-xs text-[#9C948A]">
-                                  Indisponível junto dos serviços já selecionados
+                                  {blockedReason(service.id)}
                                 </span>
                               ) : null}
                               {service.allows_parallel ? (
