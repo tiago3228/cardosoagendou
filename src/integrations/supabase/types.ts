@@ -14,6 +14,64 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointment_products: {
+        Row: {
+          appointment_id: string
+          business_id: string
+          created_at: string
+          id: string
+          image_url: string | null
+          price_cents: number
+          product_id: string | null
+          product_name: string
+          quantity: number
+        }
+        Insert: {
+          appointment_id: string
+          business_id: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          price_cents: number
+          product_id?: string | null
+          product_name: string
+          quantity?: number
+        }
+        Update: {
+          appointment_id?: string
+          business_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          price_cents?: number
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_products_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_products_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_services: {
         Row: {
           appointment_id: string
@@ -78,8 +136,16 @@ export type Database = {
           duration_minutes: number
           ends_at: string
           id: string
+          idempotency_key: string | null
+          manage_token_expires_at: string | null
+          manage_token_hash: string | null
           notes: string | null
+          policy_accepted_at: string | null
+          policy_text_snapshot: string | null
+          presence_status: string | null
           professional_id: string
+          rescheduled_from_id: string | null
+          rescheduled_to_id: string | null
           snapshot: Json
           starts_at: string
           status: Database["public"]["Enums"]["appointment_status"]
@@ -97,8 +163,16 @@ export type Database = {
           duration_minutes: number
           ends_at: string
           id?: string
+          idempotency_key?: string | null
+          manage_token_expires_at?: string | null
+          manage_token_hash?: string | null
           notes?: string | null
+          policy_accepted_at?: string | null
+          policy_text_snapshot?: string | null
+          presence_status?: string | null
           professional_id: string
+          rescheduled_from_id?: string | null
+          rescheduled_to_id?: string | null
           snapshot?: Json
           starts_at: string
           status?: Database["public"]["Enums"]["appointment_status"]
@@ -116,8 +190,16 @@ export type Database = {
           duration_minutes?: number
           ends_at?: string
           id?: string
+          idempotency_key?: string | null
+          manage_token_expires_at?: string | null
+          manage_token_hash?: string | null
           notes?: string | null
+          policy_accepted_at?: string | null
+          policy_text_snapshot?: string | null
+          presence_status?: string | null
           professional_id?: string
+          rescheduled_from_id?: string | null
+          rescheduled_to_id?: string | null
           snapshot?: Json
           starts_at?: string
           status?: Database["public"]["Enums"]["appointment_status"]
@@ -144,6 +226,20 @@ export type Database = {
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_rescheduled_from_id_fkey"
+            columns: ["rescheduled_from_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_rescheduled_to_id_fkey"
+            columns: ["rescheduled_to_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
             referencedColumns: ["id"]
           },
         ]
@@ -235,10 +331,13 @@ export type Database = {
           description: string | null
           email: string | null
           id: string
+          instagram_url: string | null
           logo_url: string | null
           max_advance_days: number
           min_notice_minutes: number
           name: string
+          reminder_enabled: boolean
+          reminder_minutes: number
           show_address: boolean
           show_whatsapp: boolean
           slot_interval_minutes: number
@@ -246,6 +345,7 @@ export type Database = {
           timezone: string
           updated_at: string
           whatsapp: string | null
+          whatsapp_notifications_enabled: boolean
         }
         Insert: {
           active?: boolean
@@ -257,10 +357,13 @@ export type Database = {
           description?: string | null
           email?: string | null
           id?: string
+          instagram_url?: string | null
           logo_url?: string | null
           max_advance_days?: number
           min_notice_minutes?: number
           name: string
+          reminder_enabled?: boolean
+          reminder_minutes?: number
           show_address?: boolean
           show_whatsapp?: boolean
           slot_interval_minutes?: number
@@ -268,6 +371,7 @@ export type Database = {
           timezone?: string
           updated_at?: string
           whatsapp?: string | null
+          whatsapp_notifications_enabled?: boolean
         }
         Update: {
           active?: boolean
@@ -279,10 +383,13 @@ export type Database = {
           description?: string | null
           email?: string | null
           id?: string
+          instagram_url?: string | null
           logo_url?: string | null
           max_advance_days?: number
           min_notice_minutes?: number
           name?: string
+          reminder_enabled?: boolean
+          reminder_minutes?: number
           show_address?: boolean
           show_whatsapp?: boolean
           slot_interval_minutes?: number
@@ -290,6 +397,7 @@ export type Database = {
           timezone?: string
           updated_at?: string
           whatsapp?: string | null
+          whatsapp_notifications_enabled?: boolean
         }
         Relationships: []
       }
@@ -430,6 +538,81 @@ export type Database = {
             columns: ["subscription_id"]
             isOneToOne: false
             referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_outbox: {
+        Row: {
+          appointment_id: string | null
+          attempts: number
+          available_at: string
+          business_id: string
+          channel: string
+          created_at: string
+          dedupe_key: string
+          event_type: string
+          id: string
+          last_error: string | null
+          locked_at: string | null
+          payload: Json
+          provider: string
+          recipient: string
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          attempts?: number
+          available_at?: string
+          business_id: string
+          channel?: string
+          created_at?: string
+          dedupe_key: string
+          event_type: string
+          id?: string
+          last_error?: string | null
+          locked_at?: string | null
+          payload?: Json
+          provider?: string
+          recipient: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          attempts?: number
+          available_at?: string
+          business_id?: string
+          channel?: string
+          created_at?: string
+          dedupe_key?: string
+          event_type?: string
+          id?: string
+          last_error?: string | null
+          locked_at?: string | null
+          payload?: Json
+          provider?: string
+          recipient?: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_outbox_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_outbox_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -1345,6 +1528,18 @@ export type Database = {
         Args: { _full_name?: string; _token: string }
         Returns: Json
       }
+      appointment_cancel_by_token: {
+        Args: { _token_hash: string }
+        Returns: Json
+      }
+      appointment_manage_by_token: {
+        Args: { _token_hash: string }
+        Returns: Json
+      }
+      appointment_presence_by_token: {
+        Args: { _presence: string; _token_hash: string }
+        Returns: Json
+      }
       approve_manual_payment_request: {
         Args: { _admin_note?: string; _request_id: string }
         Returns: Json
@@ -1357,6 +1552,10 @@ export type Database = {
         Args: { _business_id: string }
         Returns: string
       }
+      business_can_select_products: {
+        Args: { _business_id: string }
+        Returns: boolean
+      }
       business_entitlements: { Args: { _business_id: string }; Returns: Json }
       business_has_feature: {
         Args: { _business_id: string; _feature: string }
@@ -1367,6 +1566,56 @@ export type Database = {
         Returns: number
       }
       can_add_professional: { Args: { _business_id: string }; Returns: boolean }
+      create_appointment_atomic: {
+        Args: {
+          _business_id: string
+          _client_name: string
+          _client_whatsapp: string
+          _idempotency_key?: string
+          _manage_token?: string
+          _notes?: string
+          _policy_accepted?: boolean
+          _policy_text?: string
+          _professional_id: string
+          _service_ids: string[]
+          _source?: string
+          _starts_at: string
+          _status?: Database["public"]["Enums"]["appointment_status"]
+        }
+        Returns: Json
+      }
+      create_appointment_atomic_with_products: {
+        Args: {
+          _business_id: string
+          _client_name: string
+          _client_whatsapp: string
+          _idempotency_key?: string
+          _manage_token?: string
+          _notes?: string
+          _policy_accepted?: boolean
+          _policy_text?: string
+          _product_ids: string[]
+          _professional_id: string
+          _service_ids: string[]
+          _source?: string
+          _starts_at: string
+          _status?: Database["public"]["Enums"]["appointment_status"]
+        }
+        Returns: Json
+      }
+      enqueue_due_appointment_reminders: { Args: never; Returns: number }
+      enqueue_message: {
+        Args: {
+          _appointment_id: string
+          _available_at?: string
+          _business_id: string
+          _dedupe_key: string
+          _event_type: string
+          _payload: Json
+          _recipient: string
+        }
+        Returns: string
+      }
       expire_manual_payment_requests: { Args: never; Returns: number }
       has_business_role: {
         Args: {
@@ -1413,6 +1662,15 @@ export type Database = {
         Args: { _admin_note?: string; _request_id: string }
         Returns: Json
       }
+      reschedule_appointment_by_token: {
+        Args: {
+          _manage_token: string
+          _professional_id: string
+          _starts_at: string
+          _token_hash: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "master" | "owner" | "professional"
@@ -1423,6 +1681,7 @@ export type Database = {
         | "COMPLETED"
         | "CANCELED"
         | "NO_SHOW"
+        | "RESCHEDULED"
       billing_interval: "MONTHLY" | "ANNUAL"
       business_type:
         | "BARBERSHOP"
@@ -1583,6 +1842,7 @@ export const Constants = {
         "COMPLETED",
         "CANCELED",
         "NO_SHOW",
+        "RESCHEDULED",
       ],
       billing_interval: ["MONTHLY", "ANNUAL"],
       business_type: [
