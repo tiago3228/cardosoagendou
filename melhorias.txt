@@ -1,779 +1,948 @@
-# CORREÇÃO FINAL PÓS-AUDITORIA — COMMIT `48135b9`
+Faça uma **AUDITORIA FINAL, INDEPENDENTE E SOMENTE LEITURA** do commit:
 
-A auditoria final do commit:
+`de9cfff4e0bf342ea03d5a0c98a5f97742611455`
 
-`48135b9004319f2bc343d3d7c5d308c1910e9214`
+Mensagem:
 
-foi concluída e o resultado foi:
+`Complete global service catalog correction`
 
-🔴 **NÃO APROVADO — NÃO PUBLICAR**
+## REGRA PRINCIPAL
 
-Não quero reconstrução do projeto.
+NÃO altere nenhum arquivo.
 
-Quero uma **correção cirúrgica sobre o estado atual**, preservando tudo que já foi considerado correto pela auditoria.
+NÃO crie correções.
 
----
+NÃO faça commit.
 
-# REGRA ABSOLUTA
+NÃO faça push.
 
-Antes de começar:
+NÃO execute migrations em produção.
 
-* leia o estado atual do projeto;
-* leia o commit `48135b9004319f2bc343d3d7c5d308c1910e9214`;
-* preserve as implementações já corretas;
-* NÃO altere billing sem necessidade;
-* NÃO altere Mercado Pago;
-* NÃO altere trial;
-* NÃO altere preços anuais;
-* NÃO altere a lógica de agendamento/disponibilidade/reagendamento sem necessidade;
-* NÃO faça reconstrução ampla.
+NÃO aplique alterações no banco remoto.
 
-Ao final:
+Esta etapa é exclusivamente de **auditoria técnica e validação**.
 
-* NÃO faça `git push`;
-* NÃO aplique migration em produção;
-* crie um novo commit SOMENTE se todas as correções forem implementadas e validadas;
-* informe o hash do novo commit.
+O objetivo é determinar se o commit `de9cfff4e0bf342ea03d5a0c98a5f97742611455` está realmente pronto para ser publicado.
+
+Não considere o relatório anterior da implementação como prova. Verifique o código, migrations, testes e histórico Git diretamente.
 
 ---
 
-# 1. CORREÇÃO CRÍTICA — 300 SERVICE TEMPLATES
+# 1. IDENTIDADE EXATA DO COMMIT
 
-Este é o requisito principal.
+Confirme:
 
-Atualmente existem:
+* HEAD atual;
+* hash completo;
+* mensagem do commit;
+* branch atual;
+* se está detached HEAD;
+* estado do working tree;
+* relação entre HEAD e `origin/main`;
+* commits anteriores que compõem essa implementação;
+* diff exato de `de9cfff` em relação ao commit pai.
 
-```text
-20 segmentos
-44 templates
-```
-
-O requisito correto é:
-
-```text
-20 segmentos × 15 serviços = 300 templates
-```
-
-Corrija a migration/catalogação para que existam exatamente:
-
-```text
-20 segmentos
-300 service_templates
-15 templates por segmento
-```
-
-Use exatamente os nomes e durações abaixo.
+Informe se existe qualquer alteração local não commitada.
 
 ---
 
-## SEGMENTO 1 — BARBEARIA
+# 2. ESCOPO EXATO DO COMMIT
 
-1. Corte masculino — 30
-2. Corte + barba — 60
-3. Barba — 30
-4. Corte infantil — 30
-5. Pezinho — 15
-6. Sobrancelha — 15
-7. Pigmentação — 30
-8. Platinado — 120
-9. Luzes — 120
-10. Coloração — 90
-11. Relaxamento capilar — 90
-12. Hidratação capilar — 30
-13. Lavagem + finalização — 20
-14. Corte + pigmentação — 60
-15. Corte + barba + sobrancelha — 75
+Liste todos os arquivos alterados pelo `de9cfff`.
 
-## SEGMENTO 2 — SALÃO DE BELEZA
+Verifique especialmente:
 
-1. Corte feminino — 60
-2. Corte masculino — 30
-3. Corte infantil — 30
-4. Escova — 45
-5. Escova modelada — 60
-6. Hidratação — 45
-7. Reconstrução capilar — 60
-8. Progressiva — 180
-9. Relaxamento — 120
-10. Coloração — 120
-11. Mechas — 180
-12. Luzes — 180
-13. Penteado — 90
-14. Finalização — 30
-15. Tratamento capilar — 60
+* `src/lib/subscription.functions.ts`
+* `src/routes/_authenticated/app.servicos.tsx`
+* `supabase/migrations/20260907003000_complete_global_catalog.sql`
+* `tests/catalog.test.ts`
+* qualquer outro arquivo alterado direta ou indiretamente.
 
-## SEGMENTO 3 — MANICURE & PEDICURE
+Confirme que:
 
-1. Manicure — 30
-2. Pedicure — 45
-3. Manicure + pedicure — 75
-4. Esmaltação comum — 30
-5. Esmaltação em gel — 60
-6. Alongamento de unhas — 120
-7. Manutenção de alongamento — 90
-8. Fibra de vidro — 150
-9. Manutenção de fibra — 90
-10. Blindagem — 60
-11. Nail art — 30
-12. Francesinha — 30
-13. Spa dos pés — 45
-14. Remoção de alongamento — 45
-15. Remoção de esmaltação em gel — 30
+`src/lib/billing.server.ts`
 
-## SEGMENTO 4 — ESTÉTICA
+NÃO foi alterado pelo commit.
 
-1. Limpeza de pele — 60
-2. Limpeza de pele profunda — 90
-3. Peeling — 45
-4. Drenagem linfática — 60
-5. Massagem modeladora — 60
-6. Radiofrequência — 60
-7. Criolipólise — 90
-8. Ultrassom estético — 45
-9. Microagulhamento — 90
-10. Design corporal — 60
-11. Tratamento facial — 60
-12. Tratamento para acne — 60
-13. Tratamento para manchas — 60
-14. Depilação facial — 30
-15. Depilação corporal — 60
+Também confirme que não houve alteração acidental em:
 
-## SEGMENTO 5 — MASSAGEM & TERAPIAS
-
-1. Massagem relaxante — 60
-2. Massagem terapêutica — 60
-3. Massagem desportiva — 60
-4. Shiatsu — 60
-5. Reflexologia — 45
-6. Drenagem linfática — 60
-7. Massagem modeladora — 60
-8. Massagem com pedras quentes — 90
-9. Massagem aromática — 60
-10. Liberação miofascial — 60
-11. Reiki — 60
-12. Ventosaterapia — 45
-13. Auriculoterapia — 30
-14. Terapia corporal — 60
-15. Sessão terapêutica — 60
-
-## SEGMENTO 6 — PET SHOP / BANHO & TOSA
-
-1. Banho pequeno porte — 45
-2. Banho médio porte — 60
-3. Banho grande porte — 90
-4. Banho + tosa higiênica — 75
-5. Tosa higiênica — 45
-6. Tosa completa — 90
-7. Tosa na tesoura — 120
-8. Desembolo — 60
-9. Corte de unhas — 15
-10. Limpeza de ouvidos — 15
-11. Escovação dentária — 15
-12. Hidratação de pelos — 30
-13. Banho terapêutico — 60
-14. Escovação — 30
-15. Spa pet — 90
-
-## SEGMENTO 7 — CLÍNICA ODONTOLÓGICA
-
-1. Avaliação odontológica — 30
-2. Consulta odontológica — 45
-3. Limpeza dental — 60
-4. Profilaxia — 60
-5. Clareamento dental — 90
-6. Avaliação ortodôntica — 30
-7. Manutenção ortodôntica — 30
-8. Restauração — 60
-9. Extração — 60
-10. Tratamento de canal — 90
-11. Aplicação de flúor — 30
-12. Radiografia odontológica — 30
-13. Moldagem odontológica — 30
-14. Consulta de retorno — 30
-15. Avaliação estética dental — 45
-
-## SEGMENTO 8 — PERSONAL TRAINER / ACADEMIA
-
-1. Avaliação física — 60
-2. Treino individual — 60
-3. Treino funcional — 60
-4. Consultoria esportiva — 60
-5. Avaliação de composição corporal — 45
-6. Treino para emagrecimento — 60
-7. Treino de força — 60
-8. Treino de condicionamento — 60
-9. Treino para iniciantes — 60
-10. Treino para corrida — 60
-11. Acompanhamento mensal — 60
-12. Reavaliação física — 45
-13. Planejamento de treino — 60
-14. Aula experimental — 60
-15. Sessão online — 60
-
-## SEGMENTO 9 — YOGA & PILATES
-
-1. Aula de Yoga — 60
-2. Aula de Pilates — 60
-3. Aula individual de Yoga — 60
-4. Aula individual de Pilates — 60
-5. Avaliação de Pilates — 45
-6. Aula experimental — 60
-7. Yoga para iniciantes — 60
-8. Yoga avançado — 60
-9. Pilates para iniciantes — 60
-10. Pilates avançado — 60
-11. Aula de mobilidade — 45
-12. Aula de alongamento — 45
-13. Sessão de respiração — 30
-14. Aula online — 60
-15. Reavaliação — 45
-
-## SEGMENTO 10 — SOBRANCELHAS & CÍLIOS
-
-1. Design de sobrancelhas — 30
-2. Design + henna — 45
-3. Henna — 30
-4. Brow lamination — 60
-5. Micropigmentação — 120
-6. Manutenção de micropigmentação — 90
-7. Lifting de cílios — 60
-8. Extensão de cílios — 120
-9. Manutenção de extensão — 90
-10. Volume brasileiro — 120
-11. Volume russo — 150
-12. Mega volume — 180
-13. Remoção de extensão — 30
-14. Lash botox — 60
-15. Design masculino — 30
-
-## SEGMENTO 11 — MAQUIAGEM
-
-1. Maquiagem social — 60
-2. Maquiagem para festa — 90
-3. Maquiagem para casamento — 120
-4. Maquiagem para noiva — 150
-5. Maquiagem para madrinha — 90
-6. Maquiagem para formatura — 90
-7. Maquiagem artística — 120
-8. Maquiagem para ensaio fotográfico — 90
-9. Maquiagem express — 30
-10. Maquiagem masculina — 45
-11. Aula de automaquiagem — 120
-12. Produção completa — 120
-13. Teste de maquiagem para noiva — 90
-14. Maquiagem infantil — 45
-15. Retoque de maquiagem — 30
-
-## SEGMENTO 12 — SPA
-
-1. Spa relaxante — 90
-2. Day Spa — 180
-3. Banho relaxante — 60
-4. Ritual corporal — 90
-5. Esfoliação corporal — 60
-6. Hidratação corporal — 60
-7. Massagem relaxante — 60
-8. Massagem com pedras quentes — 90
-9. Banho de ofurô — 60
-10. Spa dos pés — 45
-11. Spa das mãos — 45
-12. Tratamento facial — 60
-13. Ritual aromático — 60
-14. Experiência para casal — 120
-15. Pacote relaxamento — 180
-
-## SEGMENTO 13 — CLÍNICA / CONSULTÓRIO
-
-1. Consulta inicial — 60
-2. Consulta de retorno — 30
-3. Avaliação — 45
-4. Atendimento particular — 60
-5. Teleconsulta — 60
-6. Acompanhamento — 45
-7. Avaliação completa — 60
-8. Retorno de avaliação — 30
-9. Orientação — 45
-10. Procedimento — 60
-11. Atendimento especializado — 60
-12. Avaliação preventiva — 60
-13. Consulta de rotina — 45
-14. Revisão de tratamento — 45
-15. Atendimento online — 60
-
-## SEGMENTO 14 — FISIOTERAPIA
-
-1. Avaliação fisioterapêutica — 60
-2. Sessão de fisioterapia — 60
-3. Fisioterapia ortopédica — 60
-4. Fisioterapia esportiva — 60
-5. Fisioterapia respiratória — 60
-6. Fisioterapia neurológica — 60
-7. Pilates terapêutico — 60
-8. RPG — 60
-9. Liberação miofascial — 60
-10. Terapia manual — 60
-11. Reabilitação pós-operatória — 60
-12. Reabilitação esportiva — 60
-13. Avaliação postural — 45
-14. Sessão de retorno — 45
-15. Atendimento domiciliar — 60
-
-## SEGMENTO 15 — PSICOLOGIA
-
-1. Primeira consulta — 60
-2. Psicoterapia individual — 50
-3. Psicoterapia de casal — 60
-4. Psicoterapia familiar — 60
-5. Sessão de acompanhamento — 50
-6. Avaliação psicológica — 60
-7. Orientação profissional — 60
-8. Aconselhamento — 50
-9. Atendimento online — 50
-10. Sessão infantil — 50
-11. Sessão adolescente — 50
-12. Sessão de retorno — 50
-13. Avaliação inicial — 60
-14. Orientação parental — 60
-15. Atendimento psicológico — 50
-
-## SEGMENTO 16 — JOALHERIA / SERVIÇOS ESPECIALIZADOS
-
-1. Avaliação de joia — 30
-2. Ajuste de anel — 60
-3. Ajuste de pulseira — 45
-4. Ajuste de corrente — 45
-5. Polimento de joia — 60
-6. Limpeza de joia — 30
-7. Gravação — 60
-8. Conserto de joia — 90
-9. Solda — 90
-10. Troca de pedra — 90
-11. Avaliação de relógio — 30
-12. Manutenção de relógio — 120
-13. Personalização de joia — 60
-14. Orçamento personalizado — 30
-15. Retirada/entrega de serviço — 15
-
-## SEGMENTO 17 — ESTÉTICA AUTOMOTIVA
-
-1. Lavagem simples — 60
-2. Lavagem completa — 90
-3. Higienização interna — 120
-4. Higienização de bancos — 120
-5. Polimento — 240
-6. Polimento técnico — 300
-7. Enceramento — 90
-8. Cristalização — 180
-9. Vitrificação — 300
-10. Limpeza de motor — 90
-11. Limpeza de estofados — 120
-12. Descontaminação de pintura — 120
-13. Revitalização de plásticos — 90
-14. Lavagem detalhada — 180
-15. Detalhamento completo — 360
-
-## SEGMENTO 18 — SERVIÇOS DE LIMPEZA
-
-1. Limpeza residencial — 180
-2. Limpeza comercial — 240
-3. Limpeza pesada — 300
-4. Limpeza pós-obra — 360
-5. Limpeza de escritório — 180
-6. Limpeza de apartamento — 180
-7. Limpeza de casa — 240
-8. Limpeza de vidros — 120
-9. Limpeza de estofados — 120
-10. Limpeza de tapetes — 120
-11. Higienização — 180
-12. Limpeza de cozinha — 120
-13. Limpeza de banheiro — 90
-14. Organização residencial — 180
-15. Serviço de limpeza personalizado — 180
-
-## SEGMENTO 19 — FOTOGRAFIA
-
-1. Ensaio individual — 60
-2. Ensaio casal — 90
-3. Ensaio família — 120
-4. Ensaio gestante — 120
-5. Ensaio infantil — 60
-6. Ensaio profissional — 90
-7. Ensaio externo — 120
-8. Ensaio estúdio — 90
-9. Fotografia de produto — 120
-10. Cobertura de evento — 180
-11. Fotografia corporativa — 120
-12. Retrato profissional — 60
-13. Fotografia para redes sociais — 90
-14. Pré-casamento — 180
-15. Reunião/briefing fotográfico — 60
-
-## SEGMENTO 20 — AULAS / PROFESSORES PARTICULARES
-
-1. Aula particular — 60
-2. Aula experimental — 60
-3. Reforço escolar — 60
-4. Preparação para provas — 60
-5. Preparação para vestibular — 90
-6. Preparação para ENEM — 90
-7. Aula de idiomas — 60
-8. Aula de conversação — 60
-9. Aula de matemática — 60
-10. Aula de português — 60
-11. Aula de física — 60
-12. Aula de química — 60
-13. Aula de música — 60
-14. Aula online — 60
-15. Consultoria/aula personalizada — 60
+* Mercado Pago;
+* trial;
+* cobrança mensal;
+* cobrança anual;
+* preços dos planos;
+* entitlements;
+* disponibilidade;
+* agendamento;
+* reagendamento;
+* cancelamento;
+* integridade de appointments.
 
 ---
 
-# 2. IMPORTANTE — NÃO DUPLICAR O CATÁLOGO
+# 3. ARQUITETURA GLOBAL DE SEGMENTOS
 
-Antes de inserir os 300 templates:
+Verifique diretamente o schema/migrations e o código.
 
-* examine o que já existe;
-* preserve a estrutura global já criada;
-* não gere duplicidades;
-* utilize os IDs/segmentos existentes quando possível;
-* faça a seed de maneira idempotente;
-* ao final, cada segmento deve possuir exatamente 15 templates.
+A arquitetura esperada é:
 
-Se houver templates incorretos já inseridos, trate-os de maneira segura.
+## `segments`
 
-Não apague serviços reais de empresas.
+Catálogo GLOBAL, compartilhado por todos os businesses.
 
-Não altere serviços já copiados para empresas.
+Deve existir uma única tabela global de segmentos, não uma tabela de segmentos por business.
+
+Esperado conceitualmente:
+
+* id
+* código/identificador estável
+* nome
+* descrição
+* ícone, caso o schema existente utilize esse conceito
+* ordem
+* ativo/inativo
+* timestamps
+
+Não renomeie campos cegamente.
+
+Se o projeto usa `slug` em vez de `code`, ou `active` em vez de `is_active`, avalie se isso é tecnicamente consistente com o restante do código.
+
+O importante é:
+
+* catálogo global;
+* identificador estável;
+* ativo/inativo;
+* sem duplicação por business.
 
 ---
 
-# 3. REGRA DE INDEPENDÊNCIA
+# 4. OS 20 SEGMENTOS DEFINITIVOS
 
-Mantenha:
+Confirme no banco/migration que existem exatamente os 20 segmentos comerciais abaixo:
 
-```text
-service_templates
-        ↓ COPY
-services
-```
+1. Barbearia
+2. Salão de beleza
+3. Manicure & Pedicure
+4. Estética
+5. Massagem & Terapias
+6. Pet Shop / Banho & Tosa
+7. Clínica odontológica
+8. Personal Trainer / Academia
+9. Yoga & Pilates
+10. Sobrancelhas & Cílios
+11. Maquiagem
+12. Spa
+13. Clínica / Consultório
+14. Fisioterapia
+15. Psicologia
+16. Joalheria / Serviços especializados
+17. Estética automotiva
+18. Serviços de limpeza
+19. Fotografia
+20. Aulas / Professores particulares
+
+IMPORTANTE:
+
+`Sobrancelhas & Cílios` é UM único segmento.
+
+Não aceite duas categorias separadas.
+
+Verifique:
+
+* nomes;
+* identificadores;
+* duplicidades;
+* ativos/inativos;
+* ordem;
+* estabilidade dos IDs/slugs/codes.
+
+---
+
+# 5. CATÁLOGO GLOBAL DE SERVICE TEMPLATES
+
+Este é um dos pontos mais importantes da auditoria.
+
+A implementação final deve possuir:
+
+**20 segmentos × 15 templates = 300 templates**
+
+Confirme diretamente na migration/schema.
+
+Verifique:
+
+* total global = 300;
+* exatamente 15 templates por segmento;
+* todos pertencem a um segmento global válido;
+* não existem templates comerciais duplicados;
+* templates antigos incorretos foram desativados de forma segura;
+* não existem apenas 44 templates ou qualquer catálogo parcial.
+
+Faça uma tabela de auditoria:
+
+SEGMENTO | QUANTIDADE DE TEMPLATES | STATUS
+
+O resultado esperado é:
+
+20 segmentos com 15 templates cada.
+
+---
+
+# 6. VERIFICAÇÃO DOS 300 NOMES E DURAÇÕES
+
+Não basta verificar a quantidade.
+
+Compare os templates existentes com esta especificação definitiva.
+
+## 1. Barbearia
+
+* Corte masculino — 30
+* Corte + barba — 60
+* Barba — 30
+* Corte infantil — 30
+* Pezinho — 15
+* Sobrancelha — 15
+* Pigmentação — 30
+* Platinado — 120
+* Luzes — 120
+* Coloração — 90
+* Relaxamento capilar — 90
+* Hidratação capilar — 30
+* Lavagem + finalização — 20
+* Corte + pigmentação — 60
+* Corte + barba + sobrancelha — 75
+
+## 2. Salão de Beleza
+
+* Corte feminino — 60
+* Corte masculino — 30
+* Corte infantil — 30
+* Escova — 45
+* Escova modelada — 60
+* Hidratação — 45
+* Reconstrução capilar — 60
+* Progressiva — 180
+* Relaxamento — 120
+* Coloração — 120
+* Mechas — 180
+* Luzes — 180
+* Penteado — 90
+* Finalização — 30
+* Tratamento capilar — 60
+
+## 3. Manicure & Pedicure
+
+* Manicure — 30
+* Pedicure — 45
+* Manicure + pedicure — 75
+* Esmaltação comum — 30
+* Esmaltação em gel — 60
+* Alongamento de unhas — 120
+* Manutenção de alongamento — 90
+* Fibra de vidro — 150
+* Manutenção de fibra — 90
+* Blindagem — 60
+* Nail art — 30
+* Francesinha — 30
+* Spa dos pés — 45
+* Remoção de alongamento — 45
+* Remoção de esmaltação em gel — 30
+
+## 4. Estética
+
+* Limpeza de pele — 60
+* Limpeza de pele profunda — 90
+* Peeling — 45
+* Drenagem linfática — 60
+* Massagem modeladora — 60
+* Radiofrequência — 60
+* Criolipólise — 90
+* Ultrassom estético — 45
+* Microagulhamento — 90
+* Design corporal — 60
+* Tratamento facial — 60
+* Tratamento para acne — 60
+* Tratamento para manchas — 60
+* Depilação facial — 30
+* Depilação corporal — 60
+
+## 5. Massagem & Terapias
+
+* Massagem relaxante — 60
+* Massagem terapêutica — 60
+* Massagem desportiva — 60
+* Shiatsu — 60
+* Reflexologia — 45
+* Drenagem linfática — 60
+* Massagem modeladora — 60
+* Massagem com pedras quentes — 90
+* Massagem aromática — 60
+* Liberação miofascial — 60
+* Reiki — 60
+* Ventosaterapia — 45
+* Auriculoterapia — 30
+* Terapia corporal — 60
+* Sessão terapêutica — 60
+
+## 6. Pet Shop / Banho & Tosa
+
+* Banho pequeno porte — 45
+* Banho médio porte — 60
+* Banho grande porte — 90
+* Banho + tosa higiênica — 75
+* Tosa higiênica — 45
+* Tosa completa — 90
+* Tosa na tesoura — 120
+* Desembolo — 60
+* Corte de unhas — 15
+* Limpeza de ouvidos — 15
+* Escovação dentária — 15
+* Hidratação de pelos — 30
+* Banho terapêutico — 60
+* Escovação — 30
+* Spa pet — 90
+
+## 7. Clínica Odontológica
+
+* Avaliação odontológica — 30
+* Consulta odontológica — 45
+* Limpeza dental — 60
+* Profilaxia — 60
+* Clareamento dental — 90
+* Avaliação ortodôntica — 30
+* Manutenção ortodôntica — 30
+* Restauração — 60
+* Extração — 60
+* Tratamento de canal — 90
+* Aplicação de flúor — 30
+* Radiografia odontológica — 30
+* Moldagem odontológica — 30
+* Consulta de retorno — 30
+* Avaliação estética dental — 45
+
+## 8. Personal Trainer / Academia
+
+* Avaliação física — 60
+* Treino individual — 60
+* Treino funcional — 60
+* Consultoria esportiva — 60
+* Avaliação de composição corporal — 45
+* Treino para emagrecimento — 60
+* Treino de força — 60
+* Treino de condicionamento — 60
+* Treino para iniciantes — 60
+* Treino para corrida — 60
+* Acompanhamento mensal — 60
+* Reavaliação física — 45
+* Planejamento de treino — 60
+* Aula experimental — 60
+* Sessão online — 60
+
+## 9. Yoga & Pilates
+
+* Aula de Yoga — 60
+* Aula de Pilates — 60
+* Aula individual de Yoga — 60
+* Aula individual de Pilates — 60
+* Avaliação de Pilates — 45
+* Aula experimental — 60
+* Yoga para iniciantes — 60
+* Yoga avançado — 60
+* Pilates para iniciantes — 60
+* Pilates avançado — 60
+* Aula de mobilidade — 45
+* Aula de alongamento — 45
+* Sessão de respiração — 30
+* Aula online — 60
+* Reavaliação — 45
+
+## 10. Sobrancelhas & Cílios
+
+* Design de sobrancelhas — 30
+* Design + henna — 45
+* Henna — 30
+* Brow lamination — 60
+* Micropigmentação — 120
+* Manutenção de micropigmentação — 90
+* Lifting de cílios — 60
+* Extensão de cílios — 120
+* Manutenção de extensão — 90
+* Volume brasileiro — 120
+* Volume russo — 150
+* Mega volume — 180
+* Remoção de extensão — 30
+* Lash botox — 60
+* Design masculino — 30
+
+## 11. Maquiagem
+
+* Maquiagem social — 60
+* Maquiagem para festa — 90
+* Maquiagem para casamento — 120
+* Maquiagem para noiva — 150
+* Maquiagem para madrinha — 90
+* Maquiagem para formatura — 90
+* Maquiagem artística — 120
+* Maquiagem para ensaio fotográfico — 90
+* Maquiagem express — 30
+* Maquiagem masculina — 45
+* Aula de automaquiagem — 120
+* Produção completa — 120
+* Teste de maquiagem para noiva — 90
+* Maquiagem infantil — 45
+* Retoque de maquiagem — 30
+
+## 12. Spa
+
+* Spa relaxante — 90
+* Day Spa — 180
+* Banho relaxante — 60
+* Ritual corporal — 90
+* Esfoliação corporal — 60
+* Hidratação corporal — 60
+* Massagem relaxante — 60
+* Massagem com pedras quentes — 90
+* Banho de ofurô — 60
+* Spa dos pés — 45
+* Spa das mãos — 45
+* Tratamento facial — 60
+* Ritual aromático — 60
+* Experiência para casal — 120
+* Pacote relaxamento — 180
+
+## 13. Clínica / Consultório
+
+* Consulta inicial — 60
+* Consulta de retorno — 30
+* Avaliação — 45
+* Atendimento particular — 60
+* Teleconsulta — 60
+* Acompanhamento — 45
+* Avaliação completa — 60
+* Retorno de avaliação — 30
+* Orientação — 45
+* Procedimento — 60
+* Atendimento especializado — 60
+* Avaliação preventiva — 60
+* Consulta de rotina — 45
+* Revisão de tratamento — 45
+* Atendimento online — 60
+
+## 14. Fisioterapia
+
+* Avaliação fisioterapêutica — 60
+* Sessão de fisioterapia — 60
+* Fisioterapia ortopédica — 60
+* Fisioterapia esportiva — 60
+* Fisioterapia respiratória — 60
+* Fisioterapia neurológica — 60
+* Pilates terapêutico — 60
+* RPG — 60
+* Liberação miofascial — 60
+* Terapia manual — 60
+* Reabilitação pós-operatória — 60
+* Reabilitação esportiva — 60
+* Avaliação postural — 45
+* Sessão de retorno — 45
+* Atendimento domiciliar — 60
+
+## 15. Psicologia
+
+* Primeira consulta — 60
+* Psicoterapia individual — 50
+* Psicoterapia de casal — 60
+* Psicoterapia familiar — 60
+* Sessão de acompanhamento — 50
+* Avaliação psicológica — 60
+* Orientação profissional — 60
+* Aconselhamento — 50
+* Atendimento online — 50
+* Sessão infantil — 50
+* Sessão adolescente — 50
+* Sessão de retorno — 50
+* Avaliação inicial — 60
+* Orientação parental — 60
+* Atendimento psicológico — 50
+
+## 16. Joalheria / Serviços Especializados
+
+* Avaliação de joia — 30
+* Ajuste de anel — 60
+* Ajuste de pulseira — 45
+* Ajuste de corrente — 45
+* Polimento de joia — 60
+* Limpeza de joia — 30
+* Gravação — 60
+* Conserto de joia — 90
+* Solda — 90
+* Troca de pedra — 90
+* Avaliação de relógio — 30
+* Manutenção de relógio — 120
+* Personalização de joia — 60
+* Orçamento personalizado — 30
+* Retirada/entrega de serviço — 15
+
+## 17. Estética Automotiva
+
+* Lavagem simples — 60
+* Lavagem completa — 90
+* Higienização interna — 120
+* Higienização de bancos — 120
+* Polimento — 240
+* Polimento técnico — 300
+* Enceramento — 90
+* Cristalização — 180
+* Vitrificação — 300
+* Limpeza de motor — 90
+* Limpeza de estofados — 120
+* Descontaminação de pintura — 120
+* Revitalização de plásticos — 90
+* Lavagem detalhada — 180
+* Detalhamento completo — 360
+
+## 18. Serviços de Limpeza
+
+* Limpeza residencial — 180
+* Limpeza comercial — 240
+* Limpeza pesada — 300
+* Limpeza pós-obra — 360
+* Limpeza de escritório — 180
+* Limpeza de apartamento — 180
+* Limpeza de casa — 240
+* Limpeza de vidros — 120
+* Limpeza de estofados — 120
+* Limpeza de tapetes — 120
+* Higienização — 180
+* Limpeza de cozinha — 120
+* Limpeza de banheiro — 90
+* Organização residencial — 180
+* Serviço de limpeza personalizado — 180
+
+## 19. Fotografia
+
+* Ensaio individual — 60
+* Ensaio casal — 90
+* Ensaio família — 120
+* Ensaio gestante — 120
+* Ensaio infantil — 60
+* Ensaio profissional — 90
+* Ensaio externo — 120
+* Ensaio estúdio — 90
+* Fotografia de produto — 120
+* Cobertura de evento — 180
+* Fotografia corporativa — 120
+* Retrato profissional — 60
+* Fotografia para redes sociais — 90
+* Pré-casamento — 180
+* Reunião/briefing fotográfico — 60
+
+## 20. Aulas / Professores Particulares
+
+* Aula particular — 60
+* Aula experimental — 60
+* Reforço escolar — 60
+* Preparação para provas — 60
+* Preparação para vestibular — 90
+* Preparação para ENEM — 90
+* Aula de idiomas — 60
+* Aula de conversação — 60
+* Aula de matemática — 60
+* Aula de português — 60
+* Aula de física — 60
+* Aula de química — 60
+* Aula de música — 60
+* Aula online — 60
+* Consultoria/aula personalizada — 60
+
+Se houver qualquer diferença de nome, duração, quantidade ou associação, reporte exatamente.
+
+---
+
+# 7. BUSINESS_SEGMENTS
+
+Verifique a relação:
+
+`businesses ↔ business_segments ↔ segments`
+
+Deve ser many-to-many.
+
+Confirme:
+
+* foreign key correta;
+* UNIQUE(business_id, segment_id), ou proteção equivalente contra duplicidade;
+* nenhum business consegue associar segmento inexistente;
+* nenhum business consegue associar segmento inativo;
+* isolamento entre tenants;
+* RLS adequada.
+
+---
+
+# 8. SERVICE_TEMPLATES NÃO PODEM SER TENANT-LOCAL
+
+Confirme que os templates são realmente globais.
+
+O template não deve representar uma cópia de um serviço de um business.
+
+Deve existir conceitualmente:
+
+`global segment → global service template → business service`
+
+e NÃO:
+
+`business → service template privado`
+
+Verifique se ainda existe alguma lógica que trate template como serviço vivo de um business.
+
+---
+
+# 9. CÓPIA DE TEMPLATE PARA SERVICE
+
+Audite completamente a RPC/função:
+
+`copy_catalog_services(...)`
+
+Verifique:
+
+* segurança;
+* autorização;
+* business_id;
+* tenant isolation;
+* segmento válido;
+* template válido;
+* template ativo;
+* duplicação;
+* comportamento quando chamado duas vezes;
+* transação;
+* tratamento de erros;
+* retorno;
+* integridade dos dados.
+
+O resultado deve ser uma cópia independente para `services`.
 
 Depois da cópia:
 
-* alterar o serviço não altera template;
-* alterar template não altera serviço;
-* alterar duração do serviço não altera template;
-* preço do serviço é independente;
-* exclusão/desativação do template não exclui serviço existente.
+* preço pode ser alterado;
+* duração pode ser alterada;
+* nome pode ser alterado;
+* serviço pode ser desativado;
+* serviço pode ser excluído conforme regras existentes.
 
-Preserve a RPC `copy_catalog_services(...)` se ela já estiver correta.
+Alterar o template global NÃO pode alterar o serviço já copiado.
 
 ---
 
-# 4. CORRIGIR `GERAL`
+# 10. SERVIÇOS LEGADOS E "GERAL"
 
-A auditoria encontrou:
-
-```sql
-IF NEW.segment_id IS NULL
-```
-
-que automaticamente associa novos serviços a `Geral`.
-
-Isso precisa ser corrigido.
+Verifique cuidadosamente a categoria técnica `Geral`.
 
 A regra é:
 
-> `Geral` é somente um mecanismo técnico de compatibilidade para dados legados.
+`Geral` NÃO é um segmento comercial público.
 
-Não deve:
+Verifique:
 
-* aparecer como segmento comercial;
-* aparecer no catálogo público;
-* ser ativado automaticamente para novos negócios;
-* receber automaticamente novos serviços;
-* ser criado automaticamente como segmento ativo para uma empresa nova.
+* não aparece como opção comercial;
+* não aparece no catálogo público como segmento;
+* não é automaticamente atribuído a novos serviços;
+* serviços legados continuam preservados;
+* nenhum dado histórico é apagado.
 
-Para novos serviços:
+Muito importante:
 
-* se segmento for obrigatório, exigir um segmento comercial válido;
-* se houver fluxo legítimo de serviço sem segmento, manter `segment_id` nulo;
-* não utilizar `Geral` como fallback automático.
+Não deve existir trigger que faça automaticamente:
 
-IMPORTANTE:
+`novo service → Geral`
 
-Não prejudique os serviços legados existentes.
+apenas porque o serviço não possui segmento.
 
-Os dados históricos devem continuar funcionando.
+Serviço sem segmento pode existir sem ser forçado para `Geral`.
 
 ---
 
-# 5. DOWNGRADE DE SEGMENTOS
+# 11. TRIGGERS
 
-Corrija o comportamento de downgrade.
+Procure todos os triggers relacionados a:
 
-Regras:
+* services;
+* service_templates;
+* segments;
+* business_segments.
 
-```text
-BASIC → máximo 1 segmento ativo
-MEDIUM → máximo 2 segmentos ativos
-UNLIMITED → ilimitado
-TRIALING → ilimitado
-```
+Verifique se existe algum trigger que:
 
-Se uma empresa já possui mais segmentos ativos do que o novo plano permite:
+* altera automaticamente serviços;
+* sincroniza templates com serviços;
+* força `Geral`;
+* muda duração;
+* muda preço;
+* altera segmento automaticamente.
 
-### NÃO fazer:
-
-* DELETE;
-* apagar serviços;
-* apagar profissionais;
-* apagar appointments;
-* apagar histórico;
-* apagar preços;
-* apagar associações.
-
-### Implementar comportamento seguro.
-
-Pode utilizar uma destas estratégias, escolhendo a mais coerente com a arquitetura existente:
-
-1. bloquear a mudança de plano até adequação;
-2. permitir downgrade, mas manter excesso somente como estado de não conformidade e impedir novas ativações;
-3. exigir que o proprietário escolha quais segmentos permanecerão ativos antes de concluir o downgrade.
-
-A experiência deve ser clara para o usuário.
-
-O sistema nunca deve apagar dados silenciosamente.
+Qualquer sincronização automática entre template global e serviço vivo deve ser considerada suspeita e investigada.
 
 ---
 
-# 6. ASSOCIAÇÃO DE PROFISSIONAIS
+# 12. LIMITES DOS PLANOS
 
-A auditoria identificou que a tela:
+Regras definitivas:
 
-```text
-src/routes/_authenticated/app.servicos.tsx
-```
+### BASIC
 
-não associa profissionais diretamente dentro da experiência de catálogo.
+Máximo 1 segmento ativo.
 
-Implemente o fluxo integrado de forma coerente com o sistema existente.
+### MEDIUM
 
-Depois de copiar um ou mais serviços, o usuário deve conseguir:
+Máximo 2 segmentos ativos.
 
-* selecionar profissionais;
-* associar o serviço aos profissionais;
-* visualizar profissionais já associados;
+### UNLIMITED
+
+Segmentos ilimitados.
+
+### TRIALING
+
+Acesso completo, sem limite de segmentos.
+
+Serviços continuam ilimitados em TODOS os planos.
+
+Verifique tanto frontend quanto backend.
+
+Não confie apenas em esconder botão na UI.
+
+---
+
+# 13. DOWNGRADE
+
+Este é um ponto crítico.
+
+Verifique o comportamento quando um business possui:
+
+* 3 segmentos ativos e tenta ir para BASIC;
+* 3 segmentos ativos e tenta ir para MEDIUM;
+* 2 segmentos ativos e vai para BASIC;
+* qualquer quantidade e vai para UNLIMITED;
+* TRIALING.
+
+A regra obrigatória é:
+
+**NUNCA apagar automaticamente segmentos, serviços ou dados para satisfazer downgrade.**
+
+Se o estado atual não for compatível com o novo plano, deve haver comportamento seguro, como:
+
+* bloquear downgrade;
+* exigir seleção/desativação explícita;
+* ou colocar o estado em condição claramente controlada sem destruir dados.
+
+Audite especificamente `subscription.functions.ts`.
+
+Verifique se a alteração desse arquivo introduziu regressões na lógica de assinatura.
+
+---
+
+# 14. ASSOCIAÇÃO DE PROFISSIONAIS
+
+A tela de serviços deve permitir:
+
+* visualizar profissionais;
+* associar profissional ao serviço;
 * remover associação;
-* salvar corretamente em `professional_services`.
+* respeitar business_id;
+* não permitir associação cruzada entre businesses.
 
-IMPORTANTE:
+Verifique se isso está realmente implementado no backend e não apenas visualmente.
 
-Não duplique a lógica existente de profissionais.
+Confirme compatibilidade com:
 
-Reutilize as funções existentes sempre que possível.
+`professional_services`
 
-Não quebre a área atual de profissionais/serviços.
-
----
-
-# 7. SCHEMA `segments`
-
-A auditoria identificou a seguinte diferença:
-
-Atual:
-
-```text
-slug
-active
-```
-
-Contrato originalmente definido:
-
-```text
-code
-icon
-is_active
-```
-
-NÃO faça uma simples renomeação sem analisar o projeto.
-
-Primeiro procure todas as referências a:
-
-```text
-segments.slug
-segments.active
-segments.code
-segments.icon
-segments.is_active
-```
-
-Determine se `slug/active` já constituem um contrato utilizado pelo sistema.
-
-Se a implementação atual for funcionalmente equivalente e não houver dependência real dos nomes do contrato antigo, preserve o schema atual para evitar regressão.
-
-Se o contrato exigir efetivamente `code`, `icon` e `is_active`, faça a adaptação de maneira compatível e segura.
-
-A decisão deve ser baseada no código existente, não em alteração cosmética.
+e com a lógica existente de agendamento/disponibilidade.
 
 ---
 
-# 8. TESTES
+# 15. RLS E MULTI-TENANCY
 
-Amplie os testes para proteger o requisito principal.
+Audite as policies das tabelas novas/alteradas.
 
-Criar validações para:
+Especial atenção para:
 
-### Catálogo
+* `segments`;
+* `business_segments`;
+* `service_templates`;
+* `services`;
+* `professional_services`.
 
-```text
-20 segmentos
-300 templates
-15 templates por segmento
-```
+Teste conceitualmente ou por SQL quando possível:
 
-### Conteúdo
+Business A NÃO pode:
 
-Validar nomes e durações.
+* ver dados privados de Business B;
+* copiar serviço para Business B;
+* alterar serviço de Business B;
+* associar profissional de Business B;
+* associar segmento de Business B.
 
-### Duplicidade
+O catálogo global pode ser compartilhado.
 
-Validar que não existem templates duplicados dentro do segmento.
-
-### RPC
-
-Validar:
-
-* usuário autorizado;
-* business correto;
-* template global;
-* segmento pertencente ao business;
-* cópia independente;
-* impossibilidade de cross-tenant.
-
-### Plano
-
-Validar:
-
-```text
-BASIC = 1
-MEDIUM = 2
-UNLIMITED = ilimitado
-TRIALING = ilimitado
-```
-
-### Geral
-
-Validar que novos serviços não são automaticamente atribuídos a `Geral`.
-
-### Downgrade
-
-Validar que dados existentes não são apagados e que o excesso de segmentos é tratado de forma segura.
+Dados dos businesses NÃO.
 
 ---
 
-# 9. MIGRATION
+# 16. MIGRATION `20260907003000_complete_global_catalog.sql`
 
-Crie uma nova migration corretiva em vez de modificar silenciosamente uma migration que já possa ter sido registrada/aplicada.
+Audite profundamente a migration.
 
-Nome sugerido:
+Verifique:
 
-```text
-20260907003000_complete_service_catalog.sql
-```
+* ordem das operações;
+* foreign keys;
+* índices;
+* constraints;
+* unique constraints;
+* RLS;
+* policies;
+* funções;
+* triggers;
+* inserts;
+* updates;
+* inserts idempotentes;
+* tratamento de dados existentes;
+* compatibilidade com banco já populado.
 
-A migration deve ser segura e idempotente.
+Pergunta crítica:
 
-NÃO aplicar em produção.
+**Se essa migration for executada em um banco que já contém businesses, services, business_segments e dados históricos, ela preserva os dados existentes?**
 
-NÃO apagar serviços existentes.
+Não basta funcionar em banco vazio.
 
-NÃO apagar appointments.
+Procure:
 
-NÃO apagar professional_services.
-
-NÃO apagar preços.
-
-NÃO apagar clientes.
-
-NÃO apagar histórico.
-
----
-
-# 10. BILLING — NÃO TOCAR
-
-Não altere:
-
-```text
-src/lib/billing.server.ts
-```
-
-a menos que seja absolutamente inevitável.
-
-Também não altere sem necessidade:
-
-```text
-src/lib/subscription.functions.ts
-MercadoPagoProvider.ts
-```
-
-A auditoria confirmou que billing e Mercado Pago estão corretos.
-
-Preserve:
-
-```text
-Basic anual = R$ 218,90
-Medium anual = R$ 399,00
-Unlimited anual = R$ 539,10
-```
-
-E:
-
-```text
-Trial = 30 dias
-TRIALING = acesso completo
-```
+* DROP destrutivo;
+* DELETE;
+* CASCADE perigoso;
+* UPDATE amplo que altera serviços reais;
+* alteração de duração/preço de serviços existentes;
+* colisões de slug;
+* colisões de IDs;
+* foreign keys quebradas.
 
 ---
 
-# 11. PRESERVAR O QUE JÁ ESTÁ CORRETO
+# 17. IDEMPOTÊNCIA
 
-Não regredir:
+Verifique se a migration é segura contra execução repetida ou, quando migrations do Supabase garantem execução única, se as operações auxiliares utilizadas são seguras.
 
-* agendamento;
+Especialmente:
+
+* seeds;
+* templates;
+* segmentos;
+* constraints;
+* policies;
+* funções;
+* triggers.
+
+Não deve criar duplicações.
+
+---
+
+# 18. TESTES
+
+Analise `tests/catalog.test.ts` e todos os testes existentes.
+
+Não aceite apenas:
+
+`npm test passou`
+
+Verifique se os testes realmente cobrem:
+
+* 20 segmentos;
+* 300 templates;
+* 15 templates por segmento;
+* nomes;
+* durações;
+* `Sobrancelhas & Cílios` como segmento único;
+* cópia de template;
+* independência após cópia;
+* limites BASIC;
+* limites MEDIUM;
+* UNLIMITED;
+* TRIALING;
+* downgrade;
+* `Geral`;
+* ausência de fallback automático;
+* associação profissional;
+* isolamento entre businesses;
+* template inativo;
+* segmento inativo;
+* template de outro segmento;
+* duplicação;
+* serviços legados.
+
+Se algum desses pontos não estiver coberto, classifique como lacuna.
+
+---
+
+# 19. REGRESSÃO DO SISTEMA EXISTENTE
+
+Verifique se a implementação pode afetar:
+
+* criação de serviço;
+* edição de serviço;
+* exclusão/desativação;
+* associação de profissionais;
 * disponibilidade;
+* booking;
+* appointment_services;
 * reagendamento;
 * conflitos;
-* profissionais;
 * horários;
-* catálogo público;
-* WhatsApp básico;
-* Instagram;
-* billing;
-* Mercado Pago;
-* trial;
-* planos;
-* preços;
-* dados existentes.
+* preço;
+* duração;
+* catálogo público.
 
-O catálogo público continua mostrando somente:
-
-```text
-services
-```
-
-e nunca:
-
-```text
-service_templates
-```
+O catálogo novo deve evoluir a arquitetura existente, não reconstruí-la.
 
 ---
 
-# 12. VALIDAÇÃO OBRIGATÓRIA
+# 20. BILLING E MERCADO PAGO
 
-Após implementar:
+Faça uma auditoria de regressão, mesmo que `billing.server.ts` não tenha sido alterado.
 
-```bash
+Confirme que o commit NÃO mudou:
+
+* `platformSetting`;
+* `resolveProvider`;
+* `graceDays`;
+* subscriptions;
+* payments;
+* Mercado Pago;
+* trial de 30 dias;
+* datas de cobrança;
+* annual pricing;
+* annual discounts;
+* entitlements.
+
+Especialmente compare `subscription.functions.ts` com o commit anterior e explique exatamente o que mudou.
+
+Se houver qualquer risco de regressão, marque como BLOCKER até ser comprovado o contrário.
+
+---
+
+# 21. TRIAL
+
+Confirmar que continua:
+
+* 30 dias;
+* status TRIALING;
+* acesso completo;
+* segmentos ilimitados durante trial.
+
+Não pode haver regressão.
+
+---
+
+# 22. BUILD E QUALIDADE
+
+Execute SOMENTE validações locais e não destrutivas:
+
+```powershell
 npm test
 npx tsc --noEmit
 npm run lint
@@ -781,113 +950,168 @@ npm run build
 git diff --check
 ```
 
-Também faça uma auditoria estrutural diretamente no SQL/código para confirmar:
+Se houver scripts equivalentes definidos no projeto, use-os também.
 
-```text
-20 segmentos
-300 templates
-15 por segmento
-```
+Reporte:
 
-Não aceite somente "seed criado".
-
-Mostre a contagem real encontrada.
-
----
-
-# 13. NÃO FAZER PUSH
-
-Ao terminar:
-
-* não faça push;
-* não aplique migration em produção;
-* não conecte ou altere banco de produção;
-* não faça deploy.
-
-Pode criar um commit local com as correções.
+* PASS;
+* FAIL;
+* WARNINGS;
+* pre-existing warnings;
+* novos warnings;
+* erros reais.
 
 ---
 
-# 14. RELATÓRIO FINAL OBRIGATÓRIO
+# 23. NÃO CONFUNDIR BUILD PASSANDO COM IMPLEMENTAÇÃO CORRETA
+
+Mesmo que:
+
+* testes passem;
+* TypeScript passe;
+* lint passe;
+* build passe;
+
+isso NÃO significa aprovação automática.
+
+A aprovação depende da arquitetura, migration, RLS, dados existentes, catálogo e regressões.
+
+---
+
+# 24. CLASSIFICAÇÃO FINAL
+
+Ao final, classifique o commit em exatamente uma destas categorias:
+
+### 🟢 APROVADO PARA PUSH
+
+Somente se não existir nenhum blocker técnico ou arquitetural relevante.
+
+OU
+
+### 🟡 APROVADO COM RESSALVAS
+
+Somente se existirem problemas menores que não comprometem dados, segurança, arquitetura ou funcionamento.
+
+OU
+
+### 🔴 NÃO APROVADO
+
+Se existir qualquer problema relevante que precise ser corrigido antes do push.
+
+---
+
+# 25. FORMATO OBRIGATÓRIO DO RELATÓRIO
+
+Comece com:
+
+`AUDITORIA FINAL — de9cfff4e0bf342ea03d5a0c98a5f97742611455`
+
+Depois:
+
+## 1. Status final
+
+🟢 / 🟡 / 🔴
+
+## 2. Resumo executivo
+
+Máximo 10 linhas.
+
+## 3. Git
 
 Informe:
 
-```text
-Commit base:
-Novo commit:
+* HEAD;
+* branch;
+* working tree;
+* relação com origin/main.
 
-Segmentos:
-Templates:
-Templates por segmento:
+## 4. Arquivos alterados
 
-BASIC:
-MEDIUM:
-UNLIMITED:
-TRIALING:
+Lista completa.
 
-Geral:
-Downgrade:
-Associação de profissionais:
+## 5. Catálogo
 
-Tests:
-TSC:
-Lint:
-Build:
-Diff check:
+Informe:
 
-Billing:
-Mercado Pago:
-Trial:
-Preços anuais:
+* segmentos encontrados;
+* templates encontrados;
+* templates por segmento;
+* divergências.
 
-Working tree:
-Push realizado: NÃO
-Migration aplicada em produção: NÃO
-```
+## 6. Migration
 
-Depois apresente:
+Liste riscos e conclusões.
 
-## PROBLEMAS CORRIGIDOS
+## 7. RLS / segurança
 
-Liste cada problema encontrado pela auditoria `48135b9` e como foi corrigido.
+Liste problemas ou confirme.
 
-## PROBLEMAS RESTANTES
+## 8. Downgrade
 
-Se houver qualquer problema, informe.
+Explique comportamento real.
 
-## VEREDITO
+## 9. Profissionais
 
-Use somente:
+Explique associação real.
 
-🟢 **PRONTO PARA AUDITORIA FINAL**
+## 10. Geral
+
+Explique exatamente como está funcionando.
+
+## 11. Billing / Mercado Pago / Trial
+
+Confirme regressão ou ausência dela.
+
+## 12. Testes
+
+Tabela:
+
+| Validação        | Resultado |
+| ---------------- | --------- |
+| npm test         |           |
+| TypeScript       |           |
+| lint             |           |
+| build            |           |
+| git diff --check |           |
+
+## 13. BLOCKERS
+
+Liste SOMENTE problemas que impedem aprovação.
+
+Para cada blocker:
+
+* arquivo;
+* linha/função;
+* problema;
+* impacto;
+* correção necessária.
+
+## 14. WARNINGS
+
+Liste problemas menores.
+
+## 15. VEREDITO
+
+Use exatamente:
+
+`🟢 APROVADO PARA PUSH`
 
 ou
 
-🔴 **AINDA NÃO PRONTO**
+`🟡 APROVADO COM RESSALVAS`
 
-Não declare "pronto para produção" ainda.
+ou
 
----
+`🔴 NÃO APROVADO`
 
-# OBJETIVO FINAL
+## REGRA FINAL
 
-Transformar o atual:
+NÃO faça nenhuma alteração durante esta auditoria.
 
-```text
-20 segmentos
-44 templates
-```
+NÃO faça commit.
 
-em:
+NÃO faça push.
 
-```text
-20 segmentos
-300 templates
-15 por segmento
-```
+NÃO aplique migration remota.
 
-sem destruir ou alterar indevidamente os dados existentes e sem regressão no restante do Agendou.
-
-O commit `48135b9` é a BASE da correção.
-
-**Não reconstrua o projeto. Corrija somente os pontos identificados pela auditoria.**
+Apenas investigue e entregue o relatório técnico completo.
