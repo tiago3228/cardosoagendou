@@ -1,170 +1,140 @@
-## CORREÇÃO ESTRUTURAL — CATÁLOGO GLOBAL DE SEGMENTOS E SERVIÇOS DO AGENDOU
+# AUDITORIA FINAL — COMMIT `48135b9004319f2bc343d3d7c5d308c1910e9214`
 
-Com base na auditoria final do commit:
+## OBJETIVO
 
-`0303a99b8019354664ddefce4068bd26442c1e15`
+Faça uma **auditoria técnica final, rigorosa e SOMENTE LEITURA** do estado atual do projeto no commit:
 
-Mensagem:
+`48135b9004319f2bc343d3d7c5d308c1910e9214`
 
-`Implement plan-based service catalog segments`
+Mensagem do commit:
 
-a implementação atual foi considerada **REPROVADA** porque a arquitetura criada não corresponde ao requisito definido.
+`Fix global segment service catalog structure`
 
-Sua tarefa agora é **CORRIGIR a implementação existente**, aproveitando o código atual e preservando todas as funcionalidades que já estão funcionando.
+O objetivo é determinar se este commit está realmente pronto para ser preservado, publicado e posteriormente aplicado ao ambiente de produção.
 
-### REGRA PRINCIPAL
+### REGRA ABSOLUTA
 
-NÃO reconstrua o projeto.
+**NÃO MODIFIQUE NENHUM ARQUIVO.**
 
-NÃO faça uma implementação paralela.
+Não faça:
 
-NÃO substitua funcionalidades existentes desnecessariamente.
+* alterações de código;
+* correções;
+* criação de novos arquivos;
+* alteração de migrations;
+* aplicação de migrations;
+* alteração do banco de produção;
+* `git commit`;
+* `git push`;
+* reset;
+* rebase;
+* cherry-pick;
+* merge.
 
-Corrija somente o que for necessário para que a arquitetura final corresponda aos requisitos abaixo.
+Esta etapa é **AUDITORIA READ-ONLY**.
+
+Se encontrar qualquer problema, apenas documente o problema com:
+
+* arquivo;
+* função/componente/RPC;
+* linha aproximada ou exata;
+* causa;
+* impacto;
+* severidade;
+* correção recomendada.
 
 ---
 
-# 1. OBJETIVO FINAL
+# 1. VALIDAR O ESTADO DO GIT
 
-A arquitetura correta deve ser:
+Primeiro confirme:
+
+* commit atual;
+* branch atual;
+* `git status`;
+* histórico recente;
+* existência do commit `48135b9004319f2bc343d3d7c5d308c1910e9214`;
+* relação entre o commit atual e `origin/main`;
+* existência de alterações locais;
+* se o HEAD está detached;
+* quais arquivos realmente pertencem ao commit auditado.
+
+Não faça nenhuma alteração no Git.
+
+Informe claramente:
+
+```text
+HEAD atual:
+Branch:
+Working tree:
+origin/main:
+Commit auditado:
+```
+
+---
+
+# 2. ESCOPO DO COMMIT
+
+Audite principalmente:
+
+```text
+src/lib/booking.server.ts
+src/routes/_authenticated/app.assinatura.tsx
+src/routes/_authenticated/app.servicos.tsx
+supabase/migrations/20260907002000_catalog_structural_fix.sql
+```
+
+E qualquer outro arquivo que o commit tenha alterado ou que seja diretamente necessário para validar a funcionalidade.
+
+Também compare com o estado imediatamente anterior ao commit.
+
+---
+
+# 3. OBJETIVO PRINCIPAL — CATÁLOGO GLOBAL
+
+Verifique se a arquitetura implementada corresponde EXATAMENTE ao seguinte modelo:
+
+## `segments`
+
+Deve ser um catálogo GLOBAL.
+
+Esperado:
 
 ```text
 segments
-    ↓
-service_templates
-    ↓
-business_segments
-    ↓
-services
-    ↓
-professional_services
+- id
+- code
+- name
+- description
+- icon
+- sort_order
+- is_active
+- created_at
+- updated_at
 ```
 
-Onde:
+Confirme:
 
-### `segments`
-
-É o catálogo GLOBAL dos segmentos comerciais disponíveis no Agendou.
-
-### `service_templates`
-
-É o catálogo GLOBAL de serviços sugeridos pertencentes a cada segmento.
-
-### `business_segments`
-
-Representa quais segmentos um determinado estabelecimento escolheu.
-
-### `services`
-
-Continua sendo o catálogo REAL e independente de cada estabelecimento.
-
-Quando o estabelecimento seleciona um serviço sugerido:
-
-```text
-service_template global
-        ↓
-COPIAR
-        ↓
-service do estabelecimento
-```
-
-Depois da cópia, o serviço pertence exclusivamente ao estabelecimento.
-
-Alterações futuras no catálogo global NÃO podem alterar automaticamente o serviço existente do estabelecimento.
+* não existe `business_id` em `segments`;
+* os segmentos são globais;
+* existe unicidade adequada para `code`;
+* existe exatamente o conjunto comercial definido;
+* segmentos inativos não podem ser utilizados indevidamente;
+* RLS não impede o uso correto do catálogo público/global.
 
 ---
 
-# 2. NÃO ALTERAR FUNCIONALIDADES FORA DO ESCOPO
+# 4. VALIDAR OS 20 SEGMENTOS
 
-Preserve integralmente, salvo necessidade técnica diretamente relacionada:
-
-* autenticação;
-* usuários;
-* profiles;
-* profissionais;
-* professional_services;
-* horários;
-* clientes;
-* agendamentos;
-* disponibilidade;
-* conflitos;
-* reagendamento;
-* confirmação;
-* produtos;
-* estoque;
-* financeiro;
-* relatórios;
-* notificações;
-* WhatsApp básico;
-* Instagram;
-* trial;
-* billing;
-* Mercado Pago;
-* planos;
-* assinaturas;
-* pagamentos.
-
-## ATENÇÃO ESPECIAL
-
-NÃO alterar:
-
-`src/lib/billing.server.ts`
-
-O módulo de billing já foi restaurado anteriormente e deve permanecer íntegro.
-
-Não reescreva, substitua ou refatore esse arquivo.
-
-Também não desfaça as correções anteriores de:
-
-* trial de 30 dias;
-* Mercado Pago;
-* `auto_recurring.start_date`;
-* planos anuais;
-* descontos anuais.
-
----
-
-# 3. SEGMENTOS GLOBAIS
-
-Crie a tabela global:
-
-```text
-public.segments
-```
-
-Estrutura recomendada:
-
-```text
-id
-code
-name
-description
-icon
-sort_order
-is_active
-created_at
-updated_at
-```
-
-Use UUID ou o padrão de IDs já adotado pelo projeto.
-
-A tabela NÃO deve possuir `business_id`.
-
-Ela é global.
-
----
-
-# 4. CRIAR EXATAMENTE OS 20 SEGMENTOS
-
-Cadastrar no catálogo global:
+Confirme se existem exatamente estes 20 segmentos comerciais:
 
 1. Barbearia
-2. Salão de Beleza
+2. Salão de beleza
 3. Manicure & Pedicure
 4. Estética
 5. Massagem & Terapias
 6. Pet Shop / Banho & Tosa
-7. Clínica Odontológica
+7. Clínica odontológica
 8. Personal Trainer / Academia
 9. Yoga & Pilates
 10. Sobrancelhas & Cílios
@@ -173,192 +143,92 @@ Cadastrar no catálogo global:
 13. Clínica / Consultório
 14. Fisioterapia
 15. Psicologia
-16. Joalheria / Serviços Especializados
-17. Estética Automotiva
-18. Serviços de Limpeza
+16. Joalheria / Serviços especializados
+17. Estética automotiva
+18. Serviços de limpeza
 19. Fotografia
-20. Aulas / Professores Particulares
+20. Aulas / Professores particulares
 
-## REGRA CRÍTICA
+Verifique:
 
-`Sobrancelhas & Cílios` é UM ÚNICO segmento.
+* quantidade total;
+* códigos;
+* nomes;
+* duplicidades;
+* segmentos faltantes;
+* segmentos extras;
+* ordem;
+* status ativo;
+* se `Sobrancelhas & Cílios` é corretamente tratado como UM segmento.
 
-Não criar:
-
-* Sobrancelhas
-* Cílios
-
-como segmentos separados.
-
----
-
-# 5. CÓDIGOS DOS SEGMENTOS
-
-Use códigos estáveis e previsíveis, por exemplo:
-
-```text
-BARBEARIA
-SALAO_BELEZA
-MANICURE_PEDICURE
-ESTETICA
-MASSAGEM_TERAPIAS
-PET_SHOP_BANHO_TOSA
-CLINICA_ODONTOLOGICA
-PERSONAL_TRAINER_ACADEMIA
-YOGA_PILATES
-SOBRANCELHAS_CILIOS
-MAQUIAGEM
-SPA
-CLINICA_CONSULTORIO
-FISIOTERAPIA
-PSICOLOGIA
-JOALHERIA_SERVICOS
-ESTETICA_AUTOMOTIVA
-SERVICOS_LIMPEZA
-FOTOGRAFIA
-AULAS_PROFESSORES
-```
-
-Evite códigos que possam mudar futuramente por causa de tradução ou alteração visual do nome.
+Se houver qualquer divergência, liste explicitamente.
 
 ---
 
-# 6. SERVICE TEMPLATES GLOBAIS
+# 5. VALIDAR O CATÁLOGO DE SERVIÇOS
 
-A tabela:
+Este é um dos pontos MAIS IMPORTANTES da auditoria.
 
-```text
-public.service_templates
-```
-
-deve representar o catálogo GLOBAL.
-
-Ela NÃO deve possuir:
+A arquitetura esperada é:
 
 ```text
-business_id
-```
-
-O relacionamento correto é:
-
-```text
-service_templates.segment_id
-        ↓
-segments.id
-```
-
-Estrutura recomendada:
-
-```text
-id
-segment_id
-name
-description
-default_duration_minutes
-sort_order
-is_active
-created_at
-updated_at
-```
-
-Se o projeto precisar de outros campos, preserve-os somente quando fizer sentido.
-
----
-
-# 7. REMOVER O CONCEITO INCORRETO DE TEMPLATE ESPELHADO
-
-A implementação atual possui `service_templates` vinculado a:
-
-```text
-business_id
-service_id
-```
-
-e existe um mecanismo de sincronização entre `services` e `service_templates`.
-
-Isso está ERRADO para o requisito atual.
-
-Corrija para que:
-
-```text
+segments
+    ↓
 service_templates
+    ↓
+services
 ```
 
-seja exclusivamente catálogo global.
+Os `service_templates` devem ser sugestões GLOBAIS.
 
-NÃO deve existir trigger que faça:
+Eles NÃO devem ser serviços pertencentes diretamente a uma empresa.
 
-```text
-services → service_templates
-```
+Confirme que:
 
-NÃO transforme automaticamente todo serviço criado pelo estabelecimento em template global.
-
-NÃO sincronize alterações de um serviço de um estabelecimento com o catálogo global.
-
-NÃO exclua template global quando um serviço de estabelecimento for excluído.
+* `service_templates` não depende de `business_id` para o catálogo global;
+* os templates pertencem a um `segment_id`;
+* os templates são globais;
+* os templates não são sincronizados automaticamente com os serviços reais;
+* editar um template global NÃO altera serviços existentes;
+* excluir/desativar um template NÃO exclui serviços existentes;
+* alterar duração do template NÃO altera serviços já copiados;
+* preço do serviço real continua independente do template.
 
 ---
 
-# 8. CÓPIA DE TEMPLATE PARA SERVICE
+# 6. VALIDAR EXATAMENTE 300 TEMPLATES
 
-Implemente uma operação clara para:
-
-```text
-copiar service_template → services
-```
-
-Ao copiar:
-
-* criar novo `services.id`;
-* usar o `business_id` do estabelecimento;
-* usar o `segment_id` selecionado;
-* copiar nome;
-* copiar descrição;
-* copiar duração sugerida;
-* preço deve ser definido pelo estabelecimento;
-* permitir edição posterior;
-* permitir ativar/desativar;
-* permitir exclusão lógica;
-* permitir associação com profissionais.
-
-Depois da cópia:
+A estrutura esperada é:
 
 ```text
-service_template
+20 segmentos × 15 serviços = 300 service_templates
 ```
 
-e
+Verifique isso diretamente.
+
+Não aceite apenas a afirmação de que existem 300.
+
+Faça a validação estrutural.
+
+Informe:
 
 ```text
-service
+Total de segmentos:
+Total de templates:
+Templates por segmento:
+Total esperado:
+Total encontrado:
 ```
 
-são independentes.
+Cada segmento deve possuir exatamente 15 serviços.
+
+Se algum segmento possuir 14, 16 ou qualquer quantidade diferente, isso deve ser apontado.
 
 ---
 
-# 9. SERVIÇOS PERSONALIZADOS
+# 7. CONFERIR NOMES E DURAÇÕES
 
-O estabelecimento deve continuar podendo criar serviços manualmente.
-
-Um serviço personalizado:
-
-* não precisa existir em `service_templates`;
-* pode ser associado a um segmento;
-* pode possuir nome próprio;
-* pode possuir duração própria;
-* pode possuir preço próprio;
-* pode ser ativado/desativado;
-* pode ser associado a profissionais.
-
-Serviços personalizados são ILIMITADOS em todos os planos.
-
----
-
-# 10. CATÁLOGO COMPLETO DE SERVIÇOS
-
-Cadastre no `service_templates` global todos os serviços e durações abaixo.
+Compare o catálogo real com a especificação abaixo.
 
 ## 1. BARBEARIA
 
@@ -720,707 +590,530 @@ Cadastre no `service_templates` global todos os serviços e durações abaixo.
 * Aula online — 60
 * Consultoria/aula personalizada — 60
 
-Os números representam `default_duration_minutes`.
+Informe qualquer diferença de:
 
-Não criar preços padrão.
+* nome;
+* acentuação;
+* duração;
+* segmento;
+* duplicidade;
+* ausência.
 
 ---
 
-# 11. BUSINESS_SEGMENTS
+# 8. BUSINESS_SEGMENTS
 
-A tabela:
+Audite a relação:
 
 ```text
+businesses
+    ↕
 business_segments
+    ↕
+segments
 ```
 
-deve ser o relacionamento entre:
+Confirme:
 
-```text
-business
-```
+* `business_segments` possui `business_id`;
+* possui `segment_id`;
+* `segment_id` referencia `segments.id`;
+* existe UNIQUE adequado para evitar duplicidade;
+* uma empresa pode possuir vários segmentos;
+* Basic permite somente 1;
+* Medium permite até 2;
+* Unlimited permite ilimitados;
+* Trialing permite ilimitados;
+* não existe limite artificial de serviços.
 
-e:
-
-```text
-segment
-```
-
-Portanto, ela deve apontar para:
-
-```text
-business_id
-segment_id
-```
-
-e NÃO possuir uma cópia independente do nome do segmento como fonte principal.
-
-Deve existir:
-
-```text
-UNIQUE(business_id, segment_id)
-```
-
-ou equivalente.
-
-Um estabelecimento pode possuir vários segmentos conforme o plano.
+Verifique também se a validação ocorre no servidor/backend e não somente na interface.
 
 ---
 
-# 12. REGRA DE PLANOS
+# 9. PLANOS E ENTITLEMENTS
 
-Mantenha exatamente:
-
-### BASIC
-
-```text
-máximo: 1 segmento ativo
-```
-
-### MEDIUM
-
-```text
-máximo: 2 segmentos ativos
-```
-
-### UNLIMITED
-
-```text
-segmentos ilimitados
-```
-
-### TRIALING
-
-```text
-acesso completo
-segmentos ilimitados
-```
-
-Os serviços continuam SEM LIMITE em todos os planos.
-
-Serviços personalizados também continuam SEM LIMITE.
-
-Não criar limite de quantidade de serviços.
-
----
-
-# 13. DOWNGRADE
-
-A auditoria encontrou uma lacuna no downgrade.
-
-Implemente uma política segura e consistente.
-
-Preferência:
-
-Quando um estabelecimento possui mais segmentos ativos do que o novo plano permite, NÃO exclua dados silenciosamente.
-
-O sistema deve:
-
-* impedir novas ativações que ultrapassem o limite;
-* preservar os segmentos existentes;
-* identificar o excesso;
-* impedir novas ativações incompatíveis;
-* informar claramente o estabelecimento de que precisa adequar os segmentos antes de utilizar o novo limite.
-
-Se a arquitetura atual exigir uma solução diferente, escolha a alternativa mais segura que preserve dados e seja consistente com o billing existente.
-
-NUNCA apagar segmentos ou serviços silenciosamente por downgrade.
-
----
-
-# 14. SEGMENTO "GERAL"
-
-O segmento:
-
-```text
-Geral
-```
-
-é apenas uma solução de compatibilidade para dados legados.
-
-Ele NÃO faz parte dos 20 segmentos comerciais.
-
-Regras:
-
-* não deve ser criado desnecessariamente para novos negócios;
-* não deve aparecer como segmento comercial no onboarding;
-* não deve aparecer como categoria pública para clientes;
-* não deve ser contado como um dos 20 segmentos comerciais;
-* não deve aparecer no catálogo público;
-* pode permanecer associado a serviços legados que realmente não possuem segmento;
-* serviços existentes devem ser preservados.
-
-Se necessário, use um identificador técnico claro para diferenciá-lo dos segmentos comerciais.
-
----
-
-# 15. MIGRAÇÃO DOS DADOS EXISTENTES
-
-Muito importante:
-
-NÃO perder serviços existentes.
-
-NÃO perder preços.
-
-NÃO perder durações.
-
-NÃO perder associações com profissionais.
-
-NÃO perder histórico de agendamentos.
-
-NÃO alterar agendamentos antigos.
-
-Para serviços existentes que já estão no banco:
-
-* preservar os registros;
-* preservar `service_id`;
-* preservar preços;
-* preservar duração;
-* preservar status;
-* preservar vínculos;
-* atribuir segmento somente quando houver correspondência segura;
-* usar `Geral` somente quando não houver correspondência adequada.
-
-Não converter serviços existentes em templates globais.
-
----
-
-# 16. INTERFACE DE SERVIÇOS
-
-Corrija:
-
-`src/routes/_authenticated/app.servicos.tsx`
-
-A experiência desejada é:
-
-## ETAPA 1 — SEGMENTOS
-
-Mostrar cards dos segmentos disponíveis.
-
-Exemplo:
-
-```text
-▸ 👁️ Sobrancelhas & Cílios
-   15 serviços disponíveis
-   [Selecionar segmento]
-```
-
-Ao expandir:
-
-```text
-▾ 👁️ Sobrancelhas & Cílios
-
-1. Design de sobrancelhas
-2. Design + henna
-3. Henna
-...
-15. Design masculino
-
-[Selecionar segmento]
-```
-
-IMPORTANTE:
-
-Expandir NÃO significa selecionar.
-
-A seleção precisa ser explícita.
-
----
-
-# 17. SERVIÇOS SUGERIDOS
-
-Depois que o segmento for selecionado, permitir:
-
-```text
-☑ Selecionar todos
-☐ Desmarcar todos
-```
-
-E seleção individual:
-
-```text
-☑ Design de sobrancelhas
-☑ Design + henna
-☐ Henna
-☑ Brow lamination
-```
-
-O usuário pode:
-
-* selecionar todos;
-* selecionar alguns;
-* selecionar nenhum;
-* criar serviços próprios.
-
----
-
-# 18. CÓPIA DOS SERVIÇOS
-
-Quando o usuário confirmar:
-
-```text
-Adicionar selecionados
-```
-
-os templates selecionados devem ser copiados para `services`.
-
-Depois disso:
-
-* o template global permanece intacto;
-* o serviço do negócio pode ser editado;
-* o preço pode ser definido;
-* a duração pode ser alterada;
-* o serviço pode ser desativado;
-* o serviço pode ser associado aos profissionais.
-
-Evitar duplicar o mesmo template várias vezes para o mesmo negócio.
-
-Se necessário, implemente uma proteção lógica para impedir duplicação.
-
----
-
-# 19. PROFISSIONAIS
-
-Não remover o relacionamento existente:
-
-```text
-professional_services
-```
-
-Depois de criar/copiar um serviço, o estabelecimento deve continuar podendo associá-lo aos profissionais existentes.
-
-Não alterar a regra de limite de profissionais.
-
----
-
-# 20. CATÁLOGO PÚBLICO
-
-Atualize o catálogo público para:
-
-* retornar somente serviços reais do estabelecimento;
-* agrupar por segmento comercial;
-* não retornar `Geral`;
-* não retornar templates globais;
-* não expor serviços de outro estabelecimento;
-* manter serviços ativos;
-* respeitar `deleted_at`;
-* preservar profissionais;
-* preservar horários;
-* preservar disponibilidade;
-* preservar todo o fluxo atual de agendamento.
-
-Arquivos relevantes:
-
-```text
-src/lib/booking.server.ts
-src/lib/booking.functions.ts
-src/routes/$slug.tsx
-```
-
-Faça somente as alterações necessárias.
-
----
-
-# 21. RLS
-
-Audite e implemente RLS corretamente.
-
-### Catálogo global
-
-`segments` e `service_templates`:
-
-* leitura pública somente quando apropriado;
-* escrita administrativa/protegida;
-* estabelecimento comum NÃO pode alterar o catálogo global.
-
-### Tenant
-
-`business_segments` e `services`:
-
-* isolamento por `business_id`;
-* estabelecimento só acessa seus próprios dados;
-* estabelecimento não consegue alterar dados de outro negócio.
-
-### Integridade
-
-Garanta que:
-
-```text
-service.segment_id
-```
-
-corresponda a um segmento válido.
-
-E que a operação de cópia utilize o segmento selecionado pelo estabelecimento.
-
----
-
-# 22. MIGRATIONS
-
-Crie migrations corretivas.
-
-Não edite migrations históricas já aplicadas de maneira destrutiva.
-
-Como a migration anterior:
-
-```text
-20260907000000_segments_service_catalog.sql
-```
-
-já existe no histórico local, prefira criar uma migration corretiva posterior.
-
-A migration corretiva deve:
-
-* criar `segments`;
-* popular os 20 segmentos;
-* corrigir `service_templates`;
-* migrar a estrutura antiga com segurança;
-* preservar serviços;
-* remover dependências incorretas;
-* remover triggers de sincronização incorretos;
-* corrigir `business_segments`;
-* preservar dados;
-* ajustar RLS;
-* corrigir catálogo público.
-
-Não execute migrations em produção nesta tarefa.
-
-Apenas crie o SQL e valide localmente.
-
----
-
-# 23. IDEMPOTÊNCIA
-
-As novas migrations devem ser seguras e consistentes com o padrão do projeto.
-
-Evite:
-
-```text
-CREATE POLICY
-```
-
-sem verificar se já existe quando houver possibilidade de reexecução no contexto de desenvolvimento.
-
-Evite constraints duplicadas.
-
-Use mecanismos apropriados como:
-
-```text
-IF NOT EXISTS
-```
-
-quando suportado.
-
-Quando `IF NOT EXISTS` não existir para determinada operação, utilize abordagem segura.
-
----
-
-# 24. TESTES OBRIGATÓRIOS
-
-Amplie os testes.
-
-Além dos testes existentes, crie testes para:
-
-### Segmentos
-
-* os 20 segmentos existem;
-* códigos são únicos;
-* `Sobrancelhas & Cílios` é um único segmento.
-
-### Templates
-
-* catálogo global existe;
-* templates pertencem a segmentos globais;
-* quantidade correta de serviços por segmento;
-* durações corretas;
-* não possuem `business_id`;
-* não são serviços vivos.
-
-### Cópia
-
-* template pode ser copiado;
-* cópia gera novo `service_id`;
-* preço pode ser definido independentemente;
-* duração pode ser alterada;
-* alteração do template não altera o serviço;
-* exclusão do serviço não exclui template.
-
-### Planos
-
-* Basic = 1 segmento;
-* Medium = 2;
-* Unlimited = ilimitado;
-* Trial = ilimitado;
-* serviços ilimitados em todos.
-
-### Downgrade
-
-Testar cenário:
-
-```text
-Medium
-2 segmentos
-↓
-Basic
-```
-
-Não deve apagar dados.
-
-### Geral
-
-* `Geral` não aparece no catálogo público;
-* `Geral` não conta como segmento comercial;
-* serviços legados continuam preservados.
-
-### Isolamento
-
-Testar que negócio A não consegue acessar/modificar dados de negócio B.
-
-### Catálogo público
-
-Testar:
-
-* somente serviços do estabelecimento;
-* somente serviços ativos;
-* agrupamento por segmento;
-* ausência de `Geral`.
-
----
-
-# 25. VALIDAÇÃO
-
-Depois da implementação, execute:
-
-```text
-npm test
-npx tsc --noEmit
-npm run lint
-npm run build
-git diff --check
-```
-
-Não faça alterações artificiais apenas para fazer os testes passarem.
-
-Corrija problemas reais encontrados durante a implementação.
-
----
-
-# 26. PLANOS COMERCIAIS
-
-Atualize os cards de assinatura para refletir:
+Confirme:
 
 ### BASIC
 
 ```text
 1 segmento
 1 profissional
-Serviços ilimitados
-Serviços personalizados ilimitados
-Recursos essenciais para começar
+serviços ilimitados
 ```
 
 ### MEDIUM
 
 ```text
-🔥 MAIS ASSINADO
-
-Até 2 segmentos
-Até 5 profissionais
-Serviços ilimitados
-Serviços personalizados ilimitados
-Principais novidades e recursos avançados
+até 2 segmentos
+até 5 profissionais
+serviços ilimitados
 ```
 
 ### UNLIMITED
 
 ```text
-👑 MAIS COMPLETO
-
-Segmentos ilimitados
-Profissionais ilimitados
-Serviços ilimitados
-Serviços personalizados ilimitados
-Novos recursos premium incluídos no plano, sem custo adicional por recurso
+segmentos ilimitados
+profissionais ilimitados
+serviços ilimitados
 ```
 
-Não prometer que o preço nunca mudará.
+### TRIALING
 
-Não dizer que o Basic será abandonado.
-
-O Basic continua recebendo correções de segurança, estabilidade e bugs.
-
----
-
-# 27. PREÇOS
-
-NÃO alterar os valores já corrigidos.
-
-Mensal:
+Durante os 30 dias:
 
 ```text
-Basic: R$ 19,90
-Medium: R$ 39,90
-Unlimited: R$ 59,90
+acesso completo
+segmentos ilimitados
+profissionais conforme regra de trial já definida
+serviços ilimitados
 ```
-
-Anual:
-
-```text
-Basic: R$ 218,90
-Medium: R$ 399,00
-Unlimited: R$ 539,10
-```
-
-Descontos:
-
-```text
-Basic: 1 mês grátis
-Medium: 2 meses grátis
-Unlimited: 3 meses grátis
-```
-
-Não modificar Mercado Pago ou billing sem necessidade absoluta.
-
----
-
-# 28. CRITÉRIO DE PRESERVAÇÃO
-
-Antes de alterar qualquer arquivo importante, verifique a implementação atual.
-
-Principalmente:
-
-```text
-src/lib/billing.server.ts
-src/lib/subscription.functions.ts
-src/lib/plans.ts
-src/lib/booking.server.ts
-src/lib/booking.functions.ts
-src/routes/$slug.tsx
-src/routes/_authenticated/app.servicos.tsx
-src/routes/_authenticated/app.assinatura.tsx
-```
-
-Preserve a lógica existente que não esteja diretamente relacionada ao catálogo.
-
----
-
-# 29. GIT
-
-Você está trabalhando a partir do commit:
-
-```text
-0303a99b8019354664ddefce4068bd26442c1e15
-```
-
-Antes de modificar:
-
-* confirme branch/HEAD;
-* confirme working tree;
-* confirme a diferença com `origin/main`.
 
 IMPORTANTE:
 
-O commit auditado NÃO deve ser enviado para produção como está.
-
-Faça as correções na árvore de trabalho atual.
-
-Ao final:
-
-* pode criar um NOVO commit com a correção;
-* NÃO faça push;
-* informe exatamente o hash do novo commit;
-* informe todos os arquivos alterados;
-* informe migrations criadas;
-* informe testes executados.
+Não deve existir qualquer regra acidental que limite a quantidade de serviços com base no plano.
 
 ---
 
-# 30. RELATÓRIO FINAL OBRIGATÓRIO
+# 10. DOWNGRADE
 
-Ao terminar, entregue:
+Audite especificamente o comportamento de downgrade.
 
-## STATUS
+Cenários:
 
-🟢 Implementação corrigida
+```text
+UNLIMITED → MEDIUM
+UNLIMITED → BASIC
+MEDIUM → BASIC
+```
 
-ou
+Confirme:
 
-🟡 Implementação corrigida com ressalvas
+* o sistema NÃO apaga segmentos;
+* NÃO apaga serviços;
+* NÃO apaga profissionais;
+* NÃO apaga appointments;
+* NÃO apaga preços;
+* NÃO apaga associações `professional_services`;
+* NÃO apaga histórico;
+* não existe deleção silenciosa;
+* existe comportamento seguro quando a conta excede o novo limite;
+* o usuário recebe indicação clara do excesso;
+* novas ativações são bloqueadas até adequação, se essa for a estratégia implementada.
 
-ou
+O downgrade deve ser seguro para os dados existentes.
 
-🔴 Correção incompleta
+---
 
-## ARQUITETURA
+# 11. SERVICE_TEMPLATES → SERVICES
 
-Mostre:
+Audite profundamente a função/RPC:
+
+```text
+copy_catalog_services(...)
+```
+
+Confirme:
+
+* copia somente templates válidos;
+* copia para a empresa correta;
+* copia somente templates dos segmentos selecionados/permitidos;
+* não cria serviço para outra empresa;
+* não permite cross-tenant;
+* não altera templates globais;
+* serviços copiados tornam-se independentes;
+* duração inicial é copiada;
+* nome é copiado;
+* descrição é copiada;
+* segmento é preservado;
+* preço continua configurável pelo estabelecimento;
+* profissional pode ser associado posteriormente.
+
+Teste mentalmente ou por inspeção:
+
+```text
+template A → business X
+template A → business Y
+```
+
+As duas cópias devem ser independentes.
+
+Alterar a cópia em X não pode alterar Y nem o template global.
+
+---
+
+# 12. DUPLICIDADE
+
+Verifique o que acontece se o usuário tentar copiar novamente o mesmo template.
+
+Não deve haver comportamento que gere duplicações descontroladas.
+
+Determine:
+
+* existe constraint;
+* existe idempotência;
+* existe verificação;
+* ou existe comportamento explícito e seguro.
+
+Informe exatamente qual estratégia foi implementada.
+
+---
+
+# 13. LEGADO / "GERAL"
+
+Audite o tratamento do antigo segmento `Geral`.
+
+A regra esperada:
+
+`Geral` pode existir SOMENTE como mecanismo técnico de compatibilidade/legado.
+
+Ele:
+
+* não deve ser segmento comercial;
+* não deve aparecer como opção comercial;
+* não deve aparecer no catálogo público;
+* não deve aparecer como segmento normal na nova experiência;
+* não deve ser confundido com um dos 20 segmentos;
+* não deve receber automaticamente serviços novos.
+
+Confirme como os serviços legados continuam funcionando.
+
+---
+
+# 14. PRESERVAÇÃO DOS DADOS EXISTENTES
+
+Esta é uma verificação CRÍTICA.
+
+Analise a migration:
+
+```text
+supabase/migrations/20260907002000_catalog_structural_fix.sql
+```
+
+Determine se ela pode causar perda de dados.
+
+Verifique especialmente:
+
+* `DROP TABLE`;
+* `TRUNCATE`;
+* `DELETE`;
+* `DROP COLUMN`;
+* `DROP CONSTRAINT`;
+* alterações destrutivas;
+* recriação de tabelas;
+* conversões de IDs;
+* perda de foreign keys;
+* perda de registros.
+
+Confirme que os dados existentes de:
+
+```text
+services
+professional_services
+appointments
+appointment_services
+transactions
+clients
+```
+
+continuam preservados.
+
+Preços e durações existentes devem continuar intactos.
+
+---
+
+# 15. MIGRATION
+
+Audite a migration inteira:
+
+```text
+20260907002000_catalog_structural_fix.sql
+```
+
+Verifique:
+
+* idempotência;
+* ordem das operações;
+* foreign keys;
+* índices;
+* UNIQUE;
+* CHECK constraints;
+* triggers;
+* funções;
+* RPC;
+* grants;
+* RLS;
+* rollback conceitual;
+* compatibilidade com banco existente;
+* possibilidade de execução em banco já populado.
+
+Não aplique a migration.
+
+Apenas audite.
+
+Se houver qualquer trecho potencialmente destrutivo ou não-idempotente, marque como problema.
+
+---
+
+# 16. RLS / SEGURANÇA MULTI-TENANT
+
+Audite RLS de:
 
 ```text
 segments
-↓
-service_templates
-↓
 business_segments
-↓
+service_templates
 services
-↓
-professional_services
 ```
-
-## SEGMENTOS
-
-Informe:
-
-```text
-20/20 segmentos criados
-```
-
-e quantidade de templates por segmento.
-
-## SERVICE TEMPLATES
-
-Confirme:
-
-* global;
-* sem `business_id`;
-* independente dos serviços;
-* cópia funcionando.
-
-## DADOS EXISTENTES
 
 Confirme que:
 
-* serviços antigos foram preservados;
-* preços preservados;
-* durações preservadas;
-* profissionais preservados;
-* agendamentos preservados.
+* usuários de uma empresa não conseguem acessar/modificar dados de outra;
+* templates globais podem ser lidos conforme necessário;
+* dados privados continuam isolados;
+* RPC não permite escalada de privilégio;
+* `business_id` utilizado pela RPC não pode ser manipulado para acessar outra empresa;
+* não existe bypass indevido de RLS;
+* funções possuem `search_path` seguro quando necessário;
+* permissões `EXECUTE` estão corretas.
 
-## PLANOS
+Preste atenção especial a funções `SECURITY DEFINER`.
 
-Confirme:
+---
+
+# 17. BACKEND
+
+Audite:
 
 ```text
-Basic = 1 segmento
-Medium = 2 segmentos
-Unlimited = ilimitado
-Trial = ilimitado
-Serviços = ilimitados em todos
+src/lib/booking.server.ts
 ```
 
-## GERAL
+Verifique se a nova implementação:
 
-Confirme que:
+* valida segmento ativo;
+* valida pertencimento do segmento à empresa;
+* valida limites do plano;
+* não confia apenas no frontend;
+* não quebra criação/edição/exclusão de serviços;
+* não quebra disponibilidade;
+* não quebra conflitos;
+* não quebra agendamento;
+* não quebra reagendamento;
+* não quebra profissionais;
+* não quebra associações profissional/serviço.
 
-* não aparece publicamente;
-* não é segmento comercial;
-* só é utilizado para compatibilidade quando necessário.
+---
 
-## TESTES
+# 18. PUBLIC BOOKING
 
-Informe resultados de:
+Audite a experiência pública:
 
 ```text
+/$slug
+```
+
+Confirme que o catálogo público mostra:
+
+* somente serviços reais existentes em `services`;
+* somente serviços ativos;
+* somente serviços pertencentes à empresa;
+* não mostra `service_templates`;
+* não mostra catálogo global diretamente;
+* não mostra `Geral` como segmento comercial;
+* não cria serviços automaticamente durante uma consulta pública;
+* mantém duração/preço reais do estabelecimento.
+
+Verifique também que a implementação não quebrou:
+
+* seleção de serviço;
+* seleção de profissional;
+* disponibilidade;
+* horários;
+* resumo;
+* confirmação;
+* WhatsApp;
+* Instagram;
+* endereço/mapa;
+* política de aceite.
+
+---
+
+# 19. APP.SERVICOS
+
+Audite:
+
+```text
+src/routes/_authenticated/app.servicos.tsx
+```
+
+A interface deve permitir:
+
+1. visualizar segmentos globais;
+2. expandir/recolher;
+3. selecionar segmento explicitamente;
+4. respeitar limite do plano;
+5. visualizar serviços sugeridos;
+6. selecionar todos;
+7. selecionar alguns;
+8. selecionar nenhum;
+9. copiar os serviços escolhidos;
+10. criar serviços personalizados;
+11. editar duração;
+12. editar preço;
+13. ativar/desativar serviço;
+14. associar profissionais;
+15. desativar segmento sem apagar dados indevidamente.
+
+IMPORTANTE:
+
+Expandir um segmento NÃO deve significar automaticamente ativá-lo.
+
+A seleção deve ser explícita.
+
+---
+
+# 20. APP.ASSINATURA
+
+Audite:
+
+```text
+src/routes/_authenticated/app.assinatura.tsx
+```
+
+Confirme visualmente e funcionalmente:
+
+### BASIC
+
+* 1 segmento;
+* 1 profissional;
+* serviços ilimitados.
+
+### MEDIUM
+
+* até 2 segmentos;
+* até 5 profissionais;
+* serviços ilimitados;
+* `🔥 MAIS ASSINADO`.
+
+### UNLIMITED
+
+* segmentos ilimitados;
+* profissionais ilimitados;
+* serviços ilimitados;
+* `👑 MAIS COMPLETO`.
+
+Não deve existir promessa de preço fixo para sempre.
+
+---
+
+# 21. BILLING — PROTEÇÃO ABSOLUTA
+
+Este projeto já teve corrupção crítica de:
+
+```text
+src/lib/billing.server.ts
+```
+
+Portanto faça uma verificação específica.
+
+Confirme que o commit auditado NÃO alterou indevidamente:
+
+```text
+src/lib/billing.server.ts
+```
+
+Compare com o estado correto imediatamente anterior.
+
+Confirme a existência e integridade de funções como:
+
+```text
+platformSetting
+resolveProvider
+graceDays
+loadSubscriptionByBusiness
+loadSubscriptionByProviderId
+loadPlanById
+businessEntitlements
+assertAcceptsBookings
+dueDateString
+recordEventOnce
+markEventProcessed
+discardEvent
+applyBillingEvent
+reconcileSubscriptions
+```
+
+Se `billing.server.ts` tiver sido alterado, explique exatamente o que mudou e se existe risco.
+
+---
+
+# 22. MERCADO PAGO
+
+Confirme que o commit não quebrou a lógica já corrigida do Mercado Pago.
+
+Verifique:
+
+* início futuro da cobrança;
+* trial de 30 dias;
+* `TRIALING`;
+* datas de vencimento;
+* assinatura mensal;
+* assinatura anual;
+* `auto_recurring.start_date`;
+* tratamento de datas.
+
+Não altere nada.
+
+---
+
+# 23. PREÇOS ANUAIS
+
+Confirme que permanecem:
+
+```text
+BASIC
+R$ 218,90/ano
+11 meses cobrados
+1 mês grátis
+
+MEDIUM
+R$ 399,00/ano
+10 meses cobrados
+2 meses grátis
+
+UNLIMITED
+R$ 539,10/ano
+9 meses cobrados
+3 meses grátis
+```
+
+Não faça nenhuma alteração.
+
+Apenas reporte se estiver correto ou não.
+
+---
+
+# 24. TRIAL
+
+Confirme que o trial permanece:
+
+```text
+30 dias
+status TRIALING
+acesso completo
+segmentos ilimitados
+```
+
+Verifique se a nova arquitetura de segmentos não criou um bloqueio indevido durante o trial.
+
+---
+
+# 25. REGRESSÃO
+
+Execute somente verificações seguras e sem modificar o código:
+
+```bash
 npm test
 npx tsc --noEmit
 npm run lint
@@ -1428,27 +1121,245 @@ npm run build
 git diff --check
 ```
 
-## GIT
+Se algum comando alterar arquivos automaticamente, NÃO execute essa etapa ou utilize apenas opções explicitamente read-only.
 
 Informe:
 
-* branch;
-* HEAD;
-* novo commit;
-* arquivos alterados;
-* migrations criadas;
-* working tree.
+```text
+TEST:
+TSC:
+LINT:
+BUILD:
+DIFF CHECK:
+```
 
-## IMPORTANTE
+Não considere warnings preexistentes como falha, mas liste-os.
 
-NÃO FAÇA PUSH.
+---
 
-NÃO EXECUTE MIGRATIONS EM PRODUÇÃO.
+# 26. AUDITORIA DE ARQUITETURA
 
-NÃO ALTERE BILLING DESNECESSARIAMENTE.
+Responda objetivamente:
 
-NÃO REESCREVA O PROJETO.
+### A arquitetura final é:
 
-A implementação deve ser uma correção evolutiva sobre o estado existente.
+```text
+GLOBAL
+segments
+   ↓
+service_templates
+   ↓
+COPIAR
+   ↓
+services
+   ↓
+professional_services
+```
 
-O objetivo é deixar o Agendou com um catálogo global real, completo e independente, mantendo todas as funcionalidades existentes intactas.
+### E por empresa:
+
+```text
+business
+   ↓
+business_segments
+   ↓
+segments
+```
+
+Se não estiver exatamente assim, explique a divergência.
+
+---
+
+# 27. CHECKLIST FINAL
+
+Preencha:
+
+| Item                               | Status |
+| ---------------------------------- | ------ |
+| Git/HEAD correto                   | ✅/⚠️/❌ |
+| 20 segmentos                       | ✅/⚠️/❌ |
+| 300 templates                      | ✅/⚠️/❌ |
+| 15 templates por segmento          | ✅/⚠️/❌ |
+| Nomes corretos                     | ✅/⚠️/❌ |
+| Durações corretas                  | ✅/⚠️/❌ |
+| `segments` global                  | ✅/⚠️/❌ |
+| `service_templates` global         | ✅/⚠️/❌ |
+| Cópia independente para `services` | ✅/⚠️/❌ |
+| `business_segments` correto        | ✅/⚠️/❌ |
+| RLS                                | ✅/⚠️/❌ |
+| Multi-tenant                       | ✅/⚠️/❌ |
+| RPC segura                         | ✅/⚠️/❌ |
+| Duplicidade controlada             | ✅/⚠️/❌ |
+| Legado `Geral` isolado             | ✅/⚠️/❌ |
+| Dados existentes preservados       | ✅/⚠️/❌ |
+| Migration segura                   | ✅/⚠️/❌ |
+| Downgrade seguro                   | ✅/⚠️/❌ |
+| Limites Basic                      | ✅/⚠️/❌ |
+| Limites Medium                     | ✅/⚠️/❌ |
+| Unlimited                          | ✅/⚠️/❌ |
+| Trial                              | ✅/⚠️/❌ |
+| UI Serviços                        | ✅/⚠️/❌ |
+| UI Assinatura                      | ✅/⚠️/❌ |
+| Catálogo público                   | ✅/⚠️/❌ |
+| Agendamento                        | ✅/⚠️/❌ |
+| Disponibilidade                    | ✅/⚠️/❌ |
+| Reagendamento                      | ✅/⚠️/❌ |
+| Billing preservado                 | ✅/⚠️/❌ |
+| Mercado Pago preservado            | ✅/⚠️/❌ |
+| Preços anuais preservados          | ✅/⚠️/❌ |
+| Testes                             | ✅/⚠️/❌ |
+| TypeScript                         | ✅/⚠️/❌ |
+| Lint                               | ✅/⚠️/❌ |
+| Build                              | ✅/⚠️/❌ |
+
+---
+
+# 28. CLASSIFICAÇÃO DE PROBLEMAS
+
+Classifique cada problema encontrado:
+
+### 🔴 CRÍTICO
+
+Pode causar:
+
+* perda de dados;
+* falha de billing;
+* quebra de produção;
+* vazamento multi-tenant;
+* corrupção de agendamentos;
+* quebra do catálogo;
+* violação das regras dos planos.
+
+### 🟠 ALTO
+
+Funcionalidade importante quebrada ou arquitetura incorreta.
+
+### 🟡 MÉDIO
+
+Problema funcional que não compromete dados ou billing.
+
+### 🔵 BAIXO
+
+Melhoria, inconsistência visual ou técnica sem impacto relevante.
+
+---
+
+# 29. NÃO CORRIJA
+
+Se encontrar problemas, NÃO os corrija.
+
+Não gere patch.
+
+Não altere o commit.
+
+Não faça novo commit.
+
+Apenas documente.
+
+---
+
+# 30. VEREDITO FINAL
+
+No final, dê SOMENTE um destes três vereditos:
+
+## 🟢 APROVADO — PODE PRESERVAR/PUBLICAR
+
+Somente se não houver nenhum problema crítico ou alto e a arquitetura estiver realmente correta.
+
+## 🟡 APROVADO COM RESSALVAS
+
+Somente se os problemas encontrados forem médios/baixos e não houver risco de produção.
+
+## 🔴 NÃO APROVADO — NÃO PUBLICAR
+
+Se existir qualquer problema crítico ou alto.
+
+---
+
+# FORMATO OBRIGATÓRIO DO RELATÓRIO
+
+Comece com:
+
+```text
+# AUDITORIA FINAL — COMMIT 48135b9
+
+Commit auditado:
+Mensagem:
+HEAD:
+Branch:
+Working tree:
+
+VEREDITO:
+```
+
+Depois apresente:
+
+```text
+## 1. Resumo executivo
+
+## 2. Git e integridade do commit
+
+## 3. Estrutura dos segmentos
+
+## 4. Catálogo dos 300 serviços
+
+## 5. Migration
+
+## 6. RPC copy_catalog_services
+
+## 7. RLS e segurança
+
+## 8. Multi-tenant
+
+## 9. Planos e limites
+
+## 10. Downgrade
+
+## 11. UI de Serviços
+
+## 12. UI de Assinatura
+
+## 13. Catálogo público
+
+## 14. Billing
+
+## 15. Mercado Pago
+
+## 16. Trial
+
+## 17. Regressão
+
+## 18. Problemas encontrados
+
+## 19. Checklist final
+
+## 20. VEREDITO FINAL
+```
+
+Para cada problema, informe:
+
+```text
+Severidade:
+Arquivo:
+Linha/função:
+Problema:
+Impacto:
+Evidência:
+Correção recomendada:
+```
+
+## REGRA FINAL
+
+Não aceite como evidência apenas o relatório anterior do Manus.
+
+**Audite o código, a migration, o schema, as funções e os fluxos reais.**
+
+Quero uma auditoria independente.
+
+O objetivo é responder uma única pergunta:
+
+> **O commit `48135b9004319f2bc343d3d7c5d308c1910e9214` implementa corretamente o catálogo global de 20 segmentos × 15 serviços, com isolamento por empresa, limites de plano, preservação dos dados existentes e sem regressão no billing/agendamento, de forma segura para publicação?**
+
+Se a resposta for não, explique exatamente por quê.
+
+**NÃO ALTERE NADA. NÃO FAÇA COMMIT. NÃO FAÇA PUSH. NÃO APLIQUE MIGRATIONS.**
