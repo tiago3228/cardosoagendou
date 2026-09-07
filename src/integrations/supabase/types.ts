@@ -320,12 +320,67 @@ export type Database = {
           },
         ]
       }
+      business_segments: {
+        Row: {
+          active: boolean
+          business_id: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          segment_id: string | null
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          business_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          segment_id?: string | null
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          business_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          segment_id?: string | null
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_segments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_segments_segment_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "segments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       businesses: {
         Row: {
           active: boolean
           address: string | null
           booking_policy: string | null
           business_type: Database["public"]["Enums"]["business_type"]
+          cancellation_deadline_hours: number
           cover_url: string | null
           created_at: string
           description: string | null
@@ -336,8 +391,10 @@ export type Database = {
           max_advance_days: number
           min_notice_minutes: number
           name: string
+          primary_color: string
           reminder_enabled: boolean
           reminder_minutes: number
+          secondary_color: string
           show_address: boolean
           show_whatsapp: boolean
           slot_interval_minutes: number
@@ -352,6 +409,7 @@ export type Database = {
           address?: string | null
           booking_policy?: string | null
           business_type?: Database["public"]["Enums"]["business_type"]
+          cancellation_deadline_hours?: number
           cover_url?: string | null
           created_at?: string
           description?: string | null
@@ -362,8 +420,10 @@ export type Database = {
           max_advance_days?: number
           min_notice_minutes?: number
           name: string
+          primary_color?: string
           reminder_enabled?: boolean
           reminder_minutes?: number
+          secondary_color?: string
           show_address?: boolean
           show_whatsapp?: boolean
           slot_interval_minutes?: number
@@ -378,6 +438,7 @@ export type Database = {
           address?: string | null
           booking_policy?: string | null
           business_type?: Database["public"]["Enums"]["business_type"]
+          cancellation_deadline_hours?: number
           cover_url?: string | null
           created_at?: string
           description?: string | null
@@ -388,8 +449,10 @@ export type Database = {
           max_advance_days?: number
           min_notice_minutes?: number
           name?: string
+          primary_color?: string
           reminder_enabled?: boolean
           reminder_minutes?: number
+          secondary_color?: string
           show_address?: boolean
           show_whatsapp?: boolean
           slot_interval_minutes?: number
@@ -1161,6 +1224,82 @@ export type Database = {
         }
         Relationships: []
       }
+      segments: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      service_compositions: {
+        Row: {
+          business_id: string
+          component_service_id: string
+          composite_service_id: string
+          created_at: string
+        }
+        Insert: {
+          business_id: string
+          component_service_id: string
+          composite_service_id: string
+          created_at?: string
+        }
+        Update: {
+          business_id?: string
+          component_service_id?: string
+          composite_service_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_compositions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_compositions_component_service_id_business_id_fkey"
+            columns: ["component_service_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id", "business_id"]
+          },
+          {
+            foreignKeyName: "service_compositions_composite_service_id_business_id_fkey"
+            columns: ["composite_service_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id", "business_id"]
+          },
+        ]
+      }
       service_conflicts: {
         Row: {
           business_id: string
@@ -1213,6 +1352,79 @@ export type Database = {
           },
         ]
       }
+      service_templates: {
+        Row: {
+          active: boolean
+          allows_parallel: boolean
+          business_id: string | null
+          category: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          image_url: string | null
+          name: string
+          price_cents: number
+          segment_id: string | null
+          service_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          allows_parallel?: boolean
+          business_id?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          image_url?: string | null
+          name: string
+          price_cents?: number
+          segment_id?: string | null
+          service_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          allows_parallel?: boolean
+          business_id?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          image_url?: string | null
+          name?: string
+          price_cents?: number
+          segment_id?: string | null
+          service_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_templates_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_templates_global_segment_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "segments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_templates_service_fkey"
+            columns: ["service_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id", "business_id"]
+          },
+        ]
+      }
       services: {
         Row: {
           active: boolean
@@ -1225,8 +1437,10 @@ export type Database = {
           duration_minutes: number
           id: string
           image_url: string | null
+          is_composite: boolean
           name: string
           price_cents: number
+          segment_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1240,8 +1454,10 @@ export type Database = {
           duration_minutes?: number
           id?: string
           image_url?: string | null
+          is_composite?: boolean
           name: string
           price_cents?: number
+          segment_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1255,8 +1471,10 @@ export type Database = {
           duration_minutes?: number
           id?: string
           image_url?: string | null
+          is_composite?: boolean
           name?: string
           price_cents?: number
+          segment_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1266,6 +1484,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_segment_business_fkey"
+            columns: ["segment_id", "business_id"]
+            isOneToOne: false
+            referencedRelation: "business_segments"
+            referencedColumns: ["id", "business_id"]
           },
         ]
       }
@@ -1565,7 +1790,19 @@ export type Database = {
         Args: { _business_id: string }
         Returns: number
       }
+      business_segment_limit: {
+        Args: { _business_id: string }
+        Returns: number
+      }
       can_add_professional: { Args: { _business_id: string }; Returns: boolean }
+      copy_catalog_services: {
+        Args: {
+          _business_id: string
+          _segment_id: string
+          _template_ids: string[]
+        }
+        Returns: number
+      }
       create_appointment_atomic: {
         Args: {
           _business_id: string
@@ -1670,6 +1907,15 @@ export type Database = {
           _token_hash: string
         }
         Returns: Json
+      }
+      save_service_composition: {
+        Args: {
+          _business_id: string
+          _component_ids?: string[]
+          _is_composite: boolean
+          _service_id: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
