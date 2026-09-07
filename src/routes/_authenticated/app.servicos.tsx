@@ -22,14 +22,24 @@ interface EditForm {
   category: string;
   price: string;
   duration: string;
+  allowsParallel: boolean;
 }
+
+const PARALLEL_HINT =
+  "O profissional fica livre na agenda durante este serviço, podendo atender outro cliente no mesmo horário (ex: progressiva com tempo de espera).";
 
 function ServicesPage() {
   const { data: panel } = useSuspenseQuery(panelQuery);
   const businessId = panel.business!.id;
   const config = businessTypeConfig(panel.business!.business_type);
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ name: "", category: "", price: "", duration: "30" });
+  const [form, setForm] = useState({
+    name: "",
+    category: "",
+    price: "",
+    duration: "30",
+    allowsParallel: false,
+  });
   const [edit, setEdit] = useState<EditForm | null>(null);
 
   const services = useQuery({
@@ -37,7 +47,7 @@ function ServicesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("services")
-        .select("id, name, category, price_cents, duration_minutes, active")
+        .select("id, name, category, price_cents, duration_minutes, active, allows_parallel")
         .eq("business_id", businessId)
         .is("deleted_at", null)
         .order("name");
@@ -59,11 +69,12 @@ function ServicesPage() {
         category: form.category.trim() || null,
         price_cents: price,
         duration_minutes: duration,
+        allows_parallel: form.allowsParallel,
       });
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      setForm({ name: "", category: "", price: "", duration: "30" });
+      setForm({ name: "", category: "", price: "", duration: "30", allowsParallel: false });
       toast.success("Serviço criado");
       queryClient.invalidateQueries({ queryKey: ["services", businessId] });
     },
@@ -109,6 +120,7 @@ function ServicesPage() {
           category: input.category.trim() || null,
           price_cents: price,
           duration_minutes: duration,
+          allows_parallel: input.allowsParallel,
         })
         .eq("id", input.id)
         .eq("business_id", businessId);
@@ -173,6 +185,18 @@ function ServicesPage() {
             />
           </div>
         </div>
+        <label className="flex items-start gap-2 rounded-lg border border-border bg-secondary/30 p-3 sm:col-span-2">
+          <input
+            type="checkbox"
+            className="mt-0.5 size-4 accent-primary"
+            checked={form.allowsParallel}
+            onChange={(e) => setForm({ ...form, allowsParallel: e.target.checked })}
+          />
+          <span className="text-sm">
+            <span className="font-medium text-card-foreground">Permite atendimento simultâneo</span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">{PARALLEL_HINT}</span>
+          </span>
+        </label>
         <div className="sm:col-span-2">
           <Button type="submit" disabled={create.isPending}>
             <Plus className="size-4" aria-hidden /> Adicionar serviço
@@ -220,6 +244,20 @@ function ServicesPage() {
                     />
                   </div>
                 </div>
+                <label className="flex items-start gap-2 rounded-lg border border-border bg-secondary/30 p-3 sm:col-span-2">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 size-4 accent-primary"
+                    checked={edit.allowsParallel}
+                    onChange={(e) => setEdit({ ...edit, allowsParallel: e.target.checked })}
+                  />
+                  <span className="text-sm">
+                    <span className="font-medium text-card-foreground">
+                      Permite atendimento simultâneo
+                    </span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">{PARALLEL_HINT}</span>
+                  </span>
+                </label>
                 <div className="flex gap-2 sm:col-span-2">
                   <Button type="submit" size="sm" disabled={update.isPending}>
                     Salvar alterações
@@ -237,6 +275,11 @@ function ServicesPage() {
                     {service.category ? `${service.category} · ` : ""}
                     {formatDuration(service.duration_minutes)} · {formatBRL(service.price_cents)}
                   </p>
+                  {service.allows_parallel ? (
+                    <p className="mt-1 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                      Atendimento simultâneo
+                    </p>
+                  ) : null}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -257,6 +300,7 @@ function ServicesPage() {
                         category: service.category ?? "",
                         price: (service.price_cents / 100).toFixed(2).replace(".", ","),
                         duration: String(service.duration_minutes),
+                        allowsParallel: service.allows_parallel === true,
                       })
                     }
                   >
