@@ -1,223 +1,365 @@
-Com base na AUDITORIA FINAL do commit:
+Faça uma AUDITORIA TÉCNICA FINAL E SOMENTE LEITURA do commit:
 
-`de9cfff4e0bf342ea03d5a0c98a5f97742611455`
+`18748f7eaa5cf715e0ade18e44c6bd96fcbc3cfe`
 
-foram identificados dois blockers técnicos reais que precisam ser corrigidos antes de qualquer publicação.
+Mensagem:
 
-IMPORTANTE:
+`Fix catalog tenant integrity blockers`
 
-Esta etapa é exclusivamente para CORRIGIR OS DOIS BLOCKERS abaixo.
+Este commit foi criado para corrigir os dois blockers encontrados na auditoria do `de9cfff`:
+
+1. associação de `business_segments` a segmentos globais inativos;
+2. ausência de isolamento estrutural entre `professional_services`, `professionals` e `services`.
+
+## REGRA ABSOLUTA
+
+NÃO altere nenhum arquivo.
+
+NÃO crie correções.
+
+NÃO faça novo commit.
 
 NÃO faça push.
 
-NÃO faça force-push.
+NÃO faça merge.
 
-NÃO faça merge com `origin/main`.
+NÃO faça rebase.
 
-NÃO faça rebase com `origin/main`.
+NÃO execute migrations no banco remoto.
 
-NÃO altere billing.
+NÃO altere o banco de produção.
 
-NÃO altere Mercado Pago.
-
-NÃO altere trial.
-
-NÃO altere preços mensais ou anuais.
-
-NÃO altere disponibilidade, booking ou appointments.
-
-NÃO reconstrua o catálogo de segmentos/templates que já foi validado.
-
-Preserve integralmente os 20 segmentos e os 300 templates canônicos já implementados.
+Esta etapa é somente auditoria.
 
 ---
 
-# BLOCKER 1 — business_segments deve rejeitar segmento global inativo
+# 1. VALIDAR O COMMIT
 
-Problema identificado:
+Confirme:
 
-A policy atual de escrita de `business_segments` permite que um owner associe diretamente um `segment_id` existente sem garantir que o segmento global esteja ativo.
+* HEAD;
+* hash completo;
+* mensagem;
+* commit pai;
+* branch;
+* detached HEAD;
+* working tree;
+* arquivos alterados;
+* diff exato do commit.
 
-Corrija isso no BACKEND/BANCO.
+O commit esperado é:
+
+`18748f7eaa5cf715e0ade18e44c6bd96fcbc3cfe`
+
+Pai esperado:
+
+`de9cfff4e0bf342ea03d5a0c98a5f97742611455`
+
+Arquivos esperados:
+
+```text
+supabase/migrations/20260907004000_catalog_integrity_blockers.sql
+tests/catalog-integrity.test.ts
+```
+
+Confirme que nenhum outro arquivo foi alterado.
+
+---
+
+# 2. AUDITAR A MIGRATION
+
+Analise integralmente:
+
+`supabase/migrations/20260907004000_catalog_integrity_blockers.sql`
+
+Verifique:
+
+* BEGIN/COMMIT;
+* ausência de operações destrutivas;
+* ausência de DELETE;
+* ausência de DROP;
+* ausência de TRUNCATE;
+* ausência de alteração de dados de services;
+* ausência de alteração de appointments;
+* ausência de alteração de billing;
+* ausência de alteração de preços;
+* ausência de alteração de duração de serviços reais.
+
+Verifique também:
+
+* funções criadas;
+* triggers criados;
+* ordem de criação;
+* segurança;
+* `SECURITY DEFINER`, se utilizado;
+* `search_path`;
+* possibilidade de SQL injection;
+* permissões;
+* comportamento em INSERT;
+* comportamento em UPDATE.
+
+---
+
+# 3. VALIDAR `business_segments`
+
+Analise diretamente:
+
+`public.validate_business_segment_global()`
+
+e o trigger:
+
+`business_segments_validate_global`
+
+Confirme exatamente:
+
+### Deve rejeitar
+
+* `segment_id` inexistente;
+* segmento global inativo;
+* tentativa de reativar associação para segmento inativo.
+
+### Deve permitir
+
+* segmento global ativo;
+* associação válida respeitando limite do plano;
+* associações históricas já existentes mesmo que posteriormente o segmento tenha sido desativado, quando essa for a regra definida pela implementação.
+
+### Deve continuar impedindo
+
+* duplicidade `(business_id, segment_id)`;
+* associação indevida entre tenants.
+
+Verifique se a proteção ocorre realmente no PostgreSQL.
+
+Não aceite proteção somente na aplicação.
+
+---
+
+# 4. ANALISAR INTERAÇÃO COM `Geral`
+
+Este ponto é importante.
+
+Confirme o estado real do bucket técnico `Geral`.
+
+Verifique:
+
+* `Geral` continua apenas como legado;
+* não aparece como segmento comercial;
+* não pode ser selecionado como novo segmento comercial;
+* novos serviços não recebem `Geral` automaticamente;
+* serviços históricos não são apagados;
+* a nova trigger não destrói ou invalida dados legados.
+
+Confirme também que a nova validação não criou uma regressão para serviços antigos.
+
+---
+
+# 5. VALIDAR `professional_services`
+
+Analise integralmente:
+
+`public.validate_professional_service_tenant()`
+
+e:
+
+`professional_services_validate_tenant`
 
 A regra obrigatória é:
 
-Um business somente pode possuir associação ativa em `business_segments` para um segmento global que esteja ativo.
+```text
+professionals.business_id
+=
+professional_services.business_id
 
-Não basta proteger pela UI.
+services.business_id
+=
+professional_services.business_id
+```
 
-Não basta confiar em `subscription.functions.ts`.
+Teste conceitualmente todos os cenários:
 
-A proteção deve existir no PostgreSQL através de mecanismo estrutural apropriado, como:
+### Deve permitir
 
-* policy `WITH CHECK`;
-* trigger;
-* função segura;
-* ou combinação apropriada.
+```text
+Business A
+Professional A
+Service A
+Link A
+```
 
-Escolha a solução mais compatível com a arquitetura atual.
+### Deve rejeitar
 
-Requisitos:
+```text
+Business A
+Professional A
+Service B
+```
 
-* segmento inexistente → rejeitar;
-* segmento global inativo → rejeitar;
-* segmento global ativo → permitir se o plano permitir;
-* segmento duplicado → continuar impedido;
-* `Geral` técnico/legado não deve virar opção comercial;
-* preservar associações históricas válidas;
-* não apagar segmentos;
-* não apagar serviços.
+```text
+Business A
+Professional B
+Service A
+```
 
-IMPORTANTE:
+```text
+Business B
+Professional A
+Service A
+```
 
-Não introduza uma solução que quebre a leitura pública dos segmentos globais ativos.
+Também deve rejeitar:
+
+* professional inexistente;
+* service inexistente.
 
 ---
 
-# BLOCKER 2 — professional_services precisa de isolamento estrutural completo
+# 6. PROCURAR BYPASS
 
-Problema identificado:
+Não basta verificar se o trigger funciona.
 
-A tabela `professional_services` possui foreign keys individuais para:
+Procure se existe alguma forma de contornar a validação por:
 
-* `professional_id`;
-* `service_id`;
+* INSERT direto;
+* UPDATE;
+* RPC;
+* SECURITY DEFINER;
+* função existente;
+* endpoint;
+* service role;
+* operação usada pela aplicação.
+
+Verifique se o trigger cobre tanto:
+
+```text
+INSERT
+```
+
+quanto:
+
+```text
+UPDATE
+```
+
+especialmente alterações de:
+
 * `business_id`;
+* `professional_id`;
+* `service_id`.
 
-mas isso não garante que os três registros pertençam ao mesmo business.
+---
 
-É necessário impedir estruturalmente associações cruzadas entre tenants.
+# 7. RLS
 
-Exemplo que deve ser IMPOSSÍVEL:
+Analise as policies existentes de:
 
-```text
-business A
-professional A
-service B
-```
+* `business_segments`;
+* `professional_services`;
+* `professionals`;
+* `services`.
 
-ou qualquer combinação equivalente.
+Verifique se o RLS e os triggers trabalham juntos corretamente.
 
-A regra obrigatória é:
+Importante:
 
-```text
-professional.business_id = professional_services.business_id
-AND
-service.business_id = professional_services.business_id
-```
+RLS não deve ser considerado substituto do trigger.
 
-A proteção deve existir no backend/database, e não somente na interface.
+O trigger deve continuar impedindo inconsistências mesmo em chamadas autenticadas que consigam chegar ao INSERT/UPDATE.
 
-Avalie a melhor solução compatível com o schema existente:
+---
 
-* foreign keys compostas;
-* unique constraints auxiliares + foreign keys compostas;
-* trigger;
-* RPC segura;
-* ou combinação dessas técnicas.
+# 8. SECURITY DEFINER
 
-Prefira a solução estrutural mais forte e simples.
+Se as funções forem `SECURITY DEFINER`, audite especialmente:
 
-Não quebre os relacionamentos existentes.
+* `SET search_path`;
+* referências qualificadas com `public.`;
+* possibilidade de manipulação de objetos;
+* privilégio excessivo;
+* possibilidade de um usuário chamar a função diretamente para ultrapassar regras de negócio.
 
-Não altere o funcionamento normal de:
+Se não forem `SECURITY DEFINER`, explique por que a função continua funcionando corretamente com RLS.
 
-* associação profissional ↔ serviço;
+---
+
+# 9. IDEMPOTÊNCIA
+
+Verifique se a migration pode ser aplicada com segurança dentro do sistema de migrations do Supabase.
+
+Verifique:
+
+* CREATE OR REPLACE;
+* DROP TRIGGER IF EXISTS, se necessário;
+* DROP FUNCTION IF EXISTS, se necessário;
+* conflitos com funções/triggers existentes;
+* nomes duplicados;
+* dependências.
+
+Não altere a migration.
+
+Apenas reporte riscos.
+
+---
+
+# 10. DADOS EXISTENTES
+
+Como não existe conexão com o banco remoto neste ambiente, NÃO invente resultados.
+
+Separe claramente:
+
+### O que foi comprovado pelo código/migration
+
+de:
+
+### O que ainda precisa ser verificado no banco real.
+
+Identifique quais queries deveriam ser executadas futuramente para detectar:
+
+* `professional_services` cross-tenant;
+* `business_segments` apontando para segmentos inexistentes;
+* associações para segmentos inativos;
+* outras inconsistências relevantes.
+
+NÃO execute essas queries em produção agora.
+
+Apenas forneça as queries de diagnóstico no relatório, se forem úteis.
+
+---
+
+# 11. TESTES
+
+Analise:
+
+`tests/catalog-integrity.test.ts`
+
+Verifique se os testes realmente comprovam o comportamento ou se são apenas testes estáticos de texto.
+
+Classifique cada teste como:
+
+* estrutural;
+* estático;
+* unitário;
+* integração real.
+
+Não considere teste estático equivalente a teste real de PostgreSQL.
+
+---
+
+# 12. REGRESSÃO
+
+Verifique se a correção pode afetar:
+
+* criação de serviço;
+* edição de serviço;
+* associação profissional;
+* remoção de associação;
 * disponibilidade;
 * booking;
 * appointments;
-* serviços existentes.
+* catálogo público;
+* serviços históricos.
 
----
-
-# DADOS EXISTENTES
-
-Muito importante:
-
-A correção deve ser segura para um banco já populado.
-
-Antes de criar constraints rígidas, verifique se existem registros atualmente inconsistentes.
-
-Se existirem registros inconsistentes:
-
-NÃO apague automaticamente.
-
-NÃO altere silenciosamente dados históricos.
-
-Reporte exatamente os registros/problemas encontrados e escolha uma estratégia segura compatível com a arquitetura.
-
----
-
-# MIGRATION
-
-Crie uma NOVA migration corretiva.
-
-NÃO edite retroativamente migrations anteriores já criadas.
-
-A nova migration deve:
-
-* ser transacional quando apropriado;
-* preservar dados existentes;
-* não usar DROP destrutivo;
-* não apagar services;
-* não apagar professional_services;
-* não apagar business_segments;
-* não alterar preços;
-* não alterar duração dos serviços reais;
-* não alterar billing;
-* não alterar Mercado Pago.
-
----
-
-# TESTES OBRIGATÓRIOS
-
-Adicione testes específicos para os dois blockers.
-
-No mínimo:
-
-### Segmentos
-
-1. business com plano permitido + segmento ativo → sucesso.
-2. segmento inexistente → falha.
-3. segmento global inativo → falha.
-4. duplicação da associação → falha.
-5. tentativa de associação indevida a `Geral` → comportamento correto.
-
-### Professional services
-
-1. profissional A + serviço A + business A → sucesso.
-2. profissional A + serviço B + business A → falha.
-3. profissional B + serviço A + business A → falha.
-4. profissional A + serviço A + business B → falha.
-5. registros válidos existentes continuam funcionando.
-
-Se testes reais de RLS/PostgreSQL forem possíveis no ambiente disponível, faça-os.
-
-Caso não seja possível executar integração real com Supabase/PostgreSQL, deixe isso explicitamente documentado.
-
----
-
-# REGRESSÃO
-
-Depois da correção, confirme que continuam funcionando:
-
-* catálogo global;
-* 20 segmentos;
-* 300 templates;
-* 15 templates por segmento;
-* cópia de templates;
-* independência dos serviços copiados;
-* serviços customizados sem segmento;
-* `Geral` apenas como legado;
-* limites Basic = 1;
-* Medium = 2;
-* Unlimited = ilimitado;
-* Trial = ilimitado;
-* associação profissional ↔ serviço;
-* booking;
-* disponibilidade.
-
-E confirme novamente que:
+Confirme novamente:
 
 `src/lib/billing.server.ts`
 
@@ -225,7 +367,22 @@ não foi alterado.
 
 ---
 
-# VALIDAÇÃO
+# 13. CATÁLOGO
+
+Confirme que este commit não alterou indevidamente o trabalho já validado:
+
+* 20 segmentos;
+* 300 templates;
+* 15 por segmento;
+* nomes;
+* durações;
+* cópia independente;
+* templates globais;
+* `Geral`.
+
+---
+
+# 14. VALIDAÇÕES LOCAIS
 
 Execute:
 
@@ -237,61 +394,84 @@ npm run build
 git diff --check
 ```
 
-Depois confira:
+Reporte exatamente os resultados.
+
+---
+
+# 15. GIT — NÃO ALTERAR
+
+Apenas inspecione:
 
 ```powershell
 git status
-git log --oneline -10
-git diff HEAD
+git log --oneline --decorate -20
+git rev-parse HEAD
+git rev-parse origin/main
+git merge-base HEAD origin/main
+git log --oneline HEAD..origin/main
+git log --oneline origin/main..HEAD
 ```
 
-Não faça push.
+NÃO faça:
 
-Não faça merge.
+* merge;
+* rebase;
+* reset;
+* cherry-pick;
+* push;
+* force-push.
 
-Não faça rebase.
-
----
-
-# COMMIT
-
-Você pode criar um novo commit LOCAL contendo apenas essa correção, se isso facilitar a auditoria posterior.
-
-Se criar, informe:
-
-* hash completo;
-* mensagem;
-* arquivos alterados.
-
-Não publique no remoto.
+Queremos apenas saber exatamente como está a divergência.
 
 ---
 
-# RELATÓRIO FINAL
+# 16. VEREDITO
 
-Entregue:
+Classifique:
 
-## 1. Correções realizadas
+### 🟢 APROVADO
 
-## 2. Migration criada
+Se os dois blockers estiverem estruturalmente corrigidos e não houver outro problema relevante.
 
-## 3. Proteção de business_segments
+### 🟡 APROVADO COM RESSALVAS
 
-Explique exatamente como segmento inativo passou a ser bloqueado.
+Somente se houver apenas pontos de validação futura sem risco técnico imediato.
 
-## 4. Proteção de professional_services
+### 🔴 NÃO APROVADO
 
-Explique exatamente como o isolamento por business passou a ser garantido.
+Se existir qualquer falha estrutural, de segurança, isolamento ou regressão.
 
-## 5. Dados existentes
+---
 
-Informe se foram encontrados registros inconsistentes.
+# FORMATO FINAL
 
-## 6. Testes
+## AUDITORIA — 18748f7
+
+### 1. Status
+
+### 2. Commit
+
+### 3. Migration
+
+### 4. `business_segments`
+
+### 5. `professional_services`
+
+### 6. RLS
+
+### 7. SECURITY DEFINER
+
+### 8. Geral
+
+### 9. Dados existentes
+
+Separar comprovado de não comprovado.
+
+### 10. Testes
 
 Tabela:
 
-| Teste            | Resultado |
+| Validação        | Resultado |
 | ---------------- | --------- |
 | npm test         |           |
 | TypeScript       |           |
@@ -299,30 +479,16 @@ Tabela:
 | build            |           |
 | git diff --check |           |
 
-## 7. Regressão
+### 11. Regressão
 
-Confirme o que foi preservado.
+### 12. Git
 
-## 8. Git
+### 13. BLOCKERS
 
-Informe:
+### 14. WARNINGS
 
-* HEAD;
-* branch;
-* working tree;
-* arquivos alterados;
-* se houve commit;
-* confirme que NÃO houve push;
-* confirme que NÃO houve merge/rebase.
+### 15. VEREDITO FINAL
 
-## 9. Status
+🟢 / 🟡 / 🔴
 
-Classifique:
-
-🟢 BLOCKERS CORRIGIDOS
-
-ou
-
-🔴 BLOCKERS NÃO CORRIGIDOS
-
-Não faça qualquer outra alteração fora do escopo acima.
+NÃO faça nenhuma alteração durante a auditoria.
