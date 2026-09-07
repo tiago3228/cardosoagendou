@@ -74,12 +74,7 @@ function ClientsPage() {
                   </a>
                 </Button>
               ) : (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled
-                  title="WhatsApp inválido ou não informado"
-                >
+                <Button size="sm" variant="outline" disabled title="WhatsApp inválido ou não informado">
                   <MessageCircle className="size-4" aria-hidden /> Sem WhatsApp válido
                 </Button>
               )}

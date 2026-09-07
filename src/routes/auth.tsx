@@ -76,10 +76,7 @@ function AuthPage() {
         <h1 className="mt-6 font-display text-2xl font-bold text-foreground">Entrar no painel</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Ainda não tem conta?{" "}
-          <Link
-            to="/cadastro"
-            className="font-medium text-primary underline-offset-4 hover:underline"
-          >
+          <Link to="/cadastro" className="font-medium text-primary underline-offset-4 hover:underline">
             Cadastre seu negócio
           </Link>
         </p>

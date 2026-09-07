@@ -13,8 +13,9 @@ export const getPixCheckout = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => pixQuoteSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { requireOwnedBusinessId, loadPlanByCode } = await import("./subscription.server");
-    const { loadPixConfig, findPendingPixRequest, listBusinessPixRequests } =
-      await import("./manual-pix.server");
+    const { loadPixConfig, findPendingPixRequest, listBusinessPixRequests } = await import(
+      "./manual-pix.server"
+    );
     const { planPriceCents } = await import("./plans");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -52,8 +53,7 @@ export const createManualPixRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => manualPixRequestSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { requireOwnedBusinessId, loadPlanByCode, logAudit } =
-      await import("./subscription.server");
+    const { requireOwnedBusinessId, loadPlanByCode, logAudit } = await import("./subscription.server");
     const { loadSubscriptionByBusiness } = await import("./billing.server");
     const { findPendingPixRequest, pixRequestExpiryDays } = await import("./manual-pix.server");
     const { planPriceCents } = await import("./plans");
@@ -128,18 +128,14 @@ export const getMasterStatus = createServerFn({ method: "POST" })
 export const listPixRequestsForReview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: isMaster } = await context.supabase.rpc("is_master", {
-      _user_id: context.userId,
-    });
+    const { data: isMaster } = await context.supabase.rpc("is_master", { _user_id: context.userId });
     if (isMaster !== true) throw new Error("FORBIDDEN: acesso restrito à conta master");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { PIX_REQUEST_COLUMNS } = await import("./manual-pix.server");
     const { data, error } = await supabaseAdmin
       .from("manual_payment_requests")
-      .select(
-        `${PIX_REQUEST_COLUMNS}, businesses:business_id (name, slug, email), plans:plan_id (code, name)`,
-      )
+      .select(`${PIX_REQUEST_COLUMNS}, businesses:business_id (name, slug, email), plans:plan_id (code, name)`)
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw new Error("PIX_LIST_FAILED: não foi possível carregar as solicitações");
@@ -169,19 +165,11 @@ export const reviewPixRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => pixReviewSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const fn =
-      data.action === "APPROVE"
-        ? "approve_manual_payment_request"
-        : "reject_manual_payment_request";
+    const fn = data.action === "APPROVE" ? "approve_manual_payment_request" : "reject_manual_payment_request";
     const { data: result, error } = await context.supabase.rpc(fn, {
       _request_id: data.requestId,
       ...(data.adminNote ? { _admin_note: data.adminNote } : {}),
     });
     if (error) throw new Error(error.message);
-    return result as {
-      already: boolean;
-      status: string;
-      period_start?: string;
-      period_end?: string;
-    };
+    return result as { already: boolean; status: string; period_start?: string; period_end?: string };
   });

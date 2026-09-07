@@ -4,12 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery } from "./app";
-import {
-  instagramHandle,
-  normalizeBrWhatsapp,
-  normalizeInstagramUrl,
-  WEEKDAY_LABELS,
-} from "@/lib/format";
+import { WEEKDAY_LABELS } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WhatsappInput } from "@/components/ui/whatsapp-input";
@@ -32,16 +27,12 @@ function SettingsPage() {
     whatsapp: business.whatsapp ?? "",
     email: business.email ?? "",
     address: business.address ?? "",
-    instagram_url: business.instagram_url ?? "",
     booking_policy: business.booking_policy ?? "",
     show_address: business.show_address,
     show_whatsapp: business.show_whatsapp,
     slot_interval_minutes: String(business.slot_interval_minutes),
     min_notice_minutes: String(business.min_notice_minutes),
     max_advance_days: String(business.max_advance_days),
-    whatsapp_notifications_enabled: business.whatsapp_notifications_enabled ?? false,
-    reminder_enabled: business.reminder_enabled ?? true,
-    reminder_minutes: String(business.reminder_minutes ?? 60),
   });
 
   const save = useMutation({
@@ -51,7 +42,7 @@ function SettingsPage() {
         .update({
           name: form.name.trim(),
           description: form.description.trim() || null,
-          whatsapp: normalizeBrWhatsapp(form.whatsapp),
+          whatsapp: form.whatsapp.trim() || null,
           email: form.email.trim() || null,
           address: form.address.trim() || null,
           booking_policy: form.booking_policy.trim() || null,
@@ -63,41 +54,12 @@ function SettingsPage() {
         })
         .eq("id", business.id);
       if (error) throw new Error(error.message);
-      const instagram = await supabase
-        .from("businesses")
-        .update({ instagram_url: normalizeInstagramUrl(form.instagram_url) })
-        .eq("id", business.id);
-      if (instagram.error && !instagram.error.message.includes("instagram_url")) {
-        throw new Error(instagram.error.message);
-      }
-      const whatsappConfig = await supabase
-        .from("businesses")
-        .update({
-          whatsapp_notifications_enabled: form.whatsapp_notifications_enabled,
-          reminder_enabled: form.reminder_enabled,
-          reminder_minutes: Number(form.reminder_minutes) || 60,
-        })
-        .eq("id", business.id);
-      if (
-        whatsappConfig.error &&
-        !whatsappConfig.error.message.includes("whatsapp_notifications_enabled") &&
-        !whatsappConfig.error.message.includes("reminder_enabled") &&
-        !whatsappConfig.error.message.includes("reminder_minutes")
-      ) {
-        throw new Error(whatsappConfig.error.message);
-      }
-      return { instagramSaved: !instagram.error, whatsappSaved: !whatsappConfig.error };
     },
-    onSuccess: (result) => {
-      toast.success(
-        result.instagramSaved
-          ? "Configurações salvas. Instagram atualizado com sucesso."
-          : "Configurações salvas. A migration do Instagram ainda precisa ser aplicada.",
-      );
+    onSuccess: () => {
+      toast.success("Configurações salvas");
       queryClient.invalidateQueries({ queryKey: ["panel"] });
     },
-    onError: (error: Error) =>
-      toast.error("Não foi possível salvar", { description: error.message }),
+    onError: (error: Error) => toast.error("Não foi possível salvar", { description: error.message }),
   });
 
   const hours = useQuery({
@@ -114,12 +76,7 @@ function SettingsPage() {
   });
 
   const saveHour = useMutation({
-    mutationFn: async (input: {
-      id: string;
-      opens_at: string;
-      closes_at: string;
-      closed: boolean;
-    }) => {
+    mutationFn: async (input: { id: string; opens_at: string; closes_at: string; closed: boolean }) => {
       const { error } = await supabase
         .from("business_hours")
         .update({ opens_at: input.opens_at, closes_at: input.closes_at, closed: input.closed })
@@ -141,18 +98,6 @@ function SettingsPage() {
         className="mt-6 grid gap-4 rounded-xl border border-border bg-card p-5 sm:grid-cols-2"
         onSubmit={(e) => {
           e.preventDefault();
-          if (form.instagram_url.trim() && !normalizeInstagramUrl(form.instagram_url)) {
-            toast.error("Instagram inválido", {
-              description: "Informe um perfil do Instagram, como @seuperfil.",
-            });
-            return;
-          }
-          if (form.whatsapp.trim() && !normalizeBrWhatsapp(form.whatsapp)) {
-            toast.error("WhatsApp inválido", {
-              description: "Informe um número brasileiro válido com DDD, como (31) 99999-9999.",
-            });
-            return;
-          }
           save.mutate();
         }}
       >
@@ -169,10 +114,7 @@ function SettingsPage() {
         </div>
         <div className="space-y-1.5">
           <Label>WhatsApp</Label>
-          <WhatsappInput
-            value={form.whatsapp}
-            onChange={(v) => setForm({ ...form, whatsapp: v })}
-          />
+          <WhatsappInput value={form.whatsapp} onChange={(v) => setForm({ ...form, whatsapp: v })} />
         </div>
 
         <div className="space-y-1.5">
@@ -201,64 +143,9 @@ function SettingsPage() {
             Mostrar endereço para clientes
           </label>
         </div>
-        <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-4 sm:col-span-2">
-          <p className="text-sm font-medium text-foreground">WhatsApp e notificações</p>
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            <input
-              type="checkbox"
-              className="size-4 accent-primary"
-              checked={form.whatsapp_notifications_enabled}
-              onChange={(e) =>
-                setForm({ ...form, whatsapp_notifications_enabled: e.target.checked })
-              }
-            />
-            Habilitar notificações automáticas via WhatsApp
-          </label>
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            <input
-              type="checkbox"
-              className="size-4 accent-primary"
-              checked={form.reminder_enabled}
-              onChange={(e) => setForm({ ...form, reminder_enabled: e.target.checked })}
-            />
-            Enviar lembretes
-          </label>
-          <div className="max-w-xs space-y-1.5">
-            <Label>Antecedência do lembrete (minutos)</Label>
-            <Input
-              type="number"
-              min={15}
-              max={10080}
-              value={form.reminder_minutes}
-              onChange={(e) => setForm({ ...form, reminder_minutes: e.target.value })}
-            />
-            <p className="text-xs text-muted-foreground">
-              Exemplos: 60 = 1h, 120 = 2h, 1440 = 24h.
-            </p>
-          </div>
-        </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Endereço</Label>
-          <Input
-            value={form.address}
-            onChange={(e) => setForm({ ...form, address: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1.5 sm:col-span-2 rounded-lg border border-border bg-muted/40 p-4">
-          <p className="text-sm font-medium text-foreground">Redes sociais</p>
-          <Label>Instagram</Label>
-          <Input
-            value={form.instagram_url}
-            placeholder="https://instagram.com/seuperfil ou @seuperfil"
-            onChange={(e) => setForm({ ...form, instagram_url: e.target.value })}
-          />
-          <p className="text-xs text-muted-foreground">
-            Adicione o Instagram do estabelecimento para que seus clientes possam conhecer seus
-            serviços e trabalhos.
-            {form.instagram_url && normalizeInstagramUrl(form.instagram_url)
-              ? ` Será salvo como ${instagramHandle(form.instagram_url)}.`
-              : ""}
-          </p>
+          <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Política de agendamento</Label>
@@ -295,9 +182,7 @@ function SettingsPage() {
         </div>
       </form>
 
-      <h2 className="mt-8 font-display text-lg font-semibold text-foreground">
-        Horário de funcionamento
-      </h2>
+      <h2 className="mt-8 font-display text-lg font-semibold text-foreground">Horário de funcionamento</h2>
       <div className="mt-3 space-y-2 rounded-xl border border-border bg-card p-4">
         {(hours.data ?? []).map((hour) => (
           <div key={hour.id} className="flex flex-wrap items-center gap-2 text-sm">
@@ -376,6 +261,12 @@ function InstallAppSection() {
                 return;
               }
               setHint(true);
+              toast.info(
+                outcome === "dismissed"
+                  ? "Sem problemas — veja abaixo como criar o atalho manualmente."
+                  : "Seu navegador não abre a instalação automática",
+                { description: manualHint, duration: 8000 },
+              );
             }}
           >
             Instalar Agendou Pro
@@ -390,3 +281,4 @@ function InstallAppSection() {
     </div>
   );
 }
+

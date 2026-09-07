@@ -40,9 +40,7 @@ export class MockPaymentProvider implements PaymentProvider {
     };
   }
 
-  async getSubscriptionCharge(
-    providerSubscriptionId: string,
-  ): Promise<SubscriptionChargeInfo | null> {
+  async getSubscriptionCharge(providerSubscriptionId: string): Promise<SubscriptionChargeInfo | null> {
     return {
       providerPaymentId: `mock_pay_${providerSubscriptionId}`,
       invoiceUrl: null,

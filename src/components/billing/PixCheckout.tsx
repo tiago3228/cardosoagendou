@@ -64,8 +64,7 @@ export function PixCheckout({
     },
     onError: (error: Error) =>
       toast.error("Não foi possível enviar sua solicitação.", {
-        description:
-          error.message.replace(/^[A-Z_]+:\s*/, "") || "Tente novamente em alguns instantes.",
+        description: error.message.replace(/^[A-Z_]+:\s*/, "") || "Tente novamente em alguns instantes.",
       }),
   });
 
@@ -87,9 +86,7 @@ export function PixCheckout({
     try {
       const ext = file.name.split(".").pop()?.slice(0, 8) ?? "dat";
       const path = `${businessId}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("pix-proofs")
-        .upload(path, file, { upsert: false });
+      const { error } = await supabase.storage.from("pix-proofs").upload(path, file, { upsert: false });
       if (error) throw error;
       setProofPath(path);
       toast.success("Comprovante anexado");
@@ -108,17 +105,15 @@ export function PixCheckout({
         <p className="text-xs uppercase tracking-wide text-muted-foreground">Pagamento via PIX</p>
         <p className="mt-1 text-sm text-muted-foreground">
           Plano: <span className="font-medium text-foreground">{plan.name}</span> · Valor:{" "}
-          <span className="font-medium text-foreground">{formatBRL(amountCents)}</span> ·
-          Periodicidade: {interval === "ANNUAL" ? "Anual" : "Mensal"}
+          <span className="font-medium text-foreground">{formatBRL(amountCents)}</span> · Periodicidade:{" "}
+          {interval === "ANNUAL" ? "Anual" : "Mensal"}
         </p>
       </div>
 
       {pix.configured ? (
         <div className="rounded-lg border border-border bg-muted/40 p-4">
           <p className="text-sm text-muted-foreground">Chave PIX</p>
-          <code className="mt-1 block break-all text-sm font-medium text-foreground">
-            {pix.key}
-          </code>
+          <code className="mt-1 block break-all text-sm font-medium text-foreground">{pix.key}</code>
           {pix.holder ? (
             <p className="mt-1 text-sm text-muted-foreground">
               {pix.holder}
@@ -147,9 +142,7 @@ export function PixCheckout({
 
       {pending ? (
         <div className="rounded-lg border border-primary/40 bg-primary/10 p-4 text-sm">
-          <p className="font-semibold text-foreground">
-            Você já possui uma solicitação de pagamento PIX pendente.
-          </p>
+          <p className="font-semibold text-foreground">Você já possui uma solicitação de pagamento PIX pendente.</p>
           <p className="mt-1 text-muted-foreground">
             {PIX_STATUS_LABEL[pending.status]} · {formatBRL(pending.amount_cents)} · enviada em{" "}
             {new Date(pending.requested_at).toLocaleDateString("pt-BR")}
@@ -207,17 +200,11 @@ export function PixCheckout({
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Solicitações PIX</p>
           <ul className="mt-2 space-y-1 text-sm">
             {history.map((row) => (
-              <li
-                key={row.id}
-                className="flex flex-wrap justify-between gap-2 border-b border-border py-1.5"
-              >
+              <li key={row.id} className="flex flex-wrap justify-between gap-2 border-b border-border py-1.5">
                 <span className="text-muted-foreground">
-                  {new Date(row.created_at).toLocaleDateString("pt-BR")} ·{" "}
-                  {formatBRL(row.amount_cents)}
+                  {new Date(row.created_at).toLocaleDateString("pt-BR")} · {formatBRL(row.amount_cents)}
                 </span>
-                <span className="font-medium text-foreground">
-                  {PIX_STATUS_LABEL[row.status] ?? row.status}
-                </span>
+                <span className="font-medium text-foreground">{PIX_STATUS_LABEL[row.status] ?? row.status}</span>
               </li>
             ))}
           </ul>

@@ -32,11 +32,7 @@ export const provisionBusiness = createServerFn({ method: "POST" })
     const base = slugify(data.businessName) || "negocio";
     let slug = base;
     for (let attempt = 0; attempt < 25; attempt++) {
-      const taken = await supabaseAdmin
-        .from("businesses")
-        .select("id")
-        .eq("slug", slug)
-        .maybeSingle();
+      const taken = await supabaseAdmin.from("businesses").select("id").eq("slug", slug).maybeSingle();
       if (!taken.data) break;
       slug = `${base}-${attempt + 2}`;
     }
@@ -63,9 +59,7 @@ export const provisionBusiness = createServerFn({ method: "POST" })
       .from("profiles")
       .upsert({ id: userId, full_name: data.ownerName, email, whatsapp }, { onConflict: "id" });
 
-    await supabaseAdmin
-      .from("user_roles")
-      .insert({ user_id: userId, business_id: businessId, role: "owner" });
+    await supabaseAdmin.from("user_roles").insert({ user_id: userId, business_id: businessId, role: "owner" });
 
     // Mon-Fri 09-19, Sat 09-14, Sun closed.
     await supabaseAdmin.from("business_hours").insert(
@@ -83,24 +77,17 @@ export const provisionBusiness = createServerFn({ method: "POST" })
       .select("id, trial_days")
       .eq("code", "BASIC")
       .maybeSingle();
-    if (plan.error || !plan.data) {
-      throw new Error(
-        `TRIAL_PLAN_NOT_FOUND: ${plan.error?.message ?? "plano BASIC não encontrado"}`,
-      );
-    }
-    const periodStart = new Date();
-    const trialEnd = new Date(periodStart.getTime() + 30 * 86400000);
-    const subscription = await supabaseAdmin.from("subscriptions").insert({
-      business_id: businessId,
-      plan_id: plan.data.id,
-      status: "TRIALING",
-      billing_interval: "MONTHLY",
-      current_period_start: periodStart.toISOString(),
-      current_period_end: trialEnd.toISOString(),
-      trial_ends_at: trialEnd.toISOString(),
-    });
-    if (subscription.error) {
-      throw new Error(`TRIAL_CREATE_FAILED: ${subscription.error.message}`);
+    if (plan.data) {
+      const trialEnd = new Date(Date.now() + plan.data.trial_days * 86400000);
+      await supabaseAdmin.from("subscriptions").insert({
+        business_id: businessId,
+        plan_id: plan.data.id,
+        status: "TRIALING",
+        billing_interval: "MONTHLY",
+        current_period_start: new Date().toISOString(),
+        current_period_end: trialEnd.toISOString(),
+        trial_ends_at: trialEnd.toISOString(),
+      });
     }
 
     const professional = await supabaseAdmin
