@@ -24,6 +24,14 @@ interface EditForm {
   price: string;
   duration: string;
   segment_id: string;
+  allows_parallel: boolean;
+}
+
+function replaceInitialZeroPrice(current: string, next: string): string {
+  if ((current === "0" || current === "0,00") && next.startsWith(current)) {
+    return next.slice(current.length);
+  }
+  return next;
 }
 
 function ServicesPage() {
@@ -38,6 +46,7 @@ function ServicesPage() {
     price: "",
     duration: "30",
     segment_id: "",
+    allows_parallel: false,
   });
   const [edit, setEdit] = useState<EditForm | null>(null);
   const [catalogSegmentId, setCatalogSegmentId] = useState("");
@@ -75,7 +84,7 @@ function ServicesPage() {
     queryFn: async () => {
       const { data, error } = await db
         .from("service_templates")
-        .select("id, segment_id, name, description, category, duration_minutes")
+        .select("id, segment_id, name, description, category, price_cents, duration_minutes")
         .is("business_id", null)
         .eq("active", true)
         .order("name");
@@ -116,7 +125,9 @@ function ServicesPage() {
     queryFn: async () => {
       const { data, error } = await db
         .from("services")
-        .select("id, name, category, price_cents, duration_minutes, active, segment_id")
+        .select(
+          "id, name, category, price_cents, duration_minutes, active, segment_id, allows_parallel",
+        )
         .eq("business_id", businessId)
         .is("deleted_at", null)
         .order("name");
@@ -167,6 +178,23 @@ function ServicesPage() {
   const copyTemplates = useMutation({
     mutationFn: async (input: { segmentId: string; templateIds: string[] }) => {
       if (input.templateIds.length === 0) return 0;
+      const selectedTemplates = (catalogTemplates.data ?? []).filter((template: { id: string }) =>
+        input.templateIds.includes(template.id),
+      );
+      const businessSegmentId = segments.data?.find(
+        (segment: { segment_id: string | null }) => segment.segment_id === input.segmentId,
+      )?.id;
+      const templateNames = selectedTemplates.map((template: { name: string }) => template.name);
+      const existingServices = businessSegmentId
+        ? await db
+            .from("services")
+            .select("id")
+            .eq("business_id", businessId)
+            .eq("segment_id", businessSegmentId)
+            .in("name", templateNames)
+            .is("deleted_at", null)
+        : { data: [], error: null };
+      if (existingServices.error) throw new Error(existingServices.error.message);
       const { data, error } = await db.rpc(
         "copy_catalog_services" as never,
         {
@@ -176,6 +204,33 @@ function ServicesPage() {
         } as never,
       );
       if (error) throw new Error(error.message);
+      if (data && businessSegmentId && professionals.data?.length) {
+        const copiedServices = await db
+          .from("services")
+          .select("id")
+          .eq("business_id", businessId)
+          .eq("segment_id", businessSegmentId)
+          .in("name", templateNames)
+          .is("deleted_at", null);
+        if (copiedServices.error) throw new Error(copiedServices.error.message);
+        const existingIds = new Set(
+          (existingServices.data ?? []).map((service: { id: string }) => service.id),
+        );
+        const newServiceIds = (copiedServices.data ?? [])
+          .map((service: { id: string }) => service.id)
+          .filter((id: string) => !existingIds.has(id));
+        const links = newServiceIds.flatMap((serviceId: string) =>
+          (professionals.data ?? []).map((professional: { id: string }) => ({
+            business_id: businessId,
+            professional_id: professional.id,
+            service_id: serviceId,
+          })),
+        );
+        if (links.length > 0) {
+          const { error: linkError } = await db.from("professional_services").insert(links);
+          if (linkError) throw new Error(linkError.message);
+        }
+      }
       return Number(data ?? 0);
     },
     onSuccess: (count) => {
@@ -227,11 +282,19 @@ function ServicesPage() {
         price_cents: price,
         duration_minutes: duration,
         ...(form.segment_id ? { segment_id: form.segment_id } : {}),
+        allows_parallel: form.allows_parallel,
       });
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      setForm({ name: "", category: "", price: "", duration: "30", segment_id: "" });
+      setForm({
+        name: "",
+        category: "",
+        price: "",
+        duration: "30",
+        segment_id: "",
+        allows_parallel: false,
+      });
       toast.success("Serviço criado");
       queryClient.invalidateQueries({ queryKey: ["services", businessId] });
     },
@@ -280,6 +343,7 @@ function ServicesPage() {
           price_cents: price,
           duration_minutes: duration,
           segment_id: input.segment_id,
+          allows_parallel: input.allows_parallel,
         })
         .eq("id", input.id)
         .eq("business_id", businessId);
@@ -431,6 +495,7 @@ function ServicesPage() {
                                 id: string;
                                 name: string;
                                 description: string | null;
+                                price_cents: number;
                                 duration_minutes: number;
                               }) => {
                                 const checked = selectedTemplateIds.includes(template.id);
@@ -445,6 +510,9 @@ function ServicesPage() {
                                       </span>
                                       <span className="ml-2 text-muted-foreground">
                                         {template.duration_minutes} min
+                                        {template.price_cents > 0
+                                          ? ` · ${formatBRL(template.price_cents)}`
+                                          : ""}
                                         {template.description ? ` · ${template.description}` : ""}
                                       </span>
                                     </span>
@@ -536,6 +604,14 @@ function ServicesPage() {
             />
           </div>
         </div>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground sm:col-span-2">
+          <input
+            type="checkbox"
+            checked={form.allows_parallel}
+            onChange={(event) => setForm({ ...form, allows_parallel: event.target.checked })}
+          />
+          Permite atendimento simultâneo
+        </label>
         <div className="sm:col-span-2">
           <Button type="submit" disabled={create.isPending}>
             <Plus className="size-4" aria-hidden /> Adicionar serviço
@@ -553,6 +629,7 @@ function ServicesPage() {
             duration_minutes: number;
             active: boolean;
             segment_id: string | null;
+            allows_parallel: boolean;
           }) => (
             <li key={service.id} className="rounded-xl border border-border bg-card p-4">
               {edit?.id === service.id ? (
@@ -598,7 +675,12 @@ function ServicesPage() {
                       <Input
                         inputMode="decimal"
                         value={edit!.price}
-                        onChange={(e) => setEdit({ ...edit!, price: e.target.value })}
+                        onChange={(e) =>
+                          setEdit({
+                            ...edit!,
+                            price: replaceInitialZeroPrice(edit!.price, e.target.value),
+                          })
+                        }
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -610,6 +692,16 @@ function ServicesPage() {
                       />
                     </div>
                   </div>
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground sm:col-span-2">
+                    <input
+                      type="checkbox"
+                      checked={edit!.allows_parallel}
+                      onChange={(event) =>
+                        setEdit({ ...edit!, allows_parallel: event.target.checked })
+                      }
+                    />
+                    Permite atendimento simultâneo
+                  </label>
                   <div className="flex gap-2 sm:col-span-2">
                     <Button type="submit" size="sm" disabled={update.isPending}>
                       Salvar alterações
@@ -626,6 +718,7 @@ function ServicesPage() {
                     <p className="text-sm text-muted-foreground">
                       {service.category ? `${service.category} · ` : ""}
                       {formatDuration(service.duration_minutes)} · {formatBRL(service.price_cents)}
+                      {service.allows_parallel ? " · Simultâneo" : ""}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {(professionals.data ?? []).map(
@@ -678,6 +771,7 @@ function ServicesPage() {
                           price: (service.price_cents / 100).toFixed(2).replace(".", ","),
                           duration: String(service.duration_minutes),
                           segment_id: service.segment_id ?? "",
+                          allows_parallel: service.allows_parallel,
                         })
                       }
                     >
