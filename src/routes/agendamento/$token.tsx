@@ -7,6 +7,7 @@ import {
   confirmAppointmentPresence,
   cancelAppointmentByManageToken,
 } from "@/lib/appointment-manage.functions";
+import { userFacingError } from "@/lib/user-facing-error";
 
 export const Route = createFileRoute("/agendamento/$token")({
   loader: async ({ params }) => getAppointmentByManageToken({ data: { token: params.token } }),
@@ -43,9 +44,7 @@ function ManageAppointmentPage() {
       );
     } catch (error) {
       setMessage(
-        error instanceof Error
-          ? error.message.replace(/^[A-Z_]+:\s*/, "")
-          : "Não foi possível atualizar.",
+        userFacingError(error, "Não foi possível atualizar."),
       );
     } finally {
       setBusy(false);
@@ -60,9 +59,7 @@ function ManageAppointmentPage() {
       setMessage("Agendamento cancelado.");
     } catch (error) {
       setMessage(
-        error instanceof Error
-          ? error.message.replace(/^[A-Z_]+:\s*/, "")
-          : "Não foi possível cancelar.",
+        userFacingError(error, "Não foi possível cancelar."),
       );
     } finally {
       setBusy(false);

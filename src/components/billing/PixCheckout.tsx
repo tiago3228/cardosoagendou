@@ -6,6 +6,7 @@ import { Copy, Loader2, Upload } from "lucide-react";
 import { createManualPixRequest, getPixCheckout } from "@/lib/manual-pix.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/format";
+import { userFacingError } from "@/lib/user-facing-error";
 import { Button } from "@/components/ui/button";
 
 export const PIX_STATUS_LABEL: Record<string, string> = {
@@ -64,7 +65,7 @@ export function PixCheckout({
     },
     onError: (error: Error) =>
       toast.error("Não foi possível enviar sua solicitação.", {
-        description: error.message.replace(/^[A-Z_]+:\s*/, "") || "Tente novamente em alguns instantes.",
+        description: userFacingError(error, "Tente novamente em alguns instantes."),
       }),
   });
 

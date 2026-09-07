@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { uploadBusinessMedia, type MediaFolder } from "@/lib/media";
+import { userFacingError } from "@/lib/user-facing-error";
 
 interface PhotoFieldProps {
   businessId: string;
@@ -36,7 +37,7 @@ export function PhotoField({
       toast.success("Foto enviada com sucesso!");
     } catch (error) {
       toast.error("Não foi possível enviar a foto", {
-        description: error instanceof Error ? error.message : undefined,
+        description: userFacingError(error),
       });
     } finally {
       setBusy(false);

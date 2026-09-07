@@ -6,6 +6,7 @@ import { Mail, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery, entitlementsQuery } from "./app";
 import { WEEKDAY_SHORT } from "@/lib/format";
+import { userFacingError } from "@/lib/user-facing-error";
 import { BackButton } from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,7 +58,7 @@ function ProfessionalsPage() {
     },
     onError: (error: Error) =>
       toast.error("Não foi possível convidar", {
-        description: error.message.replace(/^[A-Z_]+:\s*/, ""),
+        description: userFacingError(error),
       }),
   });
 
@@ -67,7 +68,7 @@ function ProfessionalsPage() {
       toast.success("Convite revogado");
       queryClient.invalidateQueries({ queryKey: ["professional-invites", businessId] });
     },
-    onError: (error: Error) => toast.error("Erro ao revogar", { description: error.message }),
+    onError: (error: Error) => toast.error("Erro ao revogar", { description: userFacingError(error) }),
   });
 
   const professionals = useQuery({
@@ -143,9 +144,10 @@ function ProfessionalsPage() {
     },
     onError: (error: Error) =>
       toast.error("Não foi possível adicionar", {
-        description: error.message.includes("PLAN_LIMIT_REACHED")
-          ? `Seu plano ${plan?.name ?? ""} permite ${plan?.professional_limit} profissionais ativos. Faça upgrade para adicionar mais.`
-          : error.message,
+        description: userFacingError(
+          error,
+          `Seu plano ${plan?.name ?? ""} permite ${plan?.professional_limit} profissionais ativos. Faça upgrade para adicionar mais.`,
+        ),
       }),
   });
 
@@ -168,7 +170,7 @@ function ProfessionalsPage() {
       }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["professional-services", businessId] }),
-    onError: (error: Error) => toast.error("Erro ao vincular serviço", { description: error.message }),
+    onError: (error: Error) => toast.error("Erro ao vincular serviço", { description: userFacingError(error) }),
   });
 
   const setActive = useMutation({
@@ -185,9 +187,7 @@ function ProfessionalsPage() {
     },
     onError: (error: Error) =>
       toast.error("Não foi possível alterar", {
-        description: error.message.includes("PLAN_LIMIT_REACHED")
-          ? "Limite de profissionais do plano atingido."
-          : error.message,
+        description: userFacingError(error, "Limite de profissionais do plano atingido."),
       }),
   });
 
@@ -206,9 +206,7 @@ function ProfessionalsPage() {
     },
     onError: (error: Error) =>
       toast.error("Não foi possível atualizar a foto", {
-        description: error.message.includes("FEATURE_LOCKED_TEAM")
-          ? "Edição de profissionais exige um plano superior."
-          : error.message,
+        description: userFacingError(error, "Edição de profissionais exige um plano superior."),
       }),
   });
 
@@ -227,9 +225,7 @@ function ProfessionalsPage() {
     },
     onError: (error: Error) =>
       toast.error("Não foi possível salvar a descrição", {
-        description: error.message.includes("FEATURE_LOCKED_TEAM")
-          ? "Edição de profissionais exige um plano superior."
-          : error.message,
+        description: userFacingError(error, "Edição de profissionais exige um plano superior."),
       }),
   });
 
@@ -249,9 +245,7 @@ function ProfessionalsPage() {
     },
     onError: (error: Error) =>
       toast.error("Não foi possível remover", {
-        description: error.message.includes("FEATURE_LOCKED_TEAM")
-          ? "Excluir profissionais exige um plano superior."
-          : error.message,
+        description: userFacingError(error, "Excluir profissionais exige um plano superior."),
       }),
   });
 

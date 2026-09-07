@@ -5,6 +5,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { provisionBusiness } from "@/lib/signup.functions";
+import { userFacingError } from "@/lib/user-facing-error";
 import { provisionSchema, signupSchema } from "@/lib/schemas";
 import { BUSINESS_TYPES, BUSINESS_TYPE_CONFIG } from "@/lib/business-types";
 import { Button } from "@/components/ui/button";
@@ -128,7 +129,7 @@ function SignupPage() {
       navigate({ to: "/app" });
     } catch (error) {
       toast.error("Não foi possível concluir o cadastro", {
-        description: error instanceof Error ? error.message.replace(/^[A-Z_]+:\s*/, "") : undefined,
+        description: userFacingError(error),
       });
     } finally {
       setBusy(false);

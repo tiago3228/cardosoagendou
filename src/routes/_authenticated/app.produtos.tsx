@@ -6,6 +6,7 @@ import { AlertTriangle, History, Minus, Plus, ShoppingCart, Trash2 } from "lucid
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery, entitlementsQuery } from "./app";
 import { formatBRL } from "@/lib/format";
+import { userFacingError } from "@/lib/user-facing-error";
 import { BackButton } from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,7 +77,7 @@ function ProductsPage() {
       toast.success("Produto criado com sucesso!");
       queryClient.invalidateQueries({ queryKey: ["products", businessId] });
     },
-    onError: (error: Error) => toast.error("Não foi possível salvar", { description: error.message }),
+    onError: (error: Error) => toast.error("Não foi possível salvar", { description: userFacingError(error) }),
   });
 
   const move = useMutation({
@@ -96,9 +97,7 @@ function ProductsPage() {
     },
     onError: (error: Error) =>
       toast.error("Movimentação recusada", {
-        description: error.message.includes("INSUFFICIENT_STOCK")
-          ? "Estoque insuficiente para essa saída."
-          : error.message,
+        description: userFacingError(error, "Estoque insuficiente para essa saída."),
       }),
   });
 
@@ -133,9 +132,7 @@ function ProductsPage() {
     },
     onError: (error: Error) =>
       toast.error("Não foi possível registrar a venda", {
-        description: error.message.includes("INSUFFICIENT_STOCK")
-          ? "Estoque insuficiente para essa venda."
-          : error.message,
+        description: userFacingError(error, "Estoque insuficiente para essa venda."),
       }),
   });
 
@@ -152,7 +149,7 @@ function ProductsPage() {
       toast.success("Foto do produto atualizada!");
       queryClient.invalidateQueries({ queryKey: ["products", businessId] });
     },
-    onError: (error: Error) => toast.error("Não foi possível atualizar a foto", { description: error.message }),
+    onError: (error: Error) => toast.error("Não foi possível atualizar a foto", { description: userFacingError(error) }),
   });
 
   const remove = useMutation({
@@ -168,7 +165,7 @@ function ProductsPage() {
       toast.success("Produto removido");
       queryClient.invalidateQueries({ queryKey: ["products", businessId] });
     },
-    onError: (error: Error) => toast.error("Não foi possível remover", { description: error.message }),
+    onError: (error: Error) => toast.error("Não foi possível remover", { description: userFacingError(error) }),
   });
 
   if (!inventoryEnabled) {

@@ -21,6 +21,7 @@ import {
 import { rescheduleAppointmentByManageToken } from "@/lib/appointment-manage.functions";
 import { formatBRL, formatDuration, normalizeInstagramUrl, whatsappLink } from "@/lib/format";
 import { businessTypeConfig } from "@/lib/business-types";
+import { isTechnicalError, userFacingError } from "@/lib/user-facing-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WhatsappInput } from "@/components/ui/whatsapp-input";
@@ -248,7 +249,7 @@ function BookingPage() {
       setSlots(result.byProfessional);
     } catch (error) {
       toast.error("Não foi possível carregar os horários", {
-        description: error instanceof Error ? error.message.replace(/^[A-Z_]+:\s*/, "") : undefined,
+        description: userFacingError(error),
       });
       setSlots([]);
     } finally {
@@ -292,9 +293,9 @@ function BookingPage() {
       setStep(4);
     } catch (error) {
       toast.error("Não foi possível concluir a reserva", {
-        description: error instanceof Error ? error.message.replace(/^[A-Z_]+:\s*/, "") : undefined,
+        description: userFacingError(error),
       });
-      if (error instanceof Error && error.message.includes("SLOT_UNAVAILABLE")) {
+      if (isTechnicalError(error, "SLOT_UNAVAILABLE")) {
         await loadSlots(date, professionalId);
         setStep(2);
       }

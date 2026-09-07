@@ -7,6 +7,7 @@ import { ArrowDownCircle, ArrowUpCircle, Plus, Wallet } from "lucide-react";
 import { addFinanceEntry, getFinanceOverview } from "@/lib/finance.functions";
 import { entitlementsQuery } from "./app";
 import { formatBRL } from "@/lib/format";
+import { userFacingError } from "@/lib/user-facing-error";
 import { BackButton } from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,7 +92,7 @@ function FinanceDashboard() {
     },
     onError: (error: Error) =>
       toast.error("Não foi possível registrar", {
-        description: error.message.replace(/^[A-Z_]+:\s*/, ""),
+        description: userFacingError(error),
       }),
   });
 

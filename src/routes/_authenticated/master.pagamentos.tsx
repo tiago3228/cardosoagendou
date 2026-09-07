@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { getMasterStatus, listPixRequestsForReview, reviewPixRequest } from "@/lib/manual-pix.functions";
 import { PIX_STATUS_LABEL } from "@/components/billing/PixCheckout";
 import { formatBRL } from "@/lib/format";
+import { userFacingError } from "@/lib/user-facing-error";
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/BackButton";
 
@@ -59,7 +60,7 @@ function MasterPixPage() {
     },
     onError: (error: Error) =>
       toast.error("Não foi possível concluir a análise.", {
-        description: error.message.replace(/^[A-Z_]+:\s*/, ""),
+        description: userFacingError(error),
       }),
   });
 

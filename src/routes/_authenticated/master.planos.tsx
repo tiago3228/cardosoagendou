@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { listBusinessesForMaster, setMasterTestPlan } from "@/lib/master.functions";
 import { formatBRL } from "@/lib/format";
+import { userFacingError } from "@/lib/user-facing-error";
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/BackButton";
 
@@ -53,7 +54,7 @@ function MasterPlansPage() {
       queryClient.invalidateQueries({ queryKey: ["entitlements"] });
       queryClient.invalidateQueries({ queryKey: ["panel"] });
     },
-    onError: (error: Error) => toast.error(error.message.replace(/^[A-Z_]+:\s*/, "")),
+    onError: (error: Error) => toast.error(userFacingError(error)),
   });
 
   if (overview.isLoading) {

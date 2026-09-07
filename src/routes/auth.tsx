@@ -4,6 +4,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { userFacingError } from "@/lib/user-facing-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -49,7 +50,7 @@ function AuthPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) {
-      toast.error("Não foi possível entrar", { description: error.message });
+      toast.error("Não foi possível entrar", { description: userFacingError(error) });
       return;
     }
     navigate({ to: safePath(next), replace: true });
@@ -60,7 +61,7 @@ function AuthPage() {
       redirect_uri: window.location.origin,
     });
     if (result.error) {
-      toast.error("Falha no login com Google", { description: String(result.error) });
+      toast.error("Falha no login com Google", { description: userFacingError(String(result.error)) });
       return;
     }
     if (result.redirected) return;

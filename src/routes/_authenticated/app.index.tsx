@@ -16,6 +16,7 @@ import {
 import { getAgenda } from "@/lib/panel.functions";
 import { getAppointmentRevenue } from "@/lib/finance.functions";
 import { setAppointmentStatus } from "@/lib/appointments.functions";
+import { userFacingError } from "@/lib/user-facing-error";
 import { panelQuery } from "./app";
 import {
   formatBRL,
@@ -100,7 +101,7 @@ function AgendaPage() {
     },
     onError: (error: Error) =>
       toast.error("Não foi possível atualizar", {
-        description: error.message.replace(/^[A-Z_]+:\s*/, ""),
+        description: userFacingError(error),
       }),
   });
 

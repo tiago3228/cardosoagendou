@@ -22,6 +22,7 @@ import {
   type BillingInterval,
 } from "@/lib/plans";
 import { formatBRL } from "@/lib/format";
+import { userFacingError } from "@/lib/user-facing-error";
 import { Button } from "@/components/ui/button";
 import { PixCheckout } from "@/components/billing/PixCheckout";
 import { BackButton } from "@/components/BackButton";
@@ -64,7 +65,7 @@ function SubscriptionPage() {
   };
   const fail = (error: Error) =>
     toast.error("Não foi possível concluir", {
-      description: error.message.replace(/^[A-Z_]+:\s*/, ""),
+      description: userFacingError(error),
     });
 
   const checkout = useMutation({

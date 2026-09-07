@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { panelQuery } from "./app";
 import { formatBRL, formatDuration } from "@/lib/format";
 import { businessTypeConfig } from "@/lib/business-types";
+import { userFacingError } from "@/lib/user-facing-error";
 import { BackButton } from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -158,7 +159,7 @@ function ServicesPage() {
       toast.success("Segmento criado");
     },
     onError: (error: Error) =>
-      toast.error("Não foi possível criar o segmento", { description: error.message }),
+      toast.error("Não foi possível criar o segmento", { description: userFacingError(error) }),
   });
 
   const toggleSegment = useMutation({
@@ -172,7 +173,7 @@ function ServicesPage() {
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["business-segments", businessId] }),
     onError: (error: Error) =>
-      toast.error("Não foi possível atualizar o segmento", { description: error.message }),
+      toast.error("Não foi possível atualizar o segmento", { description: userFacingError(error) }),
   });
 
   const copyTemplates = useMutation({
@@ -235,6 +236,7 @@ function ServicesPage() {
     },
     onSuccess: async (count) => {
       setSelectedTemplateIds([]);
+      setExpandedSegmentId(null);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["services", businessId] }),
         queryClient.invalidateQueries({ queryKey: ["professional-services", businessId] }),
@@ -242,7 +244,7 @@ function ServicesPage() {
       toast.success(`${count} serviço(s) adicionado(s)`);
     },
     onError: (error: Error) =>
-      toast.error("Não foi possível adicionar os serviços", { description: error.message }),
+      toast.error("Não foi possível adicionar os serviços", { description: userFacingError(error) }),
   });
 
   const toggleProfessionalService = useMutation({
@@ -268,7 +270,7 @@ function ServicesPage() {
       await queryClient.invalidateQueries({ queryKey: ["professional-services", businessId] });
     },
     onError: (error: Error) =>
-      toast.error("Não foi possível atualizar os profissionais", { description: error.message }),
+      toast.error("Não foi possível atualizar os profissionais", { description: userFacingError(error) }),
   });
 
   const create = useMutation({
@@ -303,7 +305,7 @@ function ServicesPage() {
       queryClient.invalidateQueries({ queryKey: ["services", businessId] });
     },
     onError: (error: Error) =>
-      toast.error("Não foi possível salvar", { description: error.message }),
+      toast.error("Não foi possível salvar", { description: userFacingError(error) }),
   });
 
   const toggle = useMutation({
@@ -359,7 +361,7 @@ function ServicesPage() {
       queryClient.invalidateQueries({ queryKey: ["services", businessId] });
     },
     onError: (error: Error) =>
-      toast.error("Não foi possível atualizar", { description: error.message }),
+      toast.error("Não foi possível atualizar", { description: userFacingError(error) }),
   });
 
   return (
@@ -847,7 +849,7 @@ function ConflictRules({
     },
     onError: (error: Error) =>
       toast.error("Não foi possível criar a regra", {
-        description: error.message.replace(/^[A-Z_]+:\s*/, ""),
+        description: userFacingError(error),
       }),
   });
 

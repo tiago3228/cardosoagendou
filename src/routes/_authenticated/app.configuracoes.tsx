@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery } from "./app";
 import { WEEKDAY_LABELS } from "@/lib/format";
+import { userFacingError } from "@/lib/user-facing-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WhatsappInput } from "@/components/ui/whatsapp-input";
@@ -59,7 +60,7 @@ function SettingsPage() {
       toast.success("Configurações salvas");
       queryClient.invalidateQueries({ queryKey: ["panel"] });
     },
-    onError: (error: Error) => toast.error("Não foi possível salvar", { description: error.message }),
+    onError: (error: Error) => toast.error("Não foi possível salvar", { description: userFacingError(error) }),
   });
 
   const hours = useQuery({
@@ -281,4 +282,3 @@ function InstallAppSection() {
     </div>
   );
 }
-
