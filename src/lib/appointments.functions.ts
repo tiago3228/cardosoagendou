@@ -178,6 +178,7 @@ export const createManualAppointment = createServerFn({ method: "POST" })
         duration_minutes: selection.durationMinutes,
         total_price_cents: selection.priceCents,
         status: "CONFIRMED",
+        blocks_agenda: selection.blocksAgenda,
         notes: data.notes ?? null,
         snapshot: { source: "panel", services: selection.services },
       })

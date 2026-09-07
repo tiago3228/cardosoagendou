@@ -101,6 +101,7 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
         duration_minutes: selection.durationMinutes,
         total_price_cents: selection.priceCents,
         status: "PENDING",
+        blocks_agenda: selection.blocksAgenda,
         notes: data.notes ?? null,
         snapshot: {
           source: "public_booking",
