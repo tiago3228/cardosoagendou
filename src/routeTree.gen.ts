@@ -15,7 +15,6 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
-import { Route as AgendamentoTokenRouteImport } from './routes/agendamento/$token'
 import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppAssinaturaRouteImport } from './routes/_authenticated/app.assinatura'
@@ -58,11 +57,6 @@ const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   id: '/app',
   path: '/app',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AgendamentoTokenRoute = AgendamentoTokenRouteImport.update({
-  id: '/agendamento/$token',
-  path: '/agendamento/$token',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const ConviteTokenRoute = ConviteTokenRouteImport.update({
   id: '/convite/$token',
@@ -146,7 +140,6 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
-  '/agendamento/$token': typeof AgendamentoTokenRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/app/assinatura': typeof AuthenticatedAppAssinaturaRoute
   '/app/clientes': typeof AuthenticatedAppClientesRoute
@@ -166,7 +159,6 @@ export interface FileRoutesByTo {
   '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
-  '/agendamento/$token': typeof AgendamentoTokenRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/app/assinatura': typeof AuthenticatedAppAssinaturaRoute
   '/app/clientes': typeof AuthenticatedAppClientesRoute
@@ -189,7 +181,6 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
-  '/agendamento/$token': typeof AgendamentoTokenRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/_authenticated/app/assinatura': typeof AuthenticatedAppAssinaturaRoute
   '/_authenticated/app/clientes': typeof AuthenticatedAppClientesRoute
@@ -212,7 +203,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/cadastro'
     | '/app'
-    | '/agendamento/$token'
     | '/convite/$token'
     | '/app/assinatura'
     | '/app/clientes'
@@ -232,7 +222,6 @@ export interface FileRouteTypes {
     | '/$slug'
     | '/auth'
     | '/cadastro'
-    | '/agendamento/$token'
     | '/convite/$token'
     | '/app/assinatura'
     | '/app/clientes'
@@ -254,7 +243,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/cadastro'
     | '/_authenticated/app'
-    | '/agendamento/$token'
     | '/convite/$token'
     | '/_authenticated/app/assinatura'
     | '/_authenticated/app/clientes'
@@ -276,7 +264,6 @@ export interface RootRouteChildren {
   SlugRoute: typeof SlugRoute
   AuthRoute: typeof AuthRoute
   CadastroRoute: typeof CadastroRoute
-  AgendamentoTokenRoute: typeof AgendamentoTokenRoute
   ConviteTokenRoute: typeof ConviteTokenRoute
   ApiPublicCronBillingRoute: typeof ApiPublicCronBillingRoute
   ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
@@ -325,13 +312,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/app'
       preLoaderRoute: typeof AuthenticatedAppRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/agendamento/$token': {
-      id: '/agendamento/$token'
-      path: '/agendamento/$token'
-      fullPath: '/agendamento/$token'
-      preLoaderRoute: typeof AgendamentoTokenRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/convite/$token': {
       id: '/convite/$token'
@@ -473,7 +453,6 @@ const rootRouteChildren: RootRouteChildren = {
   SlugRoute: SlugRoute,
   AuthRoute: AuthRoute,
   CadastroRoute: CadastroRoute,
-  AgendamentoTokenRoute: AgendamentoTokenRoute,
   ConviteTokenRoute: ConviteTokenRoute,
   ApiPublicCronBillingRoute: ApiPublicCronBillingRoute,
   ApiPublicWebhooksMercadopagoRoute: ApiPublicWebhooksMercadopagoRoute,

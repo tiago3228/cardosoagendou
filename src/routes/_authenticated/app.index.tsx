@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Check,
@@ -38,7 +38,6 @@ const STATUS_LABEL: Record<string, string> = {
   COMPLETED: "Concluído",
   CANCELED: "Cancelado",
   NO_SHOW: "Não compareceu",
-  RESCHEDULED: "Reagendado",
 };
 
 const STATUS_STYLE: Record<string, string> = {
@@ -48,7 +47,6 @@ const STATUS_STYLE: Record<string, string> = {
   COMPLETED: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
   CANCELED: "bg-destructive/15 text-destructive",
   NO_SHOW: "bg-muted text-muted-foreground",
-  RESCHEDULED: "bg-muted text-muted-foreground",
 };
 
 const FILTERS = [
@@ -84,7 +82,6 @@ function AgendaPage() {
   const agenda = useQuery({
     queryKey: ["agenda", date],
     queryFn: () => fetchAgenda({ data: dayBounds(date) }),
-    refetchInterval: 10000,
   });
 
   const revenue = useQuery({
@@ -107,22 +104,6 @@ function AgendaPage() {
       }),
   });
 
-  const presenceByAppointment = useRef(new Map<string, string | null>());
-  useEffect(() => {
-    if (!agenda.data) return;
-    for (const appointment of agenda.data) {
-      const previous = presenceByAppointment.current.get(appointment.id);
-      if (previous !== undefined && previous !== appointment.presence_status) {
-        if (appointment.presence_status === "CONFIRMED") {
-          toast.success(`${appointment.client_name} confirmou presença`);
-        } else if (appointment.presence_status === "DECLINED") {
-          toast.warning(`${appointment.client_name} informou que não poderá comparecer`);
-        }
-      }
-      presenceByAppointment.current.set(appointment.id, appointment.presence_status);
-    }
-  }, [agenda.data]);
-
   // Official public domain first, so the shared link never points at a preview host.
   const origin =
     panel.publicOrigin ?? (typeof window !== "undefined" ? window.location.origin : "");
@@ -134,7 +115,7 @@ function AgendaPage() {
       return items.filter((a) => ["PENDING", "CONFIRMED", "IN_PROGRESS"].includes(a.status));
     if (filter === "COMPLETED") return items.filter((a) => a.status === "COMPLETED");
     if (filter === "CANCELED")
-      return items.filter((a) => ["CANCELED", "NO_SHOW", "RESCHEDULED"].includes(a.status));
+      return items.filter((a) => ["CANCELED", "NO_SHOW"].includes(a.status));
     return items;
   }, [items, filter]);
 
@@ -238,7 +219,6 @@ function AgendaPage() {
 
       <PlanBenefitsBanner
         currentPlanCode={(panel.subscription?.plans as { code?: string } | null)?.code ?? null}
-        currentStatus={panel.subscription?.status ?? null}
       />
 
       <div className="mt-6 flex gap-2 overflow-x-auto pb-1">
@@ -268,10 +248,6 @@ function AgendaPage() {
         {visible.map((appointment) => {
           const professional = appointment.professionals as { name?: string } | null;
           const services = (appointment.appointment_services ?? []) as { service_name: string }[];
-          const products = (appointment.appointment_products ?? []) as {
-            product_name: string;
-            quantity: number;
-          }[];
           const e164 = normalizeBrWhatsapp(appointment.client_whatsapp ?? "");
           const time = new Date(appointment.starts_at).toLocaleTimeString("pt-BR", {
             hour: "2-digit",
@@ -300,12 +276,6 @@ function AgendaPage() {
                     <p className="mt-0.5 truncate text-sm text-muted-foreground">
                       {services.map((s) => s.service_name).join(" + ")}
                     </p>
-                    {products.length > 0 ? (
-                      <p className="mt-1 truncate text-xs text-primary">
-                        Produtos:{" "}
-                        {products.map((p) => `${p.product_name} (${p.quantity}x)`).join(", ")}
-                      </p>
-                    ) : null}
                   </div>
                   <span
                     className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
@@ -315,6 +285,11 @@ function AgendaPage() {
                     {STATUS_LABEL[appointment.status]}
                   </span>
                 </div>
+                {appointment.blocks_agenda === false ? (
+                  <span className="mt-1.5 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                    Simultâneo · não ocupa a agenda
+                  </span>
+                ) : null}
 
                 <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                   <span className="font-medium text-foreground">
@@ -324,15 +299,6 @@ function AgendaPage() {
                     <Clock className="size-3.5" aria-hidden /> {professional?.name}
                   </span>
                   <span>{formatWhatsapp(appointment.client_whatsapp)}</span>
-                  {appointment.presence_status === "CONFIRMED" ? (
-                    <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                      Presença confirmada
-                    </span>
-                  ) : appointment.presence_status === "DECLINED" ? (
-                    <span className="font-medium text-amber-700 dark:text-amber-300">
-                      Cliente não poderá comparecer
-                    </span>
-                  ) : null}
                 </p>
 
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -341,21 +307,7 @@ function AgendaPage() {
                       <a
                         href={whatsappLink(
                           e164,
-                          [
-                            `Olá, ${appointment.client_name}!`,
-                            appointment.status === "CONFIRMED"
-                              ? "Seu agendamento foi confirmado."
-                              : "Estou entrando em contato sobre seu agendamento.",
-                            `Data e horário: ${new Date(appointment.starts_at).toLocaleString(
-                              "pt-BR",
-                              {
-                                dateStyle: "full",
-                                timeStyle: "short",
-                              },
-                            )}`,
-                            `Serviços: ${services.map((service) => service.service_name).join(", ")}`,
-                            `Profissional: ${professional?.name ?? "não informado"}`,
-                          ].join("\n"),
+                          `Olá, ${appointment.client_name}! Confirmando seu horário às ${time}.`,
                         )}
                         target="_blank"
                         rel="noreferrer"

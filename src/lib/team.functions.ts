@@ -29,8 +29,7 @@ export const inviteProfessional = createServerFn({ method: "POST" })
       .is("deleted_at", null)
       .maybeSingle();
     if (!professional.data) throw new Error("PROFESSIONAL_NOT_FOUND");
-    if (professional.data.user_id)
-      throw new Error("ALREADY_LINKED: este profissional já tem acesso");
+    if (professional.data.user_id) throw new Error("ALREADY_LINKED: este profissional já tem acesso");
 
     const token = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
     const expiresAt = new Date(Date.now() + 7 * 86400000).toISOString();
@@ -107,12 +106,7 @@ export const revokeProfessionalInvite = createServerFn({ method: "POST" })
 export const acceptProfessionalInvite = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z
-      .object({
-        token: z.string().trim().min(20).max(120),
-        fullName: z.string().trim().min(2).max(80),
-      })
-      .parse(input),
+    z.object({ token: z.string().trim().min(20).max(120), fullName: z.string().trim().min(2).max(80) }).parse(input),
   )
   .handler(async ({ data, context }) => {
     const { error, data: result } = await context.supabase.rpc("accept_professional_invite", {

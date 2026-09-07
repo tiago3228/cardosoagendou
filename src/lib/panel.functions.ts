@@ -54,33 +54,8 @@ export const getMyPanel = createServerFn({ method: "POST" })
       .eq("key", "app.public_origin")
       .maybeSingle();
 
-    const instagram = await context.supabase
-      .from("businesses")
-      .select("instagram_url")
-      .eq("id", businessId)
-      .maybeSingle();
-    const whatsappConfig = await context.supabase
-      .from("businesses")
-      .select("whatsapp_notifications_enabled, reminder_enabled, reminder_minutes")
-      .eq("id", businessId)
-      .maybeSingle();
-
     return {
-      business: business.data
-        ? {
-            ...business.data,
-            instagram_url: instagram.error ? null : (instagram.data?.instagram_url ?? null),
-            whatsapp_notifications_enabled: whatsappConfig.error
-              ? false
-              : (whatsappConfig.data?.whatsapp_notifications_enabled ?? false),
-            reminder_enabled: whatsappConfig.error
-              ? true
-              : (whatsappConfig.data?.reminder_enabled ?? true),
-            reminder_minutes: whatsappConfig.error
-              ? 60
-              : (whatsappConfig.data?.reminder_minutes ?? 60),
-          }
-        : null,
+      business: business.data ?? null,
       role: roles.data?.find((r) => r.business_id === businessId)?.role ?? null,
       ownerName: profile.data?.full_name ?? null,
       subscription: subscription.data ?? null,
@@ -97,7 +72,7 @@ export const getAgenda = createServerFn({ method: "POST" })
     const appointments = await context.supabase
       .from("appointments")
       .select(
-        "id, starts_at, ends_at, status, presence_status, client_name, client_whatsapp, total_price_cents, duration_minutes, notes, professional_id, professionals:professional_id (name), appointment_services (service_name, price_cents, duration_minutes), appointment_products (product_name, price_cents, quantity, image_url)",
+        "id, starts_at, ends_at, status, client_name, client_whatsapp, total_price_cents, duration_minutes, notes, blocks_agenda, professional_id, professionals:professional_id (name), appointment_services (service_name, price_cents, duration_minutes)",
       )
       .gte("starts_at", data.from)
       .lt("starts_at", data.to)

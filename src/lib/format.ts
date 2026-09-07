@@ -62,47 +62,11 @@ export function formatWhatsapp(e164: string | null | undefined): string {
   return masked || e164;
 }
 
+
 export function whatsappLink(e164: string | null | undefined, message?: string): string {
-  const normalized = normalizeBrWhatsapp(e164 ?? "");
-  if (!normalized) return "";
-  const digits = normalized.replace(/\D+/g, "");
+  const digits = (e164 ?? "").replace(/\D+/g, "");
   const base = `https://wa.me/${digits}`;
   return message ? `${base}?text=${encodeURIComponent(message)}` : base;
-}
-
-export function normalizeInstagramUrl(input: string | null | undefined): string | null {
-  const value = (input ?? "").trim();
-  if (!value) return null;
-  const candidate = value.replace(/^@+/, "");
-  const rawUrl = /^https?:\/\//i.test(candidate)
-    ? candidate
-    : `https://www.instagram.com/${candidate}`;
-  let url: URL;
-  try {
-    url = new URL(rawUrl);
-  } catch {
-    return null;
-  }
-  if (
-    url.protocol !== "https:" ||
-    !["instagram.com", "www.instagram.com"].includes(url.hostname.toLowerCase())
-  ) {
-    return null;
-  }
-  const username = url.pathname.split("/").filter(Boolean)[0] ?? "";
-  if (
-    !/^[a-zA-Z0-9._]{1,30}$/.test(username) ||
-    url.pathname.split("/").filter(Boolean).length !== 1
-  ) {
-    return null;
-  }
-  return `https://www.instagram.com/${username}`;
-}
-
-export function instagramHandle(url: string | null | undefined): string | null {
-  const normalized = normalizeInstagramUrl(url);
-  if (!normalized) return null;
-  return `@${normalized.split("/").filter(Boolean).pop()}`;
 }
 
 export function slugify(value: string): string {
