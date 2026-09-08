@@ -610,26 +610,7 @@ function BookingPage() {
                         key={product.id}
                         className={`rounded-xl border bg-[var(--public-surface)] p-3 transition ${selectedProducts.includes(product.id) ? "border-[var(--public-primary)]" : "border-[var(--public-border)]"}`}
                       >
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                              event.preventDefault();
-                              event.currentTarget.click();
-                            }
-                          }}
-                          onClick={() => {
-                            const alreadySelected = selectedProducts.includes(product.id);
-                            setSelectedProducts((previous) =>
-                              alreadySelected
-                                ? previous.filter((id) => id !== product.id)
-                                : [...previous, product.id],
-                            );
-                            setProductQuantities((current) => ({ ...current, [product.id]: alreadySelected ? 1 : (current[product.id] ?? 1) }));
-                          }}
-                          className="flex w-full items-center gap-3 text-left"
-                        >
+                        <div className="flex w-full items-center gap-3 text-left">
                           {product.image_url ? (
                             <img
                               src={product.image_url}
@@ -642,15 +623,38 @@ function BookingPage() {
                             <span className="text-sm text-[var(--public-accent)]">
                               {formatBRL(product.price_cents)} · Estoque: {product.stock_quantity}
                             </span>
-                            {selectedProducts.includes(product.id) ? (
-                              <span className="mt-2 flex items-center gap-2 text-sm" onClick={(event) => event.stopPropagation()}>
-                                <span>Qtd.</span>
-                                <button type="button" className="rounded border border-[var(--public-primary)] px-2" onClick={() => setProductQuantities((current) => ({ ...current, [product.id]: Math.max(1, (current[product.id] ?? 1) - 1) }))}>−</button>
-                                <span>{productQuantities[product.id] ?? 1}</span>
-                                <button type="button" className="rounded border border-[var(--public-primary)] px-2" disabled={(productQuantities[product.id] ?? 1) >= product.stock_quantity} onClick={() => setProductQuantities((current) => ({ ...current, [product.id]: Math.min(product.stock_quantity, (current[product.id] ?? 1) + 1) }))}>+</button>
-                              </span>
-                            ) : null}
                           </span>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between gap-2">
+                          {selectedProducts.includes(product.id) ? (
+                            <span className="flex items-center gap-2 text-sm text-[var(--public-text)]">
+                              <span>Qtd.</span>
+                              <button
+                                type="button"
+                                className="rounded border border-[var(--public-primary)] px-2"
+                                onClick={() => updateProductQuantity(product.id, (productQuantities[product.id] ?? 1) - 1)}
+                              >
+                                −
+                              </button>
+                              <span>{productQuantities[product.id] ?? 1}</span>
+                              <button
+                                type="button"
+                                className="rounded border border-[var(--public-primary)] px-2"
+                                disabled={(productQuantities[product.id] ?? 1) >= product.stock_quantity}
+                                onClick={() => updateProductQuantity(product.id, (productQuantities[product.id] ?? 1) + 1)}
+                              >
+                                +
+                              </button>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="rounded-md border border-[var(--public-primary)] px-3 py-1.5 text-sm font-medium text-[var(--public-primary)] transition hover:bg-[var(--public-primary)] hover:text-[var(--public-bg)]"
+                              onClick={() => updateProductQuantity(product.id, 1)}
+                            >
+                              Adicionar ao agendamento
+                            </button>
+                          )}
                           {selectedProducts.includes(product.id) ? (
                             <Check className="size-5 text-[var(--public-accent)]" aria-hidden />
                           ) : null}
