@@ -100,6 +100,20 @@ function BookingPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [productQuantities, setProductQuantities] = useState<Record<string, number>>({});
+
+  const updateProductQuantity = (productId: string, quantity: number) => {
+    if (!data) return;
+    const product = data.products?.find((p) => p.id === productId);
+    if (!product) return;
+    const safe = Math.max(0, Math.min(quantity, product.stock_quantity));
+    setProductQuantities((current) => ({ ...current, [productId]: safe }));
+    setSelectedProducts((previous) => {
+      const exists = previous.includes(productId);
+      if (safe > 0 && !exists) return [...previous, productId];
+      if (safe === 0 && exists) return previous.filter((id) => id !== productId);
+      return previous;
+    });
+  };
   const [professionalId, setProfessionalId] = useState<string | null>(null);
   const [date, setDate] = useState(todayISO());
   const [slots, setSlots] = useState<
@@ -217,6 +231,7 @@ function BookingPage() {
     !selected.includes(serviceId) &&
     (selected.some((sid) => conflictsWith(serviceId, sid)) ||
       serviceSelectionIssue([...selected, serviceId], compositionRules) === "composition");
+  const isServiceDisabled = (serviceId: string) => blockedService(serviceId);
   const blockedReason = (serviceId: string) => {
     if (selected.includes(serviceId)) return "Este serviço já foi adicionado ao atendimento.";
     if (serviceSelectionIssue([...selected, serviceId], compositionRules) === "composition") {
@@ -322,7 +337,7 @@ function BookingPage() {
 
   return (
     <main className="public-theme min-h-screen text-[var(--public-text)]" style={{ backgroundColor: business.secondary_color ?? "#0B0A08" }}>
-      <style>{\`.public-theme { --public-primary: ${business.primary_color ?? "#B4884F"}; --public-secondary: ${business.secondary_color ?? "#0B0A08"}; --public-accent: ${business.primary_color ?? "#D1A66C"}; --public-text: #F2EDE4; --public-muted: #9C948A; --public-surface: #1E1B17; --public-card: #262220; --public-border: #35302A; --public-bg: ${business.secondary_color ?? "#14120F"}; }\`}</style>
+      <style>{`.public-theme { --public-primary: ${business.primary_color ?? "#B4884F"}; --public-secondary: ${business.secondary_color ?? "#0B0A08"}; --public-accent: ${business.primary_color ?? "#D1A66C"}; --public-text: #F2EDE4; --public-muted: #9C948A; --public-surface: #1E1B17; --public-card: #262220; --public-border: #35302A; --public-bg: ${business.secondary_color ?? "#14120F"}; }`}</style>
       <div className="mx-auto min-h-screen max-w-[460px] overflow-hidden pb-32 shadow-2xl" style={{ backgroundColor: business.secondary_color ?? "#14120F" }}>
         <div className="h-1 bg-[linear-gradient(90deg,var(--public-primary)_0%,var(--public-primary)_60%,transparent_60%,transparent_70%,var(--public-primary)_70%,var(--public-primary)_100%)]" />
         <div className="border-b border-[var(--public-border)] px-5 py-6">
@@ -516,16 +531,17 @@ function BookingPage() {
                       return (
                         <li key={service.id}>
                           <button
-                            disabled={blocked}
-                            aria-disabled={blocked}
-                            onClick={() =>
+                            disabled={isServiceDisabled(service.id)}
+                            aria-disabled={isServiceDisabled(service.id)}
+                            onClick={() => {
+                              if (isServiceDisabled(service.id)) return;
                               setSelected((prev) =>
                                 prev.includes(service.id)
                                   ? prev.filter((id) => id !== service.id)
                                   : [...prev, service.id],
-                              )
-                            }
-                            className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition ${active ? "border-[var(--public-primary)] bg-[var(--public-card)]" : "border-[var(--public-border)] bg-[var(--public-surface)]"} ${blocked ? "cursor-not-allowed opacity-50" : "hover:border-[var(--public-primary)]"}`}
+                              );
+                            }}
+                            className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition ${active ? "border-[var(--public-primary)] bg-[var(--public-card)]" : "border-[var(--public-border)] bg-[var(--public-surface)]"} ${isServiceDisabled(service.id) ? "pointer-events-none cursor-not-allowed opacity-50" : "hover:border-[var(--public-primary)]"}`}
                           >
                             <span>
                               <span className="block font-medium text-[var(--public-text)]">
@@ -595,26 +611,7 @@ function BookingPage() {
                         key={product.id}
                         className={`rounded-xl border bg-[var(--public-surface)] p-3 transition ${selectedProducts.includes(product.id) ? "border-[var(--public-primary)]" : "border-[var(--public-border)]"}`}
                       >
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                              event.preventDefault();
-                              event.currentTarget.click();
-                            }
-                          }}
-                          onClick={() => {
-                            const alreadySelected = selectedProducts.includes(product.id);
-                            setSelectedProducts((previous) =>
-                              alreadySelected
-                                ? previous.filter((id) => id !== product.id)
-                                : [...previous, product.id],
-                            );
-                            setProductQuantities((current) => ({ ...current, [product.id]: alreadySelected ? 1 : (current[product.id] ?? 1) }));
-                          }}
-                          className="flex w-full items-center gap-3 text-left"
-                        >
+                        <div className="flex w-full items-center gap-3 text-left">
                           {product.image_url ? (
                             <img
                               src={product.image_url}
@@ -627,15 +624,38 @@ function BookingPage() {
                             <span className="text-sm text-[var(--public-accent)]">
                               {formatBRL(product.price_cents)} · Estoque: {product.stock_quantity}
                             </span>
-                            {selectedProducts.includes(product.id) ? (
-                              <span className="mt-2 flex items-center gap-2 text-sm" onClick={(event) => event.stopPropagation()}>
-                                <span>Qtd.</span>
-                                <button type="button" className="rounded border border-[var(--public-primary)] px-2" onClick={() => setProductQuantities((current) => ({ ...current, [product.id]: Math.max(1, (current[product.id] ?? 1) - 1) }))}>−</button>
-                                <span>{productQuantities[product.id] ?? 1}</span>
-                                <button type="button" className="rounded border border-[var(--public-primary)] px-2" disabled={(productQuantities[product.id] ?? 1) >= product.stock_quantity} onClick={() => setProductQuantities((current) => ({ ...current, [product.id]: Math.min(product.stock_quantity, (current[product.id] ?? 1) + 1) }))}>+</button>
-                              </span>
-                            ) : null}
                           </span>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between gap-2">
+                          {selectedProducts.includes(product.id) ? (
+                            <span className="flex items-center gap-2 text-sm text-[var(--public-text)]">
+                              <span>Qtd.</span>
+                              <button
+                                type="button"
+                                className="rounded border border-[var(--public-primary)] px-2"
+                                onClick={() => updateProductQuantity(product.id, (productQuantities[product.id] ?? 1) - 1)}
+                              >
+                                −
+                              </button>
+                              <span>{productQuantities[product.id] ?? 1}</span>
+                              <button
+                                type="button"
+                                className="rounded border border-[var(--public-primary)] px-2"
+                                disabled={(productQuantities[product.id] ?? 1) >= product.stock_quantity}
+                                onClick={() => updateProductQuantity(product.id, (productQuantities[product.id] ?? 1) + 1)}
+                              >
+                                +
+                              </button>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="rounded-md border border-[var(--public-primary)] px-3 py-1.5 text-sm font-medium text-[var(--public-primary)] transition hover:bg-[var(--public-primary)] hover:text-[var(--public-bg)]"
+                              onClick={() => updateProductQuantity(product.id, 1)}
+                            >
+                              Adicionar ao agendamento
+                            </button>
+                          )}
                           {selectedProducts.includes(product.id) ? (
                             <Check className="size-5 text-[var(--public-accent)]" aria-hidden />
                           ) : null}
