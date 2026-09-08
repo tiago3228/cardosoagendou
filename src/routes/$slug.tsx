@@ -636,40 +636,76 @@ function BookingPage() {
                             </span>
                           </span>
                         </div>
-                        <div className="mt-3 flex items-center justify-between gap-2">
-                          {selectedProducts.includes(product.id) ? (
-                            <span className="flex items-center gap-2 text-sm text-[var(--public-text)]">
-                              <span>Qtd.</span>
-                              <button
-                                type="button"
-                                className="rounded border border-[var(--public-primary)] px-2"
-                                onClick={() => updateProductQuantity(product.id, (productQuantities[product.id] ?? 1) - 1)}
-                              >
-                                −
-                              </button>
-                              <span>{productQuantities[product.id] ?? 1}</span>
-                              <button
-                                type="button"
-                                className="rounded border border-[var(--public-primary)] px-2"
-                                disabled={(productQuantities[product.id] ?? 1) >= product.stock_quantity}
-                                onClick={() => updateProductQuantity(product.id, (productQuantities[product.id] ?? 1) + 1)}
-                              >
-                                +
-                              </button>
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              className="rounded-md border border-[var(--public-primary)] px-3 py-1.5 text-sm font-medium text-[var(--public-primary)] transition hover:bg-[var(--public-primary)] hover:text-[var(--public-bg)]"
-                              onClick={() => updateProductQuantity(product.id, 1)}
-                            >
-                              Adicionar ao agendamento
-                            </button>
-                          )}
-                          {selectedProducts.includes(product.id) ? (
-                            <Check className="size-5 text-[var(--public-accent)]" aria-hidden />
-                          ) : null}
-                        </div>
+                        {(() => {
+                          const inCart = selectedProducts.includes(product.id);
+                          const draft = Math.min(
+                            productDrafts[product.id] ?? 1,
+                            Math.max(product.stock_quantity, 1),
+                          );
+                          const setDraft = (next: number) =>
+                            setProductDrafts((current) => ({
+                              ...current,
+                              [product.id]: Math.max(
+                                1,
+                                Math.min(next, Math.max(product.stock_quantity, 1)),
+                              ),
+                            }));
+                          const cartQty = productQuantities[product.id] ?? 1;
+                          return (
+                            <div className="mt-3 space-y-2">
+                              <div className="flex items-center gap-2 text-sm text-[var(--public-text)]">
+                                <span>Quantidade</span>
+                                <button
+                                  type="button"
+                                  aria-label="Diminuir quantidade"
+                                  className="rounded border border-[var(--public-primary)] px-2"
+                                  disabled={draft <= 1}
+                                  onClick={() => setDraft(draft - 1)}
+                                >
+                                  −
+                                </button>
+                                <span className="min-w-6 text-center font-semibold">{draft}</span>
+                                <button
+                                  type="button"
+                                  aria-label="Aumentar quantidade"
+                                  className="rounded border border-[var(--public-primary)] px-2"
+                                  disabled={draft >= product.stock_quantity}
+                                  onClick={() => setDraft(draft + 1)}
+                                >
+                                  +
+                                </button>
+                                {inCart ? (
+                                  <span className="ml-auto flex items-center gap-1 text-xs text-[var(--public-accent)]">
+                                    <Check className="size-4" aria-hidden /> {cartQty} no agendamento
+                                  </span>
+                                ) : null}
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  className="rounded-md border border-[var(--public-primary)] px-3 py-1.5 text-sm font-medium text-[var(--public-primary)] transition hover:bg-[var(--public-primary)] hover:text-[var(--public-bg)]"
+                                  disabled={product.stock_quantity < 1}
+                                  onClick={() => updateProductQuantity(product.id, draft)}
+                                >
+                                  {inCart
+                                    ? draft === cartQty
+                                      ? "Quantidade atualizada"
+                                      : "Atualizar quantidade"
+                                    : "Adicionar ao agendamento"}
+                                </button>
+                                {inCart ? (
+                                  <button
+                                    type="button"
+                                    className="rounded-md border border-[var(--public-border)] px-3 py-1.5 text-sm text-[var(--public-muted)] transition hover:text-[var(--public-text)]"
+                                    onClick={() => updateProductQuantity(product.id, 0)}
+                                  >
+                                    Remover
+                                  </button>
+                                ) : null}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </li>
                     ))}
                   </ul>
