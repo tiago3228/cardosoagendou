@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -123,7 +124,7 @@ function ManageAppointmentPage() {
         "--public-card": "#262220",
         "--public-border": "#35302A",
         backgroundColor: appointment.secondary_color ?? "#0B0A08",
-      } as React.CSSProperties}
+      } as CSSProperties}
     >
       <section className="mx-auto max-w-md rounded-2xl border border-[var(--public-border)] bg-[var(--public-card)] p-6 shadow-2xl">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--public-primary)]">
@@ -184,6 +185,7 @@ function ManageAppointmentPage() {
             variant="ghost"
             disabled={busy || !allowCancel || currentStatus !== "CONFIRMED"}
             onClick={() => void cancelAppointment()}
+            className="text-[var(--public-text)] hover:bg-[var(--public-primary)]/15 hover:text-[var(--public-accent)]"
           >
             Cancelar agendamento
           </Button>
