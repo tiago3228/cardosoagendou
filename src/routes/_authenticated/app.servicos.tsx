@@ -957,6 +957,36 @@ function ServicesPage() {
       </ul>
 
       <ConflictRules businessId={businessId} services={services.data ?? []} />
+
+      <AlertDialog
+        open={segmentToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setSegmentToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir segmento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir permanentemente este segmento
+              {segmentToDelete ? ` (${segmentToDelete.name})` : ""} e seus serviços vinculados? Os
+              agendamentos já feitos continuam no histórico.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteSegment.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                if (segmentToDelete) deleteSegment.mutate(segmentToDelete.id);
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
