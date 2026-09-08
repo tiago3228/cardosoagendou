@@ -98,6 +98,7 @@ function BookingPage() {
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [productDrafts, setProductDrafts] = useState<Record<string, number>>({});
   const [productQuantities, setProductQuantities] = useState<Record<string, number>>({});
 
   const updateProductQuantity = (productId: string, quantity: number) => {
