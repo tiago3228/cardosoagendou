@@ -550,11 +550,7 @@ function BookingPage() {
                             aria-disabled={isServiceDisabled(service.id)}
                             onClick={() => {
                               if (isServiceDisabled(service.id)) return;
-                              setSelected((prev) =>
-                                prev.includes(service.id)
-                                  ? prev.filter((id) => id !== service.id)
-                                  : [...prev, service.id],
-                              );
+                              toggleService(service.id);
                             }}
                             className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition ${active ? "border-[var(--public-primary)] bg-[var(--public-card)]" : "border-[var(--public-border)] bg-[var(--public-surface)]"} ${isServiceDisabled(service.id) ? "pointer-events-none cursor-not-allowed opacity-50" : "hover:border-[var(--public-primary)]"}`}
                           >
