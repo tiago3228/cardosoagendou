@@ -248,11 +248,25 @@ function BookingPage() {
       return [...kept, serviceId];
     });
   };
+  /** Every single service contained in the currently selected combos, by ID. */
+  const selectedComboItemIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const selectedId of selected) {
+      for (const rule of compositionRules) {
+        if (rule.composite_service_id === selectedId) ids.add(rule.component_service_id);
+      }
+    }
+    return ids;
+  }, [selected, compositionRules]);
+  const includedInCombo = (serviceId: string) =>
+    !selected.includes(serviceId) && selectedComboItemIds.has(serviceId);
   const blockedService = (serviceId: string) =>
-    !selected.includes(serviceId) && selected.some((sid) => conflictsWith(serviceId, sid));
+    !selected.includes(serviceId) &&
+    (selectedComboItemIds.has(serviceId) || selected.some((sid) => conflictsWith(serviceId, sid)));
   const isServiceDisabled = (serviceId: string) => blockedService(serviceId);
   const blockedReason = (serviceId: string) => {
     if (selected.includes(serviceId)) return "Este serviço já foi adicionado ao atendimento.";
+    if (includedInCombo(serviceId)) return "Incluso no combo selecionado";
     return "Indisponível junto dos serviços já selecionados";
   };
   const hardConflict = useMemo(() => {
