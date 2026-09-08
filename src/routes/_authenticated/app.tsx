@@ -122,7 +122,7 @@ function PanelLayout() {
       </aside>
 
       <div className="flex-1">
-        <header className="flex items-center justify-between border-b border-border px-5 py-4 md:hidden">
+        <header className="flex items-center justify-between border-b border-border px-5 py-4">
           <span className="font-display font-bold">{data.business.name}</span>
           <Button
             variant="ghost"
