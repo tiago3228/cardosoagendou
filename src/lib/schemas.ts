@@ -76,7 +76,7 @@ export const manualAppointmentSchema = z.object({
 
 /** Allowed appointment status transitions (state machine). */
 export const STATUS_TRANSITIONS: Record<string, string[]> = {
-  PENDING: ["CONFIRMED", "CANCELED", "NO_SHOW"],
+  PENDING: ["CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELED", "NO_SHOW"],
   CONFIRMED: ["IN_PROGRESS", "COMPLETED", "CANCELED", "NO_SHOW"],
   IN_PROGRESS: ["COMPLETED", "CANCELED"],
   COMPLETED: [],
