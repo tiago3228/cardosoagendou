@@ -152,7 +152,7 @@ function BookingPage() {
     const segmentNames = new Map(
       (data!.segments ?? []).map((segment) => [segment.id, segment.name]),
     );
-    const groups = new Map<string, { name: string; services: PublicService[] }>();
+    const groups = new Map<string, { key: string; name: string; services: PublicService[] }>();
     data!.services
       .filter(
         (service) =>
@@ -164,6 +164,7 @@ function BookingPage() {
       .forEach((service) => {
         const key = service.segment_id ?? "legacy";
         const current = groups.get(key) ?? {
+          key,
           name: segmentNames.get(key) ?? "Serviços",
           services: [],
         };
@@ -538,7 +539,7 @@ function BookingPage() {
               </p>
               <ul className="mt-4 space-y-2">
                 {serviceGroups.map((group) => (
-                  <Fragment key={group.name}>
+                  <Fragment key={group.key}>
                     <li className="pt-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--public-primary)]">
                       {group.name}
                     </li>
