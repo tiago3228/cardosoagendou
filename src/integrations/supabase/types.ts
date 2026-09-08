@@ -1358,6 +1358,7 @@ export type Database = {
           allows_parallel: boolean
           business_id: string | null
           category: string | null
+          component_template_ids: string[]
           created_at: string
           description: string | null
           duration_minutes: number
@@ -1374,6 +1375,7 @@ export type Database = {
           allows_parallel?: boolean
           business_id?: string | null
           category?: string | null
+          component_template_ids?: string[]
           created_at?: string
           description?: string | null
           duration_minutes?: number
@@ -1390,6 +1392,7 @@ export type Database = {
           allows_parallel?: boolean
           business_id?: string | null
           category?: string | null
+          component_template_ids?: string[]
           created_at?: string
           description?: string | null
           duration_minutes?: number
@@ -1838,6 +1841,10 @@ export type Database = {
           _starts_at: string
           _status?: Database["public"]["Enums"]["appointment_status"]
         }
+        Returns: Json
+      }
+      delete_business_segment: {
+        Args: { _business_id: string; _business_segment_id: string }
         Returns: Json
       }
       enqueue_due_appointment_reminders: { Args: never; Returns: number }

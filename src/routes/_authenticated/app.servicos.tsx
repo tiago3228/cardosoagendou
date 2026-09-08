@@ -13,6 +13,16 @@ import { BackButton } from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/app/servicos")({
   component: ServicesPage,
@@ -57,6 +67,7 @@ function ServicesPage() {
   const [catalogSegmentId, setCatalogSegmentId] = useState("");
   const [expandedSegmentId, setExpandedSegmentId] = useState<string | null>(null);
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
+  const [segmentToDelete, setSegmentToDelete] = useState<{ id: string; name: string } | null>(null);
   const segments = useQuery({
     queryKey: ["business-segments", businessId],
     queryFn: async () => {
@@ -191,6 +202,30 @@ function ServicesPage() {
     onError: (error: Error) =>
       toast.error("Não foi possível atualizar o segmento", { description: userFacingError(error) }),
   });
+
+  const deleteSegment = useMutation({
+    mutationFn: async (segmentId: string) => {
+      const { error } = await db.rpc("delete_business_segment" as never, {
+        _business_id: businessId,
+        _business_segment_id: segmentId,
+      } as never);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async () => {
+      setSegmentToDelete(null);
+      setExpandedSegmentId(null);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["business-segments", businessId] }),
+        queryClient.invalidateQueries({ queryKey: ["services", businessId] }),
+        queryClient.invalidateQueries({ queryKey: ["service-compositions", businessId] }),
+      ]);
+      toast.success("Segmento excluído");
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível excluir o segmento", { description: userFacingError(error) }),
+  });
+
+
 
   const copyTemplates = useMutation({
     mutationFn: async (input: { segmentId: string; templateIds: string[] }) => {
@@ -466,16 +501,31 @@ function ServicesPage() {
                       />
                       {segment.name}
                     </button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={segment.active ? "outline" : "default"}
-                      onClick={() =>
-                        toggleSegment.mutate({ id: segment.id, active: !segment.active })
-                      }
-                    >
-                      {segment.active ? "Desativar" : "Ativar"}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={segment.active ? "outline" : "default"}
+                        onClick={() =>
+                          toggleSegment.mutate({ id: segment.id, active: !segment.active })
+                        }
+                      >
+                        {segment.active ? "Desativar" : "Ativar"}
+                      </Button>
+                      {segment.active ? null : (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          aria-label={`Excluir segmento ${segment.name}`}
+                          onClick={() =>
+                            setSegmentToDelete({ id: segment.id, name: segment.name })
+                          }
+                        >
+                          <Trash2 className="size-4" aria-hidden />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   {expandedSegmentId === segment.id && segment.segment_id ? (
                     <div className="mt-3 space-y-2 border-t border-border pt-3">
@@ -917,6 +967,36 @@ function ServicesPage() {
       </ul>
 
       <ConflictRules businessId={businessId} services={services.data ?? []} />
+
+      <AlertDialog
+        open={segmentToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setSegmentToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir segmento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir permanentemente este segmento
+              {segmentToDelete ? ` (${segmentToDelete.name})` : ""} e seus serviços vinculados? Os
+              agendamentos já feitos continuam no histórico.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteSegment.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                if (segmentToDelete) deleteSegment.mutate(segmentToDelete.id);
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
