@@ -338,6 +338,8 @@ function BookingPage() {
       });
       setStep(4);
     } catch (error) {
+      // Surface the exact backend message in the console so booking failures are diagnosable.
+      console.error("[booking] falha ao concluir agendamento", error);
       toast.error("Não foi possível concluir a reserva", {
         description: userFacingError(error),
       });
