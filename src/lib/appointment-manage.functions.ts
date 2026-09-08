@@ -21,8 +21,9 @@ export const getAppointmentByManageToken = createServerFn({ method: "GET" })
       _token_hash: hashToken(data.token),
     });
     if (error) throw new Error(`MANAGE_LINK_FAILED: ${error.message}`);
-    return appointment as {
+    const managedAppointment = appointment as {
       id: string;
+      business_id: string;
       business_name: string;
       business_slug: string;
       client_name: string;
@@ -33,6 +34,20 @@ export const getAppointmentByManageToken = createServerFn({ method: "GET" })
       allow_cancel: boolean;
       allow_reschedule: boolean;
     } | null;
+    if (!managedAppointment) return null;
+
+    const { data: business, error: businessError } = await supabaseAdmin
+      .from("businesses")
+      .select("primary_color, secondary_color")
+      .eq("id", managedAppointment.business_id)
+      .single();
+    if (businessError) throw new Error(`MANAGE_THEME_FAILED: ${businessError.message}`);
+
+    return {
+      ...managedAppointment,
+      primary_color: business.primary_color,
+      secondary_color: business.secondary_color,
+    };
   });
 
 export const confirmAppointmentPresence = createServerFn({ method: "POST" })
