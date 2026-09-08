@@ -227,16 +227,31 @@ function BookingPage() {
         (rule.service_id === serviceId && rule.conflicting_service_id === otherId) ||
         (rule.service_id === otherId && rule.conflicting_service_id === serviceId),
     );
+  /** A combo counts as the set of every service it contains; a single service is its own set. */
+  const effectiveSet = (serviceId: string) => {
+    const components = compositionRules
+      .filter((rule) => rule.composite_service_id === serviceId)
+      .map((rule) => rule.component_service_id);
+    return components.length > 0 ? new Set(components) : new Set([serviceId]);
+  };
+  const overlaps = (a: string, b: string) => {
+    const setB = effectiveSet(b);
+    for (const id of effectiveSet(a)) if (setB.has(id)) return true;
+    return false;
+  };
+  /** Selecting a combo drops every service it already includes (and vice versa). */
+  const toggleService = (serviceId: string) => {
+    setSelected((previous) => {
+      if (previous.includes(serviceId)) return previous.filter((id) => id !== serviceId);
+      const kept = previous.filter((id) => !overlaps(id, serviceId));
+      return [...kept, serviceId];
+    });
+  };
   const blockedService = (serviceId: string) =>
-    !selected.includes(serviceId) &&
-    (selected.some((sid) => conflictsWith(serviceId, sid)) ||
-      serviceSelectionIssue([...selected, serviceId], compositionRules) === "composition");
+    !selected.includes(serviceId) && selected.some((sid) => conflictsWith(serviceId, sid));
   const isServiceDisabled = (serviceId: string) => blockedService(serviceId);
   const blockedReason = (serviceId: string) => {
     if (selected.includes(serviceId)) return "Este serviço já foi adicionado ao atendimento.";
-    if (serviceSelectionIssue([...selected, serviceId], compositionRules) === "composition") {
-      return "Este serviço já faz parte de um conjunto selecionado.";
-    }
     return "Indisponível junto dos serviços já selecionados";
   };
   const hardConflict = useMemo(() => {
