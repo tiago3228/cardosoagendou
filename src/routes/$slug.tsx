@@ -102,7 +102,8 @@ function BookingPage() {
   const [productQuantities, setProductQuantities] = useState<Record<string, number>>({});
 
   const updateProductQuantity = (productId: string, quantity: number) => {
-    const product = data?.products.find((p) => p.id === productId);
+    if (!data) return;
+    const product = data.products.find((p) => p.id === productId);
     if (!product) return;
     const safe = Math.max(0, Math.min(quantity, product.stock_quantity));
     setProductQuantities((current) => ({ ...current, [productId]: safe }));
