@@ -21,7 +21,6 @@ import {
 import { rescheduleAppointmentByManageToken } from "@/lib/appointment-manage.functions";
 import { formatBRL, formatDuration, normalizeInstagramUrl, whatsappLink } from "@/lib/format";
 import { businessTypeConfig } from "@/lib/business-types";
-import { serviceSelectionIssue } from "@/lib/service-compositions";
 import { isTechnicalError, userFacingError } from "@/lib/user-facing-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
