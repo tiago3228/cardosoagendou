@@ -192,6 +192,30 @@ function ServicesPage() {
       toast.error("Não foi possível atualizar o segmento", { description: userFacingError(error) }),
   });
 
+  const deleteSegment = useMutation({
+    mutationFn: async (segmentId: string) => {
+      const { error } = await db.rpc("delete_business_segment" as never, {
+        _business_id: businessId,
+        _business_segment_id: segmentId,
+      } as never);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async () => {
+      setSegmentToDelete(null);
+      setExpandedSegmentId(null);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["business-segments", businessId] }),
+        queryClient.invalidateQueries({ queryKey: ["services", businessId] }),
+        queryClient.invalidateQueries({ queryKey: ["service-compositions", businessId] }),
+      ]);
+      toast.success("Segmento excluído");
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível excluir o segmento", { description: userFacingError(error) }),
+  });
+
+
+
   const copyTemplates = useMutation({
     mutationFn: async (input: { segmentId: string; templateIds: string[] }) => {
       if (input.templateIds.length === 0) return 0;
