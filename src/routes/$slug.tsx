@@ -21,7 +21,6 @@ import {
 import { rescheduleAppointmentByManageToken } from "@/lib/appointment-manage.functions";
 import { formatBRL, formatDuration, normalizeInstagramUrl, whatsappLink } from "@/lib/format";
 import { businessTypeConfig } from "@/lib/business-types";
-import { serviceSelectionIssue } from "@/lib/service-compositions";
 import { isTechnicalError, userFacingError } from "@/lib/user-facing-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,6 +98,7 @@ function BookingPage() {
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [productDrafts, setProductDrafts] = useState<Record<string, number>>({});
   const [productQuantities, setProductQuantities] = useState<Record<string, number>>({});
 
   const updateProductQuantity = (productId: string, quantity: number) => {
@@ -152,7 +152,7 @@ function BookingPage() {
     const segmentNames = new Map(
       (data!.segments ?? []).map((segment) => [segment.id, segment.name]),
     );
-    const groups = new Map<string, { name: string; services: PublicService[] }>();
+    const groups = new Map<string, { key: string; name: string; services: PublicService[] }>();
     data!.services
       .filter(
         (service) =>
@@ -164,6 +164,7 @@ function BookingPage() {
       .forEach((service) => {
         const key = service.segment_id ?? "legacy";
         const current = groups.get(key) ?? {
+          key,
           name: segmentNames.get(key) ?? "Serviços",
           services: [],
         };
@@ -227,16 +228,31 @@ function BookingPage() {
         (rule.service_id === serviceId && rule.conflicting_service_id === otherId) ||
         (rule.service_id === otherId && rule.conflicting_service_id === serviceId),
     );
+  /** A combo counts as the set of every service it contains; a single service is its own set. */
+  const effectiveSet = (serviceId: string) => {
+    const components = compositionRules
+      .filter((rule) => rule.composite_service_id === serviceId)
+      .map((rule) => rule.component_service_id);
+    return components.length > 0 ? new Set(components) : new Set([serviceId]);
+  };
+  const overlaps = (a: string, b: string) => {
+    const setB = effectiveSet(b);
+    for (const id of effectiveSet(a)) if (setB.has(id)) return true;
+    return false;
+  };
+  /** Selecting a combo drops every service it already includes (and vice versa). */
+  const toggleService = (serviceId: string) => {
+    setSelected((previous) => {
+      if (previous.includes(serviceId)) return previous.filter((id) => id !== serviceId);
+      const kept = previous.filter((id) => !overlaps(id, serviceId));
+      return [...kept, serviceId];
+    });
+  };
   const blockedService = (serviceId: string) =>
-    !selected.includes(serviceId) &&
-    (selected.some((sid) => conflictsWith(serviceId, sid)) ||
-      serviceSelectionIssue([...selected, serviceId], compositionRules) === "composition");
+    !selected.includes(serviceId) && selected.some((sid) => conflictsWith(serviceId, sid));
   const isServiceDisabled = (serviceId: string) => blockedService(serviceId);
   const blockedReason = (serviceId: string) => {
     if (selected.includes(serviceId)) return "Este serviço já foi adicionado ao atendimento.";
-    if (serviceSelectionIssue([...selected, serviceId], compositionRules) === "composition") {
-      return "Este serviço já faz parte de um conjunto selecionado.";
-    }
     return "Indisponível junto dos serviços já selecionados";
   };
   const hardConflict = useMemo(() => {
@@ -323,6 +339,8 @@ function BookingPage() {
       });
       setStep(4);
     } catch (error) {
+      // Surface the exact backend message in the console so booking failures are diagnosable.
+      console.error("[booking] falha ao concluir agendamento", error);
       toast.error("Não foi possível concluir a reserva", {
         description: userFacingError(error),
       });
@@ -521,7 +539,7 @@ function BookingPage() {
               </p>
               <ul className="mt-4 space-y-2">
                 {serviceGroups.map((group) => (
-                  <Fragment key={group.name}>
+                  <Fragment key={group.key}>
                     <li className="pt-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--public-primary)]">
                       {group.name}
                     </li>
@@ -535,11 +553,7 @@ function BookingPage() {
                             aria-disabled={isServiceDisabled(service.id)}
                             onClick={() => {
                               if (isServiceDisabled(service.id)) return;
-                              setSelected((prev) =>
-                                prev.includes(service.id)
-                                  ? prev.filter((id) => id !== service.id)
-                                  : [...prev, service.id],
-                              );
+                              toggleService(service.id);
                             }}
                             className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition ${active ? "border-[var(--public-primary)] bg-[var(--public-card)]" : "border-[var(--public-border)] bg-[var(--public-surface)]"} ${isServiceDisabled(service.id) ? "pointer-events-none cursor-not-allowed opacity-50" : "hover:border-[var(--public-primary)]"}`}
                           >
@@ -626,40 +640,76 @@ function BookingPage() {
                             </span>
                           </span>
                         </div>
-                        <div className="mt-3 flex items-center justify-between gap-2">
-                          {selectedProducts.includes(product.id) ? (
-                            <span className="flex items-center gap-2 text-sm text-[var(--public-text)]">
-                              <span>Qtd.</span>
-                              <button
-                                type="button"
-                                className="rounded border border-[var(--public-primary)] px-2"
-                                onClick={() => updateProductQuantity(product.id, (productQuantities[product.id] ?? 1) - 1)}
-                              >
-                                −
-                              </button>
-                              <span>{productQuantities[product.id] ?? 1}</span>
-                              <button
-                                type="button"
-                                className="rounded border border-[var(--public-primary)] px-2"
-                                disabled={(productQuantities[product.id] ?? 1) >= product.stock_quantity}
-                                onClick={() => updateProductQuantity(product.id, (productQuantities[product.id] ?? 1) + 1)}
-                              >
-                                +
-                              </button>
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              className="rounded-md border border-[var(--public-primary)] px-3 py-1.5 text-sm font-medium text-[var(--public-primary)] transition hover:bg-[var(--public-primary)] hover:text-[var(--public-bg)]"
-                              onClick={() => updateProductQuantity(product.id, 1)}
-                            >
-                              Adicionar ao agendamento
-                            </button>
-                          )}
-                          {selectedProducts.includes(product.id) ? (
-                            <Check className="size-5 text-[var(--public-accent)]" aria-hidden />
-                          ) : null}
-                        </div>
+                        {(() => {
+                          const inCart = selectedProducts.includes(product.id);
+                          const draft = Math.min(
+                            productDrafts[product.id] ?? 1,
+                            Math.max(product.stock_quantity, 1),
+                          );
+                          const setDraft = (next: number) =>
+                            setProductDrafts((current) => ({
+                              ...current,
+                              [product.id]: Math.max(
+                                1,
+                                Math.min(next, Math.max(product.stock_quantity, 1)),
+                              ),
+                            }));
+                          const cartQty = productQuantities[product.id] ?? 1;
+                          return (
+                            <div className="mt-3 space-y-2">
+                              <div className="flex items-center gap-2 text-sm text-[var(--public-text)]">
+                                <span>Quantidade</span>
+                                <button
+                                  type="button"
+                                  aria-label="Diminuir quantidade"
+                                  className="rounded border border-[var(--public-primary)] px-2"
+                                  disabled={draft <= 1}
+                                  onClick={() => setDraft(draft - 1)}
+                                >
+                                  −
+                                </button>
+                                <span className="min-w-6 text-center font-semibold">{draft}</span>
+                                <button
+                                  type="button"
+                                  aria-label="Aumentar quantidade"
+                                  className="rounded border border-[var(--public-primary)] px-2"
+                                  disabled={draft >= product.stock_quantity}
+                                  onClick={() => setDraft(draft + 1)}
+                                >
+                                  +
+                                </button>
+                                {inCart ? (
+                                  <span className="ml-auto flex items-center gap-1 text-xs text-[var(--public-accent)]">
+                                    <Check className="size-4" aria-hidden /> {cartQty} no agendamento
+                                  </span>
+                                ) : null}
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  className="rounded-md border border-[var(--public-primary)] px-3 py-1.5 text-sm font-medium text-[var(--public-primary)] transition hover:bg-[var(--public-primary)] hover:text-[var(--public-bg)]"
+                                  disabled={product.stock_quantity < 1}
+                                  onClick={() => updateProductQuantity(product.id, draft)}
+                                >
+                                  {inCart
+                                    ? draft === cartQty
+                                      ? "Quantidade atualizada"
+                                      : "Atualizar quantidade"
+                                    : "Adicionar ao agendamento"}
+                                </button>
+                                {inCart ? (
+                                  <button
+                                    type="button"
+                                    className="rounded-md border border-[var(--public-border)] px-3 py-1.5 text-sm text-[var(--public-muted)] transition hover:text-[var(--public-text)]"
+                                    onClick={() => updateProductQuantity(product.id, 0)}
+                                  >
+                                    Remover
+                                  </button>
+                                ) : null}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </li>
                     ))}
                   </ul>
