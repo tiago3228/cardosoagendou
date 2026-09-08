@@ -100,6 +100,19 @@ function BookingPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [productQuantities, setProductQuantities] = useState<Record<string, number>>({});
+
+  const updateProductQuantity = (productId: string, quantity: number) => {
+    const product = data?.products.find((p) => p.id === productId);
+    if (!product) return;
+    const safe = Math.max(0, Math.min(quantity, product.stock_quantity));
+    setProductQuantities((current) => ({ ...current, [productId]: safe }));
+    setSelectedProducts((previous) => {
+      const exists = previous.includes(productId);
+      if (safe > 0 && !exists) return [...previous, productId];
+      if (safe === 0 && exists) return previous.filter((id) => id !== productId);
+      return previous;
+    });
+  };
   const [professionalId, setProfessionalId] = useState<string | null>(null);
   const [date, setDate] = useState(todayISO());
   const [slots, setSlots] = useState<
