@@ -57,6 +57,7 @@ function ServicesPage() {
   const [catalogSegmentId, setCatalogSegmentId] = useState("");
   const [expandedSegmentId, setExpandedSegmentId] = useState<string | null>(null);
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
+  const [segmentToDelete, setSegmentToDelete] = useState<{ id: string; name: string } | null>(null);
   const segments = useQuery({
     queryKey: ["business-segments", businessId],
     queryFn: async () => {
