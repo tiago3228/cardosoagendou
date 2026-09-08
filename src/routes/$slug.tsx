@@ -217,6 +217,7 @@ function BookingPage() {
     !selected.includes(serviceId) &&
     (selected.some((sid) => conflictsWith(serviceId, sid)) ||
       serviceSelectionIssue([...selected, serviceId], compositionRules) === "composition");
+  const isServiceDisabled = (serviceId: string) => blockedService(serviceId);
   const blockedReason = (serviceId: string) => {
     if (selected.includes(serviceId)) return "Este serviço já foi adicionado ao atendimento.";
     if (serviceSelectionIssue([...selected, serviceId], compositionRules) === "composition") {
