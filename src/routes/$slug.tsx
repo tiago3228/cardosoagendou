@@ -103,7 +103,7 @@ function BookingPage() {
 
   const updateProductQuantity = (productId: string, quantity: number) => {
     if (!data) return;
-    const product = data.products.find((p) => p.id === productId);
+    const product = data.products?.find((p) => p.id === productId);
     if (!product) return;
     const safe = Math.max(0, Math.min(quantity, product.stock_quantity));
     setProductQuantities((current) => ({ ...current, [productId]: safe }));
