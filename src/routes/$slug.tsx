@@ -336,7 +336,7 @@ function BookingPage() {
 
   return (
     <main className="public-theme min-h-screen text-[var(--public-text)]" style={{ backgroundColor: business.secondary_color ?? "#0B0A08" }}>
-      <style>{\`.public-theme { --public-primary: ${business.primary_color ?? "#B4884F"}; --public-secondary: ${business.secondary_color ?? "#0B0A08"}; --public-accent: ${business.primary_color ?? "#D1A66C"}; --public-text: #F2EDE4; --public-muted: #9C948A; --public-surface: #1E1B17; --public-card: #262220; --public-border: #35302A; --public-bg: ${business.secondary_color ?? "#14120F"}; }\`}</style>
+      <style>{`.public-theme { --public-primary: ${business.primary_color ?? "#B4884F"}; --public-secondary: ${business.secondary_color ?? "#0B0A08"}; --public-accent: ${business.primary_color ?? "#D1A66C"}; --public-text: #F2EDE4; --public-muted: #9C948A; --public-surface: #1E1B17; --public-card: #262220; --public-border: #35302A; --public-bg: ${business.secondary_color ?? "#14120F"}; }`}</style>
       <div className="mx-auto min-h-screen max-w-[460px] overflow-hidden pb-32 shadow-2xl" style={{ backgroundColor: business.secondary_color ?? "#14120F" }}>
         <div className="h-1 bg-[linear-gradient(90deg,var(--public-primary)_0%,var(--public-primary)_60%,transparent_60%,transparent_70%,var(--public-primary)_70%,var(--public-primary)_100%)]" />
         <div className="border-b border-[var(--public-border)] px-5 py-6">
