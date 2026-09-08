@@ -491,16 +491,31 @@ function ServicesPage() {
                       />
                       {segment.name}
                     </button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={segment.active ? "outline" : "default"}
-                      onClick={() =>
-                        toggleSegment.mutate({ id: segment.id, active: !segment.active })
-                      }
-                    >
-                      {segment.active ? "Desativar" : "Ativar"}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={segment.active ? "outline" : "default"}
+                        onClick={() =>
+                          toggleSegment.mutate({ id: segment.id, active: !segment.active })
+                        }
+                      >
+                        {segment.active ? "Desativar" : "Ativar"}
+                      </Button>
+                      {segment.active ? null : (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          aria-label={`Excluir segmento ${segment.name}`}
+                          onClick={() =>
+                            setSegmentToDelete({ id: segment.id, name: segment.name })
+                          }
+                        >
+                          <Trash2 className="size-4" aria-hidden />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   {expandedSegmentId === segment.id && segment.segment_id ? (
                     <div className="mt-3 space-y-2 border-t border-border pt-3">
