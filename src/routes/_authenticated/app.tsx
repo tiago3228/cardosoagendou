@@ -65,18 +65,18 @@ function PanelLayout() {
   const plan = data.subscription?.plans as { name?: string } | null | undefined;
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:flex md:pb-0">
-      <aside className="hidden w-60 shrink-0 border-r border-border bg-sidebar p-5 md:block">
-        <span className="font-display text-lg font-bold text-sidebar-foreground">Agendou</span>
+    <div className="agenda-theme min-h-screen bg-background pb-20 text-foreground md:flex md:pb-0">
+      <aside className="hidden w-60 shrink-0 border-r border-sidebar-border bg-sidebar p-5 md:flex md:flex-col">
+        <span className="font-display text-xl font-bold text-sidebar-foreground">Agendou</span>
         <p className="mt-1 truncate text-sm text-muted-foreground">{data.business.name}</p>
-        <nav className="mt-6 space-y-1">
+        <nav className="mt-7 space-y-1.5">
           {nav.map((item) => (
             <Link
               key={item.to}
               to={item.to}
               activeOptions={{ exact: "exact" in item }}
               activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
             >
               <item.icon className="size-4" aria-hidden />
               {item.label}
@@ -86,7 +86,7 @@ function PanelLayout() {
             <Link
               to="/master/pagamentos"
               activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
             >
               Pagamentos PIX
             </Link>
@@ -95,13 +95,13 @@ function PanelLayout() {
             <Link
               to="/master/planos"
               activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
             >
               Testar planos
             </Link>
           ) : null}
         </nav>
-        <div className="mt-8 rounded-lg border border-sidebar-border p-3">
+        <div className="mt-auto rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Plano</p>
           <p className="text-sm font-semibold text-sidebar-foreground">{plan?.name ?? "—"}</p>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -111,7 +111,7 @@ function PanelLayout() {
         <Button
           variant="ghost"
           size="sm"
-          className="mt-6 w-full justify-start"
+          className="mt-3 w-full justify-start text-sidebar-foreground"
           onClick={async () => {
             await supabase.auth.signOut();
             navigate({ to: "/auth" });
@@ -121,8 +121,8 @@ function PanelLayout() {
         </Button>
       </aside>
 
-      <div className="flex-1">
-        <header className="flex items-center justify-between border-b border-border px-5 py-4">
+      <div className="min-w-0 flex-1">
+        <header className="flex items-center justify-between border-b border-border bg-background/95 px-5 py-4 backdrop-blur md:px-8">
           <span className="font-display font-bold">{data.business.name}</span>
           <Button
             variant="ghost"
@@ -135,7 +135,7 @@ function PanelLayout() {
             <LogOut className="size-4" aria-hidden /> Sair
           </Button>
         </header>
-        <div className="mx-auto max-w-5xl px-5 py-6">
+        <div className="mx-auto max-w-[1440px] px-4 py-5 md:px-7 md:py-7">
           <Outlet />
         </div>
       </div>
