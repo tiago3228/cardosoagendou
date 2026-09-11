@@ -202,6 +202,36 @@
   font-family: var(--font-agenda);
 }
 
+.agenda-theme.agenda-theme-clean {
+  --background: oklch(0.975 0.008 220);
+  --foreground: oklch(0.25 0.03 238);
+  --surface: oklch(0.955 0.012 220);
+  --surface-foreground: oklch(0.25 0.03 238);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.25 0.03 238);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.25 0.03 238);
+  --primary: oklch(0.48 0.11 183);
+  --primary-foreground: oklch(0.99 0.004 90);
+  --secondary: oklch(0.93 0.014 220);
+  --secondary-foreground: oklch(0.3 0.035 238);
+  --muted: oklch(0.94 0.012 220);
+  --muted-foreground: oklch(0.52 0.028 235);
+  --accent: oklch(0.76 0.15 80);
+  --accent-foreground: oklch(0.25 0.045 70);
+  --border: oklch(0.875 0.018 225);
+  --input: oklch(0.875 0.018 225);
+  --ring: oklch(0.48 0.11 183);
+  --sidebar: oklch(0.985 0.008 220);
+  --sidebar-foreground: oklch(0.27 0.032 238);
+  --sidebar-primary: oklch(0.48 0.11 183);
+  --sidebar-primary-foreground: oklch(0.99 0.004 90);
+  --sidebar-accent: oklch(0.92 0.025 183);
+  --sidebar-accent-foreground: oklch(0.32 0.075 183);
+  --sidebar-border: oklch(0.875 0.018 225);
+  --sidebar-ring: oklch(0.48 0.11 183);
+}
+
 .agenda-theme h1,
 .agenda-theme h2,
 .agenda-theme h3,
