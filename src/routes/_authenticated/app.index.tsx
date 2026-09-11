@@ -29,7 +29,6 @@ import {
   whatsappLink,
 } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-import { PlanBenefitsBanner } from "@/components/PlanBenefitsBanner";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   head: () => ({
@@ -206,6 +205,7 @@ function AgendaPage() {
 
   const weekStart = startOfWeek(date);
   const weekDays = Array.from({ length: 7 }, (_, index) => shiftDay(weekStart, index));
+  const weekEnd = weekDays.at(-1) ?? weekStart;
   const dayLabel = dateAtNoon(date).toLocaleDateString("pt-BR", {
     weekday: "long",
     day: "2-digit",
@@ -213,7 +213,7 @@ function AgendaPage() {
   });
   const rangeLabel = view === "day"
     ? dayLabel
-    : `${dateAtNoon(weekStart).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} — ${dateAtNoon(weekDays[6]).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}`;
+    : `${dateAtNoon(weekStart).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} — ${dateAtNoon(weekEnd).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}`;
 
   function move(direction: number) {
     setDate(shiftDay(date, direction * (view === "week" ? 7 : 1)));
@@ -297,8 +297,6 @@ function AgendaPage() {
         </section>
       ) : null}
 
-      <PlanBenefitsBanner currentPlanCode={(panel.subscription?.plans as { code?: string } | null)?.code ?? null} />
-
       <section className="rounded-lg border border-border bg-card p-3 md:p-4">
         <div className="flex gap-2 overflow-x-auto pb-1">
           {FILTERS.map((item) => (
@@ -338,7 +336,11 @@ function Metric({ label, value, detail, accent = false }: { label: string; value
   );
 }
 
-function DayView({ appointments, mutation }: { appointments: AppointmentItem[]; mutation: ReturnType<typeof useMutation> }) {
+type StatusMutation = {
+  mutate: (input: { appointmentId: string; status: string }) => void;
+};
+
+function DayView({ appointments, mutation }: { appointments: AppointmentItem[]; mutation: StatusMutation }) {
   return (
     <div className="mt-4 space-y-2">
       <div className="hidden grid-cols-[92px_minmax(220px,1.4fr)_minmax(150px,1fr)_100px_130px] gap-4 px-4 pb-2 text-xs font-semibold uppercase text-muted-foreground lg:grid">
@@ -351,7 +353,7 @@ function DayView({ appointments, mutation }: { appointments: AppointmentItem[]; 
   );
 }
 
-function AppointmentRow({ appointment, mutation }: { appointment: AppointmentItem; mutation: ReturnType<typeof useMutation> }) {
+function AppointmentRow({ appointment, mutation }: { appointment: AppointmentItem; mutation: StatusMutation }) {
   const meta = statusMeta(appointment.status);
   const starts = new Date(appointment.starts_at);
   const time = starts.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -428,7 +430,8 @@ function WeekView({ appointments, days, selectedDate, onSelectDate }: { appointm
                   const meta = statusMeta(appointment.status);
                   const time = new Date(appointment.starts_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
                   return (
-                    <button key={appointment.id} type="button" onClick={() => onSelectDate(day)} className={`w-full rounded-md border border-border border-l-4 bg-card p-2.5 text-left transition-colors hover:bg-secondary/60 ${meta.stripe}`}>
+                    <Button key={appointment.id} variant="ghost" onClick={() => onSelectDate(day)} className={`h-auto w-full justify-start rounded-md border border-border border-l-4 bg-card p-2.5 text-left hover:bg-secondary/60 ${meta.stripe}`}>
+                      <span className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-display text-sm font-bold">{time}</span>
                         <span className={`size-2 rounded-full ${meta.dot}`} aria-hidden />
@@ -436,7 +439,8 @@ function WeekView({ appointments, days, selectedDate, onSelectDate }: { appointm
                       <p className="mt-1 truncate text-xs font-semibold">{appointment.client_name}</p>
                       <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{serviceNames(appointment)}</p>
                       <span className={`mt-2 inline-block rounded-full px-2 py-1 text-[10px] font-semibold ${meta.chip}`}>{meta.label}</span>
-                    </button>
+                      </span>
+                    </Button>
                   );
                 })}
               </div>

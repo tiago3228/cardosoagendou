@@ -224,21 +224,32 @@ export const schedulePlanChange = createServerFn({ method: "POST" })
       .select("provider, provider_subscription_id")
       .eq("business_id", businessId)
       .maybeSingle();
+    let gatewaySynced = true;
+    let gatewaySyncError: string | null = null;
     if (gatewaySubscriptionId.data?.provider_subscription_id) {
-      const { resolveProvider } = await import("./billing.server");
-      const { planPriceCents } = await import("./plans");
-      const provider = await resolveProvider(supabaseAdmin, gatewaySubscriptionId.data.provider);
-      await provider.updateSubscription({
-        providerSubscriptionId: gatewaySubscriptionId.data.provider_subscription_id,
-        amountCents: planPriceCents(nextPlan, data.interval),
-        interval: data.interval,
-        method: (current.data as { payment_method?: "PIX" | "CREDIT_CARD" | null }).payment_method ?? "PIX",
-        // Only future charges change — never rewrite the current paid period.
-        updatePendingPayments: false,
-      });
+      try {
+        const { resolveProvider } = await import("./billing.server");
+        const { planPriceCents } = await import("./plans");
+        const provider = await resolveProvider(supabaseAdmin, gatewaySubscriptionId.data.provider);
+        await provider.updateSubscription({
+          providerSubscriptionId: gatewaySubscriptionId.data.provider_subscription_id,
+          amountCents: planPriceCents(nextPlan, data.interval),
+          interval: data.interval,
+          method: (current.data as { payment_method?: "PIX" | "CREDIT_CARD" | null }).payment_method ?? "PIX",
+          // Only future charges change — never rewrite the current paid period.
+          updatePendingPayments: false,
+        });
+      } catch (error) {
+        // The database remains the source of truth for the next-cycle change.
+        // A stale or temporarily unavailable gateway subscription must not
+        // prevent the owner from scheduling the requested plan.
+        gatewaySynced = false;
+        gatewaySyncError = error instanceof Error ? error.message : "GATEWAY_SYNC_FAILED";
+        console.error("[billing] plan change gateway sync deferred", error);
+      }
     }
 
-    await supabaseAdmin
+    const scheduled = await supabaseAdmin
       .from("subscriptions")
       .update({
         pending_plan_id: nextPlan.id,
@@ -246,12 +257,15 @@ export const schedulePlanChange = createServerFn({ method: "POST" })
         cancel_at_period_end: false,
       })
       .eq("business_id", businessId);
+    if (scheduled.error) throw new Error(scheduled.error.message);
 
     await logAudit(supabaseAdmin, businessId, context.userId, "subscription.change_scheduled", "subscription", businessId, {
       from: currentPlan.code,
       to: nextPlan.code,
       interval: data.interval,
       kind,
+      gatewaySynced,
+      gatewaySyncError,
     });
 
     return {
@@ -259,6 +273,7 @@ export const schedulePlanChange = createServerFn({ method: "POST" })
       applied: true as const,
       effectiveAt: current.data.current_period_end,
       planName: nextPlan.name,
+      gatewaySynced,
     };
   });
 

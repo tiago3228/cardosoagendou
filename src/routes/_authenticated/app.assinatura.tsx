@@ -93,7 +93,9 @@ function SubscriptionPage() {
       if (!result.applied) toast.info("Esse já é o seu plano atual");
       else
         toast.success(`Mudança para ${result.planName} agendada`, {
-          description: `Entra em vigor em ${new Date(result.effectiveAt!).toLocaleDateString("pt-BR")}.`,
+          description: result.gatewaySynced
+            ? `Entra em vigor em ${new Date(result.effectiveAt).toLocaleDateString("pt-BR")}.`
+            : `Entra em vigor em ${new Date(result.effectiveAt).toLocaleDateString("pt-BR")}. A cobrança será sincronizada antes da renovação.`,
         });
       refresh();
     },
