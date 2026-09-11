@@ -1,11 +1,12 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { CalendarDays, CreditCard, LogOut, Package, Scissors, Settings, Users, UserSquare, Wallet } from "lucide-react";
+import { CalendarDays, CreditCard, LogOut, Moon, Package, Scissors, Settings, Sun, Users, UserSquare, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyPanel } from "@/lib/panel.functions";
 import { getMasterStatus } from "@/lib/manual-pix.functions";
 import { getMyEntitlements } from "@/lib/billing.functions";
 import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 
 export const panelQuery = queryOptions({ queryKey: ["panel"], queryFn: () => getMyPanel() });
 
@@ -38,6 +39,9 @@ const NAV = [
   { to: "/app/configuracoes", label: "Ajustes", icon: Settings },
 ] as const;
 
+type PanelTheme = "dark" | "clean";
+const PANEL_THEME_KEY = "agendou-panel-theme";
+
 function PanelLayout() {
   const { data } = useSuspenseQuery(panelQuery);
   const navigate = useNavigate();
@@ -45,6 +49,17 @@ function PanelLayout() {
   const entitlements = useQuery(entitlementsQuery);
   const features = (entitlements.data?.features ?? {}) as Record<string, unknown>;
   const nav = NAV.filter((item) => !("feature" in item) || features[item.feature] === true);
+  const [theme, setTheme] = useState<PanelTheme>("dark");
+
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem(PANEL_THEME_KEY);
+    if (savedTheme === "clean" || savedTheme === "dark") setTheme(savedTheme);
+  }, []);
+
+  function selectTheme(nextTheme: PanelTheme) {
+    setTheme(nextTheme);
+    window.localStorage.setItem(PANEL_THEME_KEY, nextTheme);
+  }
 
   if (!data.business) {
     return (
@@ -65,7 +80,7 @@ function PanelLayout() {
   const plan = data.subscription?.plans as { name?: string } | null | undefined;
 
   return (
-    <div className="agenda-theme min-h-screen bg-background pb-20 text-foreground md:flex md:pb-0">
+    <div className={`agenda-theme ${theme === "clean" ? "agenda-theme-clean" : ""} min-h-screen bg-background pb-20 text-foreground md:flex md:pb-0`}>
       <aside className="hidden w-60 shrink-0 border-r border-sidebar-border bg-sidebar p-5 md:flex md:flex-col">
         <span className="font-display text-xl font-bold text-sidebar-foreground">Agendou</span>
         <p className="mt-1 truncate text-sm text-muted-foreground">{data.business.name}</p>
@@ -122,18 +137,45 @@ function PanelLayout() {
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="flex items-center justify-between border-b border-border bg-background/95 px-5 py-4 backdrop-blur md:px-8">
-          <span className="font-display font-bold">{data.business.name}</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={async () => {
-              await supabase.auth.signOut();
-              navigate({ to: "/auth" });
-            }}
-          >
-            <LogOut className="size-4" aria-hidden /> Sair
-          </Button>
+        <header className="flex items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur md:px-8 md:py-4">
+          <span className="min-w-0 truncate font-display font-bold">{data.business.name}</span>
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="flex items-center rounded-md border border-border bg-secondary/65 p-1" aria-label="Aparência do painel">
+              <Button
+                type="button"
+                variant={theme === "dark" ? "default" : "ghost"}
+                size="sm"
+                className="h-8 gap-1.5 px-2.5"
+                aria-pressed={theme === "dark"}
+                onClick={() => selectTheme("dark")}
+              >
+                <Moon className="size-3.5" aria-hidden />
+                <span className="hidden sm:inline">Escuro</span>
+              </Button>
+              <Button
+                type="button"
+                variant={theme === "clean" ? "default" : "ghost"}
+                size="sm"
+                className="h-8 gap-1.5 px-2.5"
+                aria-pressed={theme === "clean"}
+                onClick={() => selectTheme("clean")}
+              >
+                <Sun className="size-3.5" aria-hidden />
+                <span className="hidden sm:inline">Clean</span>
+              </Button>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label="Sair"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                navigate({ to: "/auth" });
+              }}
+            >
+              <LogOut className="size-4" aria-hidden /> <span className="hidden sm:inline">Sair</span>
+            </Button>
+          </div>
         </header>
         <div className="mx-auto max-w-[1440px] px-4 py-5 md:px-7 md:py-7">
           <Outlet />
