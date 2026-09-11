@@ -29,7 +29,6 @@ import {
   whatsappLink,
 } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-import { PlanBenefitsBanner } from "@/components/PlanBenefitsBanner";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   head: () => ({
@@ -297,8 +296,6 @@ function AgendaPage() {
           </Button>
         </section>
       ) : null}
-
-      <PlanBenefitsBanner currentPlanCode={(panel.subscription?.plans as { code?: string } | null)?.code ?? null} />
 
       <section className="rounded-lg border border-border bg-card p-3 md:p-4">
         <div className="flex gap-2 overflow-x-auto pb-1">
