@@ -7,36 +7,24 @@ type PanelBusiness = Database["public"]["Tables"]["businesses"]["Row"];
 export const updateBusinessSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: unknown) => input as { businessId: string; values: Record<string, unknown> },
+    (input: unknown) => input as { businessId?: string; values: Record<string, unknown> },
   )
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const member = await supabaseAdmin
+    const ownerRole = await supabaseAdmin
       .from("user_roles")
       .select("business_id")
       .eq("user_id", context.userId)
-      .eq("business_id", data.businessId)
       .eq("role", "owner")
       .maybeSingle();
-    let authorized = Boolean(member.data);
-    if (!authorized) {
-      const membership = await supabaseAdmin.rpc("has_business_role", {
-        _user_id: context.userId,
-        _business_id: data.businessId,
-        _role: "owner",
-      });
-      authorized = membership.data === true;
-    }
-    if (!authorized) throw new Error("FORBIDDEN: sem acesso a este negócio");
+    const businessId = ownerRole.data?.business_id;
+    if (!businessId) throw new Error("FORBIDDEN: proprietário sem negócio vinculado");
 
-    const { data: updated, error } = await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from("businesses")
       .update(data.values as never)
-      .eq("id", data.businessId)
-      .select("id")
-      .maybeSingle();
+      .eq("id", businessId);
     if (error) throw new Error(`BUSINESS_UPDATE_FAILED: ${error.message}`);
-    if (!updated) throw new Error("BUSINESS_NOT_FOUND: negócio não encontrado");
     return { saved: true as const };
   });
 
