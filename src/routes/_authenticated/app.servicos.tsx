@@ -165,6 +165,11 @@ function ServicesPage() {
       return data ?? [];
     },
   });
+  const activeSegmentIds = new Set(
+    (segments.data ?? [])
+      .filter((segment: { id: string; active: boolean }) => segment.active)
+      .map((segment: { id: string }) => segment.id),
+  );
 
   const createSegment = useMutation({
     mutationFn: async () => {
@@ -748,7 +753,11 @@ function ServicesPage() {
             <p className="text-xs text-muted-foreground">Marque um ou mais serviços.</p>
             <div className="grid gap-2 rounded-md border border-border p-3 sm:grid-cols-2">
               {(services.data ?? [])
-                .filter((service: { is_composite: boolean }) => !service.is_composite)
+                .filter(
+                  (service: { is_composite: boolean; segment_id: string | null }) =>
+                    !service.is_composite &&
+                    (!service.segment_id || activeSegmentIds.has(service.segment_id)),
+                )
                 .map((service: { id: string; name: string }) => (
                   <label
                     key={service.id}
@@ -893,8 +902,14 @@ function ServicesPage() {
                       <div className="grid gap-2 rounded-md border border-border p-3 sm:grid-cols-2">
                         {(services.data ?? [])
                           .filter(
-                            (candidate: { id: string; is_composite: boolean }) =>
-                              candidate.id !== edit!.id && !candidate.is_composite,
+                            (candidate: {
+                              id: string;
+                              is_composite: boolean;
+                              segment_id: string | null;
+                            }) =>
+                              candidate.id !== edit!.id &&
+                              !candidate.is_composite &&
+                              (!candidate.segment_id || activeSegmentIds.has(candidate.segment_id)),
                           )
                           .map((candidate: { id: string; name: string }) => (
                             <label
