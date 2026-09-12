@@ -19,7 +19,10 @@ import {
 } from "lucide-react";
 import { getAgenda } from "@/lib/panel.functions";
 import { getAppointmentRevenue } from "@/lib/finance.functions";
-import { setAppointmentStatus } from "@/lib/appointments.functions";
+import {
+  createAppointmentConfirmationLink,
+  setAppointmentStatus,
+} from "@/lib/appointments.functions";
 import { userFacingError } from "@/lib/user-facing-error";
 import { panelQuery } from "./app";
 import {
@@ -403,7 +406,8 @@ function AgendaPage() {
           <div className="min-w-0 flex-1">
             <p className="font-semibold">Você tem agendamentos na agenda</p>
             <p className="mt-1 text-sm text-primary/80">
-              Confira os horários e acompanhe os pedidos dos seus clientes.
+              Nos agendamentos pendentes, use <strong>Enviar confirmação</strong> para abrir o
+              WhatsApp já com as opções do cliente.
             </p>
           </div>
           <Button
@@ -522,6 +526,7 @@ function AppointmentRow({
   appointment: AppointmentItem;
   mutation: StatusMutation;
 }) {
+  const createConfirmationLink = useServerFn(createAppointmentConfirmationLink);
   const meta = statusMeta(appointment.status);
   const starts = new Date(appointment.starts_at);
   const time = starts.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -561,6 +566,26 @@ function AppointmentRow({
       ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-3">
+        {e164 && ["PENDING", "CONFIRMED"].includes(appointment.status) ? (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={async () => {
+              try {
+                const result = await createConfirmationLink({
+                  data: { appointmentId: appointment.id },
+                });
+                window.open(whatsappLink(result.recipient, result.message), "_blank", "noopener");
+              } catch (error) {
+                toast.error("Não foi possível preparar a confirmação", {
+                  description: userFacingError(error),
+                });
+              }
+            }}
+          >
+            <MessageCircle aria-hidden /> Enviar confirmação
+          </Button>
+        ) : null}
         {e164 ? (
           <Button size="sm" variant="outline" asChild>
             <a

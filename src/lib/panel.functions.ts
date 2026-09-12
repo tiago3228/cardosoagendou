@@ -38,7 +38,7 @@ export const getMyPanel = createServerFn({ method: "POST" })
     }
 
     const businessSelect =
-      "id, slug, name, business_type, description, logo_url, cover_url, whatsapp, email, address, show_address, show_whatsapp, agenda_alerts_enabled, booking_share_message, booking_share_niche, booking_share_style, booking_policy, slot_interval_minutes, min_notice_minutes, max_advance_days, cancellation_deadline_hours, primary_color, secondary_color, timezone";
+      "id, slug, name, business_type, description, logo_url, cover_url, whatsapp, email, address, show_address, show_whatsapp, agenda_alerts_enabled, confirmation_enabled, confirmation_minutes, booking_share_message, booking_share_niche, booking_share_style, booking_policy, slot_interval_minutes, min_notice_minutes, max_advance_days, cancellation_deadline_hours, primary_color, secondary_color, timezone";
     const legacyBusinessSelect =
       "id, slug, name, business_type, description, logo_url, cover_url, whatsapp, email, address, show_address, show_whatsapp, booking_policy, slot_interval_minutes, min_notice_minutes, max_advance_days, cancellation_deadline_hours, primary_color, secondary_color, timezone";
     const businessQuery = context.supabase
@@ -79,6 +79,8 @@ export const getMyPanel = createServerFn({ method: "POST" })
       ? ({
           ...business.data,
           agenda_alerts_enabled: business.data.agenda_alerts_enabled ?? true,
+          confirmation_enabled: business.data.confirmation_enabled ?? true,
+          confirmation_minutes: business.data.confirmation_minutes ?? 0,
           booking_share_message: business.data.booking_share_message ?? null,
           booking_share_niche: business.data.booking_share_niche ?? null,
           booking_share_style: business.data.booking_share_style ?? "professional",

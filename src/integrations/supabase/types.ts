@@ -379,6 +379,8 @@ export type Database = {
           booking_policy: string | null;
           business_type: Database["public"]["Enums"]["business_type"];
           cancellation_deadline_hours: number;
+          confirmation_enabled: boolean;
+          confirmation_minutes: number;
           cover_url: string | null;
           created_at: string;
           description: string | null;
@@ -412,6 +414,8 @@ export type Database = {
           booking_policy?: string | null;
           business_type?: Database["public"]["Enums"]["business_type"];
           cancellation_deadline_hours?: number;
+          confirmation_enabled?: boolean;
+          confirmation_minutes?: number;
           cover_url?: string | null;
           created_at?: string;
           description?: string | null;
@@ -445,6 +449,8 @@ export type Database = {
           booking_policy?: string | null;
           business_type?: Database["public"]["Enums"]["business_type"];
           cancellation_deadline_hours?: number;
+          confirmation_enabled?: boolean;
+          confirmation_minutes?: number;
           cover_url?: string | null;
           created_at?: string;
           description?: string | null;

@@ -46,6 +46,8 @@ function SettingsPage() {
     show_address: business.show_address,
     show_whatsapp: business.show_whatsapp,
     agenda_alerts_enabled: business.agenda_alerts_enabled,
+    confirmation_enabled: business.confirmation_enabled,
+    confirmation_minutes: String(business.confirmation_minutes),
     booking_share_message: business.booking_share_message ?? "",
     booking_share_niche: business.booking_share_niche ?? business.business_type,
     booking_share_style: (business.booking_share_style ?? "professional") as ShareStyle,
@@ -71,6 +73,11 @@ function SettingsPage() {
           show_address: form.show_address,
           show_whatsapp: form.show_whatsapp,
           agenda_alerts_enabled: form.agenda_alerts_enabled,
+          confirmation_enabled: form.confirmation_enabled,
+          confirmation_minutes: Math.max(
+            0,
+            Math.min(10080, Number(form.confirmation_minutes) || 0),
+          ),
           booking_share_message: form.booking_share_message.trim() || null,
           booking_share_niche: form.booking_share_niche,
           booking_share_style: form.booking_share_style,
@@ -349,6 +356,38 @@ function SettingsPage() {
             value={form.max_advance_days}
             onChange={(e) => setForm({ ...form, max_advance_days: e.target.value })}
           />
+        </div>
+        <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-3 sm:col-span-2">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label>Mensagens de confirmação</Label>
+              <p className="text-xs text-muted-foreground">
+                Ao confirmar, prepara uma mensagem com o link seguro para o cliente.
+              </p>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={form.confirmation_enabled}
+                onChange={(e) => setForm({ ...form, confirmation_enabled: e.target.checked })}
+              />
+              Ativar
+            </label>
+          </div>
+          <div className="max-w-xs space-y-1.5">
+            <Label>Disponibilizar confirmação (minutos antes)</Label>
+            <Input
+              type="number"
+              min="0"
+              max="10080"
+              value={form.confirmation_minutes}
+              onChange={(e) => setForm({ ...form, confirmation_minutes: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">
+              Zero significa imediatamente. O envio automático depende de um provedor WhatsApp
+              conectado.
+            </p>
+          </div>
         </div>
         <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-3 sm:col-span-2">
           <Label>Logo do negócio</Label>
