@@ -19,7 +19,7 @@ import {
   getPublicBusiness,
 } from "@/lib/booking.functions";
 import { rescheduleAppointmentByManageToken } from "@/lib/appointment-manage.functions";
-import { formatBRL, formatDuration, normalizeInstagramUrl, whatsappLink } from "@/lib/format";
+import { formatBRL, formatDuration, normalizeInstagramUrl, whatsappWebLink } from "@/lib/format";
 import { businessTypeConfig } from "@/lib/business-types";
 import { isTechnicalError, userFacingError } from "@/lib/user-facing-error";
 import { Button } from "@/components/ui/button";
@@ -448,7 +448,7 @@ function BookingPage() {
           </p>
           {business.whatsapp ? (
             <a
-              href={whatsappLink(
+              href={whatsappWebLink(
                 business.whatsapp,
                 `Olá! Vim pela página do Agendou e gostaria de tirar uma dúvida sobre ${business.name}.`,
               )}
@@ -929,7 +929,7 @@ function BookingPage() {
                   className="mt-6 !border-[var(--public-primary)] !bg-[var(--public-text)] !text-[var(--public-surface)] hover:!bg-[var(--public-accent)] hover:!text-[var(--public-surface)]"
                 >
                   <a
-                    href={whatsappLink(business.whatsapp, confirmationWhatsappMessage)}
+                    href={whatsappWebLink(business.whatsapp, confirmationWhatsappMessage)}
                     target="_blank"
                     rel="noreferrer"
                   >
