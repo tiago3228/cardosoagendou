@@ -741,28 +741,36 @@ function ServicesPage() {
           Pacote para venda (conjunto de serviços)
         </label>
         {form.is_composite ? (
-          <label className="space-y-1.5 text-sm text-muted-foreground sm:col-span-2">
-            <span className="block">Serviços incluídos no pacote</span>
-            <select
-              multiple
-              className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-              value={form.component_ids}
-              onChange={(event) =>
-                setForm({
-                  ...form,
-                  component_ids: Array.from(event.target.selectedOptions, (option) => option.value),
-                })
-              }
-            >
+          <fieldset className="space-y-2 sm:col-span-2">
+            <legend className="text-sm font-medium text-foreground">
+              Serviços incluídos no pacote
+            </legend>
+            <p className="text-xs text-muted-foreground">Marque um ou mais serviços.</p>
+            <div className="grid gap-2 rounded-md border border-border p-3 sm:grid-cols-2">
               {(services.data ?? [])
                 .filter((service: { is_composite: boolean }) => !service.is_composite)
                 .map((service: { id: string; name: string }) => (
-                  <option key={service.id} value={service.id}>
+                  <label
+                    key={service.id}
+                    className="flex cursor-pointer items-center gap-2 rounded-md p-2 text-sm text-foreground hover:bg-muted"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={form.component_ids.includes(service.id)}
+                      onChange={(event) =>
+                        setForm({
+                          ...form,
+                          component_ids: event.target.checked
+                            ? [...form.component_ids, service.id]
+                            : form.component_ids.filter((id) => id !== service.id),
+                        })
+                      }
+                    />
                     {service.name}
-                  </option>
+                  </label>
                 ))}
-            </select>
-          </label>
+            </div>
+          </fieldset>
         ) : null}
         <div className="sm:col-span-2">
           <Button type="submit" disabled={create.isPending}>
@@ -877,34 +885,39 @@ function ServicesPage() {
                     Pacote para venda (conjunto de serviços)
                   </label>
                   {edit!.is_composite ? (
-                    <label className="space-y-1.5 text-sm text-muted-foreground sm:col-span-2">
-                      <span className="block">Serviços incluídos no pacote</span>
-                      <select
-                        multiple
-                        className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                        value={edit!.component_ids}
-                        onChange={(event) =>
-                          setEdit({
-                            ...edit!,
-                            component_ids: Array.from(
-                              event.target.selectedOptions,
-                              (option) => option.value,
-                            ),
-                          })
-                        }
-                      >
+                    <fieldset className="space-y-2 sm:col-span-2">
+                      <legend className="text-sm font-medium text-foreground">
+                        Serviços incluídos no pacote
+                      </legend>
+                      <p className="text-xs text-muted-foreground">Marque um ou mais serviços.</p>
+                      <div className="grid gap-2 rounded-md border border-border p-3 sm:grid-cols-2">
                         {(services.data ?? [])
                           .filter(
                             (candidate: { id: string; is_composite: boolean }) =>
                               candidate.id !== edit!.id && !candidate.is_composite,
                           )
                           .map((candidate: { id: string; name: string }) => (
-                            <option key={candidate.id} value={candidate.id}>
+                            <label
+                              key={candidate.id}
+                              className="flex cursor-pointer items-center gap-2 rounded-md p-2 text-sm text-foreground hover:bg-muted"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={edit!.component_ids.includes(candidate.id)}
+                                onChange={(event) =>
+                                  setEdit({
+                                    ...edit!,
+                                    component_ids: event.target.checked
+                                      ? [...edit!.component_ids, candidate.id]
+                                      : edit!.component_ids.filter((id) => id !== candidate.id),
+                                  })
+                                }
+                              />
                               {candidate.name}
-                            </option>
+                            </label>
                           ))}
-                      </select>
-                    </label>
+                      </div>
+                    </fieldset>
                   ) : null}
                   <div className="flex gap-2 sm:col-span-2">
                     <Button type="submit" size="sm" disabled={update.isPending}>
