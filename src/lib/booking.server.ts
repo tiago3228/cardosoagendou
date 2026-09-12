@@ -348,7 +348,11 @@ export async function availabilityForDay(
       (h) => h.professional_id === professional.id && h.weekday === weekday,
     );
     const professionalWindow =
-      ph && ph.enabled ? { startsAt: ph.starts_at, endsAt: ph.ends_at } : null;
+      ph && ph.enabled
+        ? { startsAt: ph.starts_at, endsAt: ph.ends_at }
+        : ph
+          ? null
+          : businessWindow;
     const breakWindow =
       ph && ph.enabled && ph.lunch_starts_at && ph.lunch_ends_at
         ? { startsAt: ph.lunch_starts_at, endsAt: ph.lunch_ends_at }

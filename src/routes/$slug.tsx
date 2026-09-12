@@ -83,8 +83,13 @@ export const Route = createFileRoute("/$slug")({
   ),
 });
 
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+function todayISO(timeZone = "America/Sao_Paulo") {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
 }
 
 function BookingPage() {
@@ -117,7 +122,7 @@ function BookingPage() {
     });
   };
   const [professionalId, setProfessionalId] = useState<string | null>(null);
-  const [date, setDate] = useState(todayISO());
+  const [date, setDate] = useState(() => todayISO(business.timezone));
   const [slots, setSlots] = useState<
     {
       professionalId: string;
