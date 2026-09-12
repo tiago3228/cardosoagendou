@@ -22,7 +22,6 @@ import { Route as AuthenticatedAppAssinaturaRouteImport } from './routes/_authen
 import { Route as AuthenticatedAppClientesRouteImport } from './routes/_authenticated/app.clientes'
 import { Route as AuthenticatedAppConfiguracoesRouteImport } from './routes/_authenticated/app.configuracoes'
 import { Route as AuthenticatedAppFaturamentoRouteImport } from './routes/_authenticated/app.faturamento'
-import { Route as AuthenticatedAppOrcamentosRouteImport } from './routes/_authenticated/app.orcamentos'
 import { Route as AuthenticatedAppProdutosRouteImport } from './routes/_authenticated/app.produtos'
 import { Route as AuthenticatedAppProfissionaisRouteImport } from './routes/_authenticated/app.profissionais'
 import { Route as AuthenticatedAppServicosRouteImport } from './routes/_authenticated/app.servicos'
@@ -99,12 +98,6 @@ const AuthenticatedAppFaturamentoRoute =
     path: '/faturamento',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
-const AuthenticatedAppOrcamentosRoute =
-  AuthenticatedAppOrcamentosRouteImport.update({
-    id: '/orcamentos',
-    path: '/orcamentos',
-    getParentRoute: () => AuthenticatedAppRoute,
-  } as any)
 const AuthenticatedAppProdutosRoute =
   AuthenticatedAppProdutosRouteImport.update({
     id: '/produtos',
@@ -159,7 +152,6 @@ export interface FileRoutesByFullPath {
   '/app/clientes': typeof AuthenticatedAppClientesRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/app/faturamento': typeof AuthenticatedAppFaturamentoRoute
-  '/app/orcamentos': typeof AuthenticatedAppOrcamentosRoute
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/app/servicos': typeof AuthenticatedAppServicosRoute
@@ -180,7 +172,6 @@ export interface FileRoutesByTo {
   '/app/clientes': typeof AuthenticatedAppClientesRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/app/faturamento': typeof AuthenticatedAppFaturamentoRoute
-  '/app/orcamentos': typeof AuthenticatedAppOrcamentosRoute
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/app/servicos': typeof AuthenticatedAppServicosRoute
@@ -204,7 +195,6 @@ export interface FileRoutesById {
   '/_authenticated/app/clientes': typeof AuthenticatedAppClientesRoute
   '/_authenticated/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/_authenticated/app/faturamento': typeof AuthenticatedAppFaturamentoRoute
-  '/_authenticated/app/orcamentos': typeof AuthenticatedAppOrcamentosRoute
   '/_authenticated/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/_authenticated/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/_authenticated/app/servicos': typeof AuthenticatedAppServicosRoute
@@ -228,7 +218,6 @@ export interface FileRouteTypes {
     | '/app/clientes'
     | '/app/configuracoes'
     | '/app/faturamento'
-    | '/app/orcamentos'
     | '/app/produtos'
     | '/app/profissionais'
     | '/app/servicos'
@@ -249,7 +238,6 @@ export interface FileRouteTypes {
     | '/app/clientes'
     | '/app/configuracoes'
     | '/app/faturamento'
-    | '/app/orcamentos'
     | '/app/produtos'
     | '/app/profissionais'
     | '/app/servicos'
@@ -272,7 +260,6 @@ export interface FileRouteTypes {
     | '/_authenticated/app/clientes'
     | '/_authenticated/app/configuracoes'
     | '/_authenticated/app/faturamento'
-    | '/_authenticated/app/orcamentos'
     | '/_authenticated/app/produtos'
     | '/_authenticated/app/profissionais'
     | '/_authenticated/app/servicos'
@@ -388,13 +375,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppFaturamentoRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
-    '/_authenticated/app/orcamentos': {
-      id: '/_authenticated/app/orcamentos'
-      path: '/orcamentos'
-      fullPath: '/app/orcamentos'
-      preLoaderRoute: typeof AuthenticatedAppOrcamentosRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
     '/_authenticated/app/produtos': {
       id: '/_authenticated/app/produtos'
       path: '/produtos'
@@ -452,7 +432,6 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppClientesRoute: typeof AuthenticatedAppClientesRoute
   AuthenticatedAppConfiguracoesRoute: typeof AuthenticatedAppConfiguracoesRoute
   AuthenticatedAppFaturamentoRoute: typeof AuthenticatedAppFaturamentoRoute
-  AuthenticatedAppOrcamentosRoute: typeof AuthenticatedAppOrcamentosRoute
   AuthenticatedAppProdutosRoute: typeof AuthenticatedAppProdutosRoute
   AuthenticatedAppProfissionaisRoute: typeof AuthenticatedAppProfissionaisRoute
   AuthenticatedAppServicosRoute: typeof AuthenticatedAppServicosRoute
@@ -464,7 +443,6 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppClientesRoute: AuthenticatedAppClientesRoute,
   AuthenticatedAppConfiguracoesRoute: AuthenticatedAppConfiguracoesRoute,
   AuthenticatedAppFaturamentoRoute: AuthenticatedAppFaturamentoRoute,
-  AuthenticatedAppOrcamentosRoute: AuthenticatedAppOrcamentosRoute,
   AuthenticatedAppProdutosRoute: AuthenticatedAppProdutosRoute,
   AuthenticatedAppProfissionaisRoute: AuthenticatedAppProfissionaisRoute,
   AuthenticatedAppServicosRoute: AuthenticatedAppServicosRoute,

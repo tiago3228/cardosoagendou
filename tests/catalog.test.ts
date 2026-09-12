@@ -6,10 +6,6 @@ const migration = readFileSync(
   new URL("../supabase/migrations/20260907003000_complete_global_catalog.sql", import.meta.url),
   "utf8",
 );
-const videomakerMigration = readFileSync(
-  new URL("../supabase/migrations/20260912160000_add_videomaker_catalog.sql", import.meta.url),
-  "utf8",
-);
 
 const templates = [...migration.matchAll(/^\s+\('([^']+)', '(.+)', (\d+)\)[,;]?$/gm)].map(
   ([, segment, name, duration]) => ({
@@ -53,16 +49,4 @@ test("new services no longer fall back to the legacy Geral bucket", () => {
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.assign_default_service_segment/);
   assert.doesNotMatch(migration, /INSERT INTO public\.business_segments[\s\S]*'Geral'/);
   assert.match(migration, /RETURN NEW;/);
-});
-
-test("Videomaker adds the segment and 15 principal services", () => {
-  assert.match(videomakerMigration, /'Videomaker',\s+'videomaker'/);
-  const serviceValues = videomakerMigration
-    .split("CROSS JOIN (", 2)[1]
-    .split(") AS v(name", 2)[0]
-    .match(/^\s{4}\('[^']+'/gm);
-  assert.equal(serviceValues?.length, 15);
-  assert.match(videomakerMigration, /'Vídeo institucional'/);
-  assert.match(videomakerMigration, /'Edição de vídeo'/);
-  assert.match(videomakerMigration, /'Captação com drone'/);
 });

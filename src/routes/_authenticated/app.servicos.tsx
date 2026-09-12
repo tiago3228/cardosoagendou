@@ -31,7 +31,6 @@ export const Route = createFileRoute("/_authenticated/app/servicos")({
 interface EditForm {
   id: string;
   name: string;
-  description: string;
   category: string;
   price: string;
   duration: string;
@@ -56,7 +55,6 @@ function ServicesPage() {
   const db = supabase as unknown as SupabaseClient;
   const [form, setForm] = useState({
     name: "",
-    description: "",
     category: "",
     price: "",
     duration: "30",
@@ -144,7 +142,7 @@ function ServicesPage() {
       const { data, error } = await db
         .from("services")
         .select(
-          "id, name, description, category, price_cents, duration_minutes, active, segment_id, allows_parallel, is_composite",
+          "id, name, category, price_cents, duration_minutes, active, segment_id, allows_parallel, is_composite",
         )
         .eq("business_id", businessId)
         .is("deleted_at", null)
@@ -165,11 +163,6 @@ function ServicesPage() {
       return data ?? [];
     },
   });
-  const activeSegmentIds = new Set(
-    (segments.data ?? [])
-      .filter((segment: { id: string; active: boolean }) => segment.active)
-      .map((segment: { id: string }) => segment.id),
-  );
 
   const createSegment = useMutation({
     mutationFn: async () => {
@@ -212,13 +205,10 @@ function ServicesPage() {
 
   const deleteSegment = useMutation({
     mutationFn: async (segmentId: string) => {
-      const { error } = await db.rpc(
-        "delete_business_segment" as never,
-        {
-          _business_id: businessId,
-          _business_segment_id: segmentId,
-        } as never,
-      );
+      const { error } = await db.rpc("delete_business_segment" as never, {
+        _business_id: businessId,
+        _business_segment_id: segmentId,
+      } as never);
       if (error) throw new Error(error.message);
     },
     onSuccess: async () => {
@@ -234,6 +224,8 @@ function ServicesPage() {
     onError: (error: Error) =>
       toast.error("Não foi possível excluir o segmento", { description: userFacingError(error) }),
   });
+
+
 
   const copyTemplates = useMutation({
     mutationFn: async (input: { segmentId: string; templateIds: string[] }) => {
@@ -303,9 +295,7 @@ function ServicesPage() {
       toast.success(`${count} serviço(s) adicionado(s)`);
     },
     onError: (error: Error) =>
-      toast.error("Não foi possível adicionar os serviços", {
-        description: userFacingError(error),
-      }),
+      toast.error("Não foi possível adicionar os serviços", { description: userFacingError(error) }),
   });
 
   const toggleProfessionalService = useMutation({
@@ -331,9 +321,7 @@ function ServicesPage() {
       await queryClient.invalidateQueries({ queryKey: ["professional-services", businessId] });
     },
     onError: (error: Error) =>
-      toast.error("Não foi possível atualizar os profissionais", {
-        description: userFacingError(error),
-      }),
+      toast.error("Não foi possível atualizar os profissionais", { description: userFacingError(error) }),
   });
 
   const create = useMutation({
@@ -344,37 +332,28 @@ function ServicesPage() {
       if (!Number.isFinite(price) || price < 0) throw new Error("Preço inválido");
       if (!Number.isFinite(duration) || duration < 5)
         throw new Error("Duração mínima de 5 minutos");
-      const { data: created, error } = await db
-        .from("services")
-        .insert({
-          business_id: businessId,
-          name: form.name.trim(),
-          description: form.description.trim() || null,
-          category: form.category.trim() || null,
-          price_cents: price,
-          duration_minutes: duration,
-          ...(form.segment_id ? { segment_id: form.segment_id } : {}),
-          allows_parallel: form.allows_parallel,
-          is_composite: false,
-        })
-        .select("id")
-        .single();
+      const { data: created, error } = await db.from("services").insert({
+        business_id: businessId,
+        name: form.name.trim(),
+        category: form.category.trim() || null,
+        price_cents: price,
+        duration_minutes: duration,
+        ...(form.segment_id ? { segment_id: form.segment_id } : {}),
+        allows_parallel: form.allows_parallel,
+        is_composite: false,
+      }).select("id").single();
       if (error) throw new Error(error.message);
-      const { error: compositionError } = await db.rpc(
-        "save_service_composition" as never,
-        {
-          _business_id: businessId,
-          _service_id: created.id,
-          _is_composite: form.is_composite,
-          _component_ids: form.component_ids,
-        } as never,
-      );
+      const { error: compositionError } = await db.rpc("save_service_composition" as never, {
+        _business_id: businessId,
+        _service_id: created.id,
+        _is_composite: form.is_composite,
+        _component_ids: form.component_ids,
+      } as never);
       if (compositionError) throw new Error(compositionError.message);
     },
     onSuccess: () => {
       setForm({
         name: "",
-        description: "",
         category: "",
         price: "",
         duration: "30",
@@ -427,7 +406,6 @@ function ServicesPage() {
         .from("services")
         .update({
           name: input.name.trim(),
-          description: input.description.trim() || null,
           category: input.category.trim() || null,
           price_cents: price,
           duration_minutes: duration,
@@ -437,15 +415,12 @@ function ServicesPage() {
         .eq("id", input.id)
         .eq("business_id", businessId);
       if (error) throw new Error(error.message);
-      const { error: compositionError } = await db.rpc(
-        "save_service_composition" as never,
-        {
-          _business_id: businessId,
-          _service_id: input.id,
-          _is_composite: input.is_composite,
-          _component_ids: input.component_ids,
-        } as never,
-      );
+      const { error: compositionError } = await db.rpc("save_service_composition" as never, {
+        _business_id: businessId,
+        _service_id: input.id,
+        _is_composite: input.is_composite,
+        _component_ids: input.component_ids,
+      } as never);
       if (compositionError) throw new Error(compositionError.message);
     },
     onSuccess: () => {
@@ -543,7 +518,9 @@ function ServicesPage() {
                           size="sm"
                           variant="ghost"
                           aria-label={`Excluir segmento ${segment.name}`}
-                          onClick={() => setSegmentToDelete({ id: segment.id, name: segment.name })}
+                          onClick={() =>
+                            setSegmentToDelete({ id: segment.id, name: segment.name })
+                          }
                         >
                           <Trash2 className="size-4" aria-hidden />
                         </Button>
@@ -671,16 +648,6 @@ function ServicesPage() {
           <Label>Nome</Label>
           <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </div>
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label>Descrição para o cliente</Label>
-          <textarea
-            className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            placeholder="Explique o que está incluído neste serviço ou pacote"
-            maxLength={500}
-          />
-        </div>
         <div className="space-y-1.5">
           <Label>Categoria</Label>
           <Input
@@ -743,43 +710,29 @@ function ServicesPage() {
               setForm({ ...form, is_composite: event.target.checked, component_ids: [] })
             }
           />
-          Pacote para venda (conjunto de serviços)
+          Serviço composto/conjunto
         </label>
         {form.is_composite ? (
-          <fieldset className="space-y-2 sm:col-span-2">
-            <legend className="text-sm font-medium text-foreground">
-              Serviços incluídos no pacote
-            </legend>
-            <p className="text-xs text-muted-foreground">Marque um ou mais serviços.</p>
-            <div className="grid gap-2 rounded-md border border-border p-3 sm:grid-cols-2">
+          <label className="space-y-1.5 text-sm text-muted-foreground sm:col-span-2">
+            <span className="block">Serviços componentes</span>
+            <select
+              multiple
+              className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+              value={form.component_ids}
+              onChange={(event) =>
+                setForm({
+                  ...form,
+                  component_ids: Array.from(event.target.selectedOptions, (option) => option.value),
+                })
+              }
+            >
               {(services.data ?? [])
-                .filter(
-                  (service: { is_composite: boolean; segment_id: string | null }) =>
-                    !service.is_composite &&
-                    (!service.segment_id || activeSegmentIds.has(service.segment_id)),
-                )
+                .filter((service: { is_composite: boolean }) => !service.is_composite)
                 .map((service: { id: string; name: string }) => (
-                  <label
-                    key={service.id}
-                    className="flex cursor-pointer items-center gap-2 rounded-md p-2 text-sm text-foreground hover:bg-muted"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={form.component_ids.includes(service.id)}
-                      onChange={(event) =>
-                        setForm({
-                          ...form,
-                          component_ids: event.target.checked
-                            ? [...form.component_ids, service.id]
-                            : form.component_ids.filter((id) => id !== service.id),
-                        })
-                      }
-                    />
-                    {service.name}
-                  </label>
+                <option key={service.id} value={service.id}>{service.name}</option>
                 ))}
-            </div>
-          </fieldset>
+            </select>
+          </label>
         ) : null}
         <div className="sm:col-span-2">
           <Button type="submit" disabled={create.isPending}>
@@ -793,7 +746,6 @@ function ServicesPage() {
           (service: {
             id: string;
             name: string;
-            description: string | null;
             category: string | null;
             price_cents: number;
             duration_minutes: number;
@@ -816,16 +768,6 @@ function ServicesPage() {
                     <Input
                       value={edit!.name}
                       onChange={(e) => setEdit({ ...edit!, name: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-1.5 sm:col-span-2">
-                    <Label>Descrição para o cliente</Label>
-                    <textarea
-                      className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                      value={edit!.description}
-                      onChange={(e) => setEdit({ ...edit!, description: e.target.value })}
-                      placeholder="Explique o que está incluído neste serviço ou pacote"
-                      maxLength={500}
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -891,48 +833,37 @@ function ServicesPage() {
                         setEdit({ ...edit!, is_composite: event.target.checked })
                       }
                     />
-                    Pacote para venda (conjunto de serviços)
+                    Serviço composto/conjunto
                   </label>
                   {edit!.is_composite ? (
-                    <fieldset className="space-y-2 sm:col-span-2">
-                      <legend className="text-sm font-medium text-foreground">
-                        Serviços incluídos no pacote
-                      </legend>
-                      <p className="text-xs text-muted-foreground">Marque um ou mais serviços.</p>
-                      <div className="grid gap-2 rounded-md border border-border p-3 sm:grid-cols-2">
+                    <label className="space-y-1.5 text-sm text-muted-foreground sm:col-span-2">
+                      <span className="block">Serviços componentes</span>
+                      <select
+                        multiple
+                        className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                        value={edit!.component_ids}
+                        onChange={(event) =>
+                          setEdit({
+                            ...edit!,
+                            component_ids: Array.from(
+                              event.target.selectedOptions,
+                              (option) => option.value,
+                            ),
+                          })
+                        }
+                      >
                         {(services.data ?? [])
                           .filter(
-                            (candidate: {
-                              id: string;
-                              is_composite: boolean;
-                              segment_id: string | null;
-                            }) =>
-                              candidate.id !== edit!.id &&
-                              !candidate.is_composite &&
-                              (!candidate.segment_id || activeSegmentIds.has(candidate.segment_id)),
+                            (candidate: { id: string; is_composite: boolean }) =>
+                              candidate.id !== edit!.id && !candidate.is_composite,
                           )
                           .map((candidate: { id: string; name: string }) => (
-                            <label
-                              key={candidate.id}
-                              className="flex cursor-pointer items-center gap-2 rounded-md p-2 text-sm text-foreground hover:bg-muted"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={edit!.component_ids.includes(candidate.id)}
-                                onChange={(event) =>
-                                  setEdit({
-                                    ...edit!,
-                                    component_ids: event.target.checked
-                                      ? [...edit!.component_ids, candidate.id]
-                                      : edit!.component_ids.filter((id) => id !== candidate.id),
-                                  })
-                                }
-                              />
+                            <option key={candidate.id} value={candidate.id}>
                               {candidate.name}
-                            </label>
+                            </option>
                           ))}
-                      </div>
-                    </fieldset>
+                      </select>
+                    </label>
                   ) : null}
                   <div className="flex gap-2 sm:col-span-2">
                     <Button type="submit" size="sm" disabled={update.isPending}>
@@ -951,29 +882,7 @@ function ServicesPage() {
                       {service.category ? `${service.category} · ` : ""}
                       {formatDuration(service.duration_minutes)} · {formatBRL(service.price_cents)}
                       {service.allows_parallel ? " · Simultâneo" : ""}
-                      {service.is_composite ? " · Pacote" : ""}
                     </p>
-                    {service.is_composite ? (
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Inclui:{" "}
-                        {(compositions.data ?? [])
-                          .filter(
-                            (composition: {
-                              composite_service_id: string;
-                              component_service_id: string;
-                            }) => composition.composite_service_id === service.id,
-                          )
-                          .map(
-                            (composition: { component_service_id: string }) =>
-                              (services.data ?? []).find(
-                                (component: { id: string }) =>
-                                  component.id === composition.component_service_id,
-                              )?.name,
-                          )
-                          .filter(Boolean)
-                          .join(", ") || "Nenhum serviço incluído"}
-                      </p>
-                    ) : null}
                     <div className="mt-2 flex flex-wrap gap-2">
                       {(professionals.data ?? []).map(
                         (professional: { id: string; name: string }) => {
@@ -1021,7 +930,6 @@ function ServicesPage() {
                         setEdit({
                           id: service.id,
                           name: service.name,
-                          description: service.description ?? "",
                           category: service.category ?? "",
                           price: (service.price_cents / 100).toFixed(2).replace(".", ","),
                           duration: String(service.duration_minutes),

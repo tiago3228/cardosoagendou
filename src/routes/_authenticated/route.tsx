@@ -16,3 +16,4 @@ export const Route = createFileRoute("/_authenticated")({
     </>
   ),
 });
+

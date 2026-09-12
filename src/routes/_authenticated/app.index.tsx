@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   CalendarDays,
-  Bell,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -19,10 +18,7 @@ import {
 } from "lucide-react";
 import { getAgenda } from "@/lib/panel.functions";
 import { getAppointmentRevenue } from "@/lib/finance.functions";
-import {
-  createAppointmentConfirmationLink,
-  setAppointmentStatus,
-} from "@/lib/appointments.functions";
+import { setAppointmentStatus } from "@/lib/appointments.functions";
 import { userFacingError } from "@/lib/user-facing-error";
 import { panelQuery } from "./app";
 import {
@@ -33,7 +29,6 @@ import {
   whatsappLink,
 } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-import { buildBookingShareText, resolvePublicBookingOrigin } from "@/lib/booking-share";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   head: () => ({
@@ -167,7 +162,6 @@ function AgendaPage() {
   const [date, setDate] = useState(today);
   const [view, setView] = useState<ViewMode>("day");
   const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>("ALL");
-  const [dismissedAlertSignature, setDismissedAlertSignature] = useState<string | null>(null);
   const fetchAgenda = useServerFn(getAgenda);
   const fetchRevenue = useServerFn(getAppointmentRevenue);
   const changeStatus = useServerFn(setAppointmentStatus);
@@ -177,17 +171,11 @@ function AgendaPage() {
   const agenda = useQuery({
     queryKey: ["agenda", view, bounds.from, bounds.to],
     queryFn: () => fetchAgenda({ data: bounds }),
-    refetchInterval: 15_000,
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
   });
 
   const revenue = useQuery({
     queryKey: ["agenda-revenue", date],
     queryFn: () => fetchRevenue({ data: { date } }),
-    refetchInterval: 15_000,
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
   });
 
   const mutation = useMutation({
@@ -203,37 +191,9 @@ function AgendaPage() {
       toast.error("Não foi possível atualizar", { description: userFacingError(error) }),
   });
 
-  const origin = resolvePublicBookingOrigin(
-    panel.publicOrigin,
-    typeof window !== "undefined" ? window.location.origin : undefined,
-  );
+  const origin = panel.publicOrigin ?? (typeof window !== "undefined" ? window.location.origin : "");
   const bookingUrl = panel.business && origin ? `${origin}/${panel.business.slug}` : "";
-  const bookingShareText = buildBookingShareText(
-    panel.business?.booking_share_message ?? "",
-    bookingUrl,
-  );
   const items = (agenda.data ?? []) as AppointmentItem[];
-  const appointmentSignature = items.map((item) => `${item.id}:${item.status}`).join(",");
-  const alertStorageKey = `agenda-alert-dismissed:${panel.business?.id ?? "unknown"}`;
-  useEffect(() => {
-    if (!appointmentSignature || typeof window === "undefined") {
-      setDismissedAlertSignature(null);
-      return;
-    }
-    setDismissedAlertSignature(window.localStorage.getItem(alertStorageKey));
-  }, [alertStorageKey, appointmentSignature]);
-
-  const showAgendaAlert =
-    panel.business?.agenda_alerts_enabled !== false &&
-    items.length > 0 &&
-    dismissedAlertSignature !== appointmentSignature;
-
-  function dismissAgendaAlert() {
-    if (!appointmentSignature || typeof window === "undefined") return;
-    window.localStorage.setItem(alertStorageKey, appointmentSignature);
-    setDismissedAlertSignature(appointmentSignature);
-  }
-
   const visible = useMemo(() => {
     if (filter === "ACTIVE")
       return items.filter((item) => ["PENDING", "CONFIRMED", "IN_PROGRESS"].includes(item.status));
@@ -251,10 +211,9 @@ function AgendaPage() {
     day: "2-digit",
     month: "long",
   });
-  const rangeLabel =
-    view === "day"
-      ? dayLabel
-      : `${dateAtNoon(weekStart).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} — ${dateAtNoon(weekEnd).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}`;
+  const rangeLabel = view === "day"
+    ? dayLabel
+    : `${dateAtNoon(weekStart).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} — ${dateAtNoon(weekEnd).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}`;
 
   function move(direction: number) {
     setDate(shiftDay(date, direction * (view === "week" ? 7 : 1)));
@@ -277,10 +236,7 @@ function AgendaPage() {
 
             <div className="flex flex-wrap gap-x-4 gap-y-2 rounded-md border border-border bg-background/45 px-3 py-2.5">
               {Object.entries(STATUS).map(([key, meta]) => (
-                <span
-                  key={key}
-                  className="flex items-center gap-2 whitespace-nowrap text-xs text-muted-foreground"
-                >
+                <span key={key} className="flex items-center gap-2 whitespace-nowrap text-xs text-muted-foreground">
                   <span className={`size-2.5 rounded-full ${meta.dot}`} aria-hidden />
                   {meta.label}
                 </span>
@@ -290,12 +246,7 @@ function AgendaPage() {
 
           <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex min-w-0 items-center gap-1 rounded-md border border-border bg-background/50 p-1">
-              <Button
-                size="icon"
-                variant="ghost"
-                aria-label="Período anterior"
-                onClick={() => move(-1)}
-              >
+              <Button size="icon" variant="ghost" aria-label="Período anterior" onClick={() => move(-1)}>
                 <ChevronLeft aria-hidden />
               </Button>
               <input
@@ -305,34 +256,19 @@ function AgendaPage() {
                 aria-label="Data da agenda"
                 className="h-9 min-w-0 flex-1 rounded-md border-0 bg-transparent px-2 text-sm text-foreground outline-none sm:w-40"
               />
-              <Button
-                size="icon"
-                variant="ghost"
-                aria-label="Próximo período"
-                onClick={() => move(1)}
-              >
+              <Button size="icon" variant="ghost" aria-label="Próximo período" onClick={() => move(1)}>
                 <ChevronRight aria-hidden />
               </Button>
               {date !== today ? (
-                <Button size="sm" variant="ghost" onClick={() => setDate(today)}>
-                  Hoje
-                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setDate(today)}>Hoje</Button>
               ) : null}
             </div>
 
             <div className="grid grid-cols-2 rounded-md border border-border bg-background/50 p-1">
-              <Button
-                size="sm"
-                variant={view === "day" ? "default" : "ghost"}
-                onClick={() => setView("day")}
-              >
+              <Button size="sm" variant={view === "day" ? "default" : "ghost"} onClick={() => setView("day")}>
                 <LayoutList aria-hidden /> Dia
               </Button>
-              <Button
-                size="sm"
-                variant={view === "week" ? "default" : "ghost"}
-                onClick={() => setView("week")}
-              >
+              <Button size="sm" variant={view === "week" ? "default" : "ghost"} onClick={() => setView("week")}>
                 <CalendarDays aria-hidden /> Semana
               </Button>
             </div>
@@ -340,91 +276,23 @@ function AgendaPage() {
         </div>
 
         <div className="grid gap-px bg-border sm:grid-cols-3">
-          <Metric
-            label="Recebido no dia"
-            value={formatBRL(revenue.data?.day.completedCents ?? 0)}
-            detail={`Previsto: ${formatBRL(revenue.data?.day.expectedCents ?? 0)}`}
-            accent
-          />
-          <Metric
-            label="Recebido na semana"
-            value={formatBRL(revenue.data?.week.completedCents ?? 0)}
-            detail={`Previsto: ${formatBRL(revenue.data?.week.expectedCents ?? 0)}`}
-          />
-          <Metric
-            label={view === "week" ? "Atendimentos na semana" : "Atendimentos no dia"}
-            value={String(
-              view === "week" ? visible.length : (revenue.data?.day.appointments ?? items.length),
-            )}
-            detail={`${revenue.data?.week.appointments ?? 0} na semana`}
-          />
+          <Metric label="Recebido no dia" value={formatBRL(revenue.data?.day.completedCents ?? 0)} detail={`Previsto: ${formatBRL(revenue.data?.day.expectedCents ?? 0)}`} accent />
+          <Metric label="Recebido na semana" value={formatBRL(revenue.data?.week.completedCents ?? 0)} detail={`Previsto: ${formatBRL(revenue.data?.week.expectedCents ?? 0)}`} />
+          <Metric label={view === "week" ? "Atendimentos na semana" : "Atendimentos no dia"} value={String(view === "week" ? visible.length : revenue.data?.day.appointments ?? items.length)} detail={`${revenue.data?.week.appointments ?? 0} na semana`} />
         </div>
       </section>
 
       {bookingUrl ? (
-        <section className="overflow-hidden rounded-xl border-2 border-primary/30 bg-primary/5 shadow-soft">
-          <div className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
-            <div className="min-w-0">
-              <p className="text-xs font-bold uppercase tracking-wide text-primary">
-                Compartilhe sua página de agendamentos
-              </p>
-              <p className="mt-1 text-lg font-bold text-foreground">Sua página de reservas</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Envie este link aos seus clientes para que eles escolham o serviço e agendem o
-                melhor horário.
-              </p>
-              <p className="mt-3 truncate rounded-md bg-background/70 px-3 py-2 text-sm font-medium text-foreground">
-                {bookingUrl}
-              </p>
-            </div>
-            <div className="flex shrink-0 flex-wrap gap-2">
-              <Button
-                size="sm"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(bookingShareText);
-                  toast.success("Mensagem e link copiados!");
-                }}
-              >
-                <MessageCircle aria-hidden /> Copiar mensagem + link
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(bookingUrl);
-                  toast.success("Somente o link foi copiado!");
-                }}
-              >
-                <Copy aria-hidden /> Copiar só o link
-              </Button>
-            </div>
+        <section className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase text-muted-foreground">Sua página de reservas</p>
+            <p className="truncate text-sm font-medium">{bookingUrl}</p>
           </div>
-        </section>
-      ) : null}
-
-      {showAgendaAlert ? (
-        <section
-          className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/10 p-4 text-primary shadow-soft"
-          role="status"
-          aria-live="polite"
-        >
-          <Bell className="mt-0.5 size-5 shrink-0" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold">Você tem agendamentos na agenda</p>
-            <p className="mt-1 text-sm text-primary/80">
-              Nos agendamentos pendentes, use <strong>Enviar confirmação</strong> para abrir o
-              WhatsApp já com as opções do cliente.
-            </p>
-          </div>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="shrink-0 text-primary hover:bg-primary/15 hover:text-primary"
-            onClick={dismissAgendaAlert}
-            aria-label="Limpar alerta da agenda"
-          >
-            Limpar
+          <Button size="sm" variant="outline" onClick={async () => {
+            await navigator.clipboard.writeText(bookingUrl);
+            toast.success("Link copiado!");
+          }}>
+            <Copy aria-hidden /> Copiar
           </Button>
         </section>
       ) : null}
@@ -432,20 +300,13 @@ function AgendaPage() {
       <section className="rounded-lg border border-border bg-card p-3 md:p-4">
         <div className="flex gap-2 overflow-x-auto pb-1">
           {FILTERS.map((item) => (
-            <Button
-              key={item.key}
-              size="sm"
-              variant={filter === item.key ? "default" : "ghost"}
-              onClick={() => setFilter(item.key)}
-            >
+            <Button key={item.key} size="sm" variant={filter === item.key ? "default" : "ghost"} onClick={() => setFilter(item.key)}>
               {item.label}
             </Button>
           ))}
         </div>
 
-        {agenda.isLoading ? (
-          <p className="p-8 text-center text-sm text-muted-foreground">Carregando agenda...</p>
-        ) : null}
+        {agenda.isLoading ? <p className="p-8 text-center text-sm text-muted-foreground">Carregando agenda...</p> : null}
         {!agenda.isLoading && visible.length === 0 ? (
           <div className="m-1 mt-4 rounded-lg border border-dashed border-border p-10 text-center">
             <CalendarDays className="mx-auto size-6 text-muted-foreground" aria-hidden />
@@ -456,43 +317,20 @@ function AgendaPage() {
           <DayView appointments={visible} mutation={mutation} />
         ) : null}
         {!agenda.isLoading && visible.length > 0 && view === "week" ? (
-          <WeekView
-            appointments={visible}
-            days={weekDays}
-            selectedDate={date}
-            onSelectDate={(day) => {
-              setDate(day);
-              setView("day");
-            }}
-          />
+          <WeekView appointments={visible} days={weekDays} selectedDate={date} onSelectDate={(day) => { setDate(day); setView("day"); }} />
         ) : null}
       </section>
     </div>
   );
 }
 
-function Metric({
-  label,
-  value,
-  detail,
-  accent = false,
-}: {
-  label: string;
-  value: string;
-  detail: string;
-  accent?: boolean;
-}) {
+function Metric({ label, value, detail, accent = false }: { label: string; value: string; detail: string; accent?: boolean }) {
   return (
     <div className="bg-card px-5 py-4">
       <p className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
-        {accent ? <TrendingUp className="size-3.5" aria-hidden /> : null}
-        {label}
+        {accent ? <TrendingUp className="size-3.5" aria-hidden /> : null}{label}
       </p>
-      <p
-        className={`mt-1 font-display text-2xl font-bold ${accent ? "text-primary" : "text-foreground"}`}
-      >
-        {value}
-      </p>
+      <p className={`mt-1 font-display text-2xl font-bold ${accent ? "text-primary" : "text-foreground"}`}>{value}</p>
       <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
     </div>
   );
@@ -502,21 +340,11 @@ type StatusMutation = {
   mutate: (input: { appointmentId: string; status: string }) => void;
 };
 
-function DayView({
-  appointments,
-  mutation,
-}: {
-  appointments: AppointmentItem[];
-  mutation: StatusMutation;
-}) {
+function DayView({ appointments, mutation }: { appointments: AppointmentItem[]; mutation: StatusMutation }) {
   return (
     <div className="mt-4 space-y-2">
       <div className="hidden grid-cols-[92px_minmax(220px,1.4fr)_minmax(150px,1fr)_100px_130px] gap-4 px-4 pb-2 text-xs font-semibold uppercase text-muted-foreground lg:grid">
-        <span>Horário</span>
-        <span>Cliente / serviço</span>
-        <span>Profissional</span>
-        <span>Duração</span>
-        <span>Status</span>
+        <span>Horário</span><span>Cliente / serviço</span><span>Profissional</span><span>Duração</span><span>Status</span>
       </div>
       {appointments.map((appointment) => (
         <AppointmentRow key={appointment.id} appointment={appointment} mutation={mutation} />
@@ -525,36 +353,23 @@ function DayView({
   );
 }
 
-function AppointmentRow({
-  appointment,
-  mutation,
-}: {
-  appointment: AppointmentItem;
-  mutation: StatusMutation;
-}) {
-  const createConfirmationLink = useServerFn(createAppointmentConfirmationLink);
+function AppointmentRow({ appointment, mutation }: { appointment: AppointmentItem; mutation: StatusMutation }) {
   const meta = statusMeta(appointment.status);
   const starts = new Date(appointment.starts_at);
   const time = starts.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   const e164 = normalizeBrWhatsapp(appointment.client_whatsapp ?? "");
 
   return (
-    <article
-      className={`relative overflow-hidden rounded-lg border border-border border-l-[6px] bg-background/45 p-4 transition-colors hover:bg-secondary/45 ${meta.stripe}`}
-    >
+    <article className={`relative overflow-hidden rounded-lg border border-border border-l-[6px] bg-background/45 p-4 transition-colors hover:bg-secondary/45 ${meta.stripe}`}>
       <div className="grid gap-4 lg:grid-cols-[92px_minmax(220px,1.4fr)_minmax(150px,1fr)_100px_130px] lg:items-center">
         <div>
           <p className="font-display text-xl font-bold text-foreground">{time}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {formatBRL(appointment.total_price_cents)}
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{formatBRL(appointment.total_price_cents)}</p>
         </div>
         <div className="min-w-0">
           <p className="truncate font-semibold text-card-foreground">{appointment.client_name}</p>
           <p className="mt-1 truncate text-sm text-muted-foreground">{serviceNames(appointment)}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {formatWhatsapp(appointment.client_whatsapp)}
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{formatWhatsapp(appointment.client_whatsapp)}</p>
         </div>
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <UserRound className="size-4" aria-hidden /> {professionalName(appointment)}
@@ -562,9 +377,7 @@ function AppointmentRow({
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Clock className="size-4" aria-hidden /> {formatDuration(appointment.duration_minutes)}
         </p>
-        <span className={`w-fit rounded-full px-3 py-1.5 text-xs font-semibold ${meta.chip}`}>
-          {meta.label}
-        </span>
+        <span className={`w-fit rounded-full px-3 py-1.5 text-xs font-semibold ${meta.chip}`}>{meta.label}</span>
       </div>
 
       {appointment.blocks_agenda === false ? (
@@ -572,82 +385,23 @@ function AppointmentRow({
       ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-3">
-        {e164 && ["PENDING", "CONFIRMED"].includes(appointment.status) ? (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={async () => {
-              try {
-                const result = await createConfirmationLink({
-                  data: { appointmentId: appointment.id },
-                });
-                const whatsappUrl = whatsappLink(result.recipient, result.message);
-                const whatsappWindow = window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-                if (!whatsappWindow) {
-                  await navigator.clipboard.writeText(result.message);
-                  toast.warning("O navegador bloqueou a abertura do WhatsApp", {
-                    description: `A mensagem foi copiada para ${formatWhatsapp(result.recipient)}.`,
-                  });
-                } else {
-                  toast.success("WhatsApp aberto com a confirmação pronta.");
-                }
-              } catch (error) {
-                toast.error("Não foi possível preparar a confirmação", {
-                  description: userFacingError(error),
-                });
-              }
-            }}
-          >
-            <MessageCircle aria-hidden /> Enviar confirmação
-          </Button>
-        ) : null}
         {e164 ? (
           <Button size="sm" variant="outline" asChild>
-            <a
-              href={whatsappLink(
-                e164,
-                `Olá, ${appointment.client_name}! Confirmando seu horário às ${time}.`,
-              )}
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a href={whatsappLink(e164, `Olá, ${appointment.client_name}! Confirmando seu horário às ${time}.`)} target="_blank" rel="noreferrer">
               <MessageCircle aria-hidden /> WhatsApp
             </a>
           </Button>
         ) : null}
         {appointment.status === "PENDING" ? (
-          <Button
-            size="sm"
-            onClick={() => mutation.mutate({ appointmentId: appointment.id, status: "CONFIRMED" })}
-          >
+          <Button size="sm" onClick={() => mutation.mutate({ appointmentId: appointment.id, status: "CONFIRMED" })}>
             <Check aria-hidden /> Confirmar
           </Button>
         ) : null}
         {["PENDING", "CONFIRMED", "IN_PROGRESS"].includes(appointment.status) ? (
           <>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() =>
-                mutation.mutate({ appointmentId: appointment.id, status: "COMPLETED" })
-              }
-            >
-              Concluir
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => mutation.mutate({ appointmentId: appointment.id, status: "CANCELED" })}
-            >
-              <X aria-hidden /> Cancelar
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => mutation.mutate({ appointmentId: appointment.id, status: "NO_SHOW" })}
-            >
-              Não compareceu
-            </Button>
+            <Button size="sm" variant="outline" onClick={() => mutation.mutate({ appointmentId: appointment.id, status: "COMPLETED" })}>Concluir</Button>
+            <Button size="sm" variant="ghost" onClick={() => mutation.mutate({ appointmentId: appointment.id, status: "CANCELED" })}><X aria-hidden /> Cancelar</Button>
+            <Button size="sm" variant="ghost" onClick={() => mutation.mutate({ appointmentId: appointment.id, status: "NO_SHOW" })}>Não compareceu</Button>
           </>
         ) : null}
       </div>
@@ -655,75 +409,36 @@ function AppointmentRow({
   );
 }
 
-function WeekView({
-  appointments,
-  days,
-  selectedDate,
-  onSelectDate,
-}: {
-  appointments: AppointmentItem[];
-  days: string[];
-  selectedDate: string;
-  onSelectDate: (day: string) => void;
-}) {
+function WeekView({ appointments, days, selectedDate, onSelectDate }: { appointments: AppointmentItem[]; days: string[]; selectedDate: string; onSelectDate: (day: string) => void }) {
   return (
     <div className="mt-4 overflow-x-auto">
       <div className="grid min-w-[980px] grid-cols-7 gap-2">
         {days.map((day) => {
-          const dayItems = appointments.filter(
-            (appointment) => appointment.starts_at.slice(0, 10) === day,
-          );
+          const dayItems = appointments.filter((appointment) => appointment.starts_at.slice(0, 10) === day);
           const label = dateAtNoon(day).toLocaleDateString("pt-BR", { weekday: "short" });
           return (
-            <section
-              key={day}
-              className={`min-h-80 rounded-lg border p-2 ${day === selectedDate ? "border-primary bg-primary/5" : "border-border bg-background/35"}`}
-            >
-              <Button
-                variant="ghost"
-                className="h-auto w-full justify-between px-2 py-2"
-                onClick={() => onSelectDate(day)}
-              >
+            <section key={day} className={`min-h-80 rounded-lg border p-2 ${day === selectedDate ? "border-primary bg-primary/5" : "border-border bg-background/35"}`}>
+              <Button variant="ghost" className="h-auto w-full justify-between px-2 py-2" onClick={() => onSelectDate(day)}>
                 <span className="capitalize text-muted-foreground">{label.replace(".", "")}</span>
-                <span
-                  className={`flex size-8 items-center justify-center rounded-full font-display text-base ${day === selectedDate ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
-                >
+                <span className={`flex size-8 items-center justify-center rounded-full font-display text-base ${day === selectedDate ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
                   {dateAtNoon(day).getDate()}
                 </span>
               </Button>
               <div className="mt-2 space-y-2">
-                {dayItems.length === 0 ? (
-                  <p className="px-2 py-5 text-center text-xs text-muted-foreground">Livre</p>
-                ) : null}
+                {dayItems.length === 0 ? <p className="px-2 py-5 text-center text-xs text-muted-foreground">Livre</p> : null}
                 {dayItems.map((appointment) => {
                   const meta = statusMeta(appointment.status);
-                  const time = new Date(appointment.starts_at).toLocaleTimeString("pt-BR", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  });
+                  const time = new Date(appointment.starts_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
                   return (
-                    <Button
-                      key={appointment.id}
-                      variant="ghost"
-                      onClick={() => onSelectDate(day)}
-                      className={`h-auto w-full justify-start rounded-md border border-border border-l-4 bg-card p-2.5 text-left hover:bg-secondary/60 ${meta.stripe}`}
-                    >
+                    <Button key={appointment.id} variant="ghost" onClick={() => onSelectDate(day)} className={`h-auto w-full justify-start rounded-md border border-border border-l-4 bg-card p-2.5 text-left hover:bg-secondary/60 ${meta.stripe}`}>
                       <span className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-display text-sm font-bold">{time}</span>
-                          <span className={`size-2 rounded-full ${meta.dot}`} aria-hidden />
-                        </div>
-                        <p className="mt-1 truncate text-xs font-semibold">
-                          {appointment.client_name}
-                        </p>
-                        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                          {serviceNames(appointment)}
-                        </p>
-                        <span
-                          className={`mt-2 inline-block rounded-full px-2 py-1 text-[10px] font-semibold ${meta.chip}`}
-                        >
-                          {meta.label}
-                        </span>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-display text-sm font-bold">{time}</span>
+                        <span className={`size-2 rounded-full ${meta.dot}`} aria-hidden />
+                      </div>
+                      <p className="mt-1 truncate text-xs font-semibold">{appointment.client_name}</p>
+                      <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{serviceNames(appointment)}</p>
+                      <span className={`mt-2 inline-block rounded-full px-2 py-1 text-[10px] font-semibold ${meta.chip}`}>{meta.label}</span>
                       </span>
                     </Button>
                   );

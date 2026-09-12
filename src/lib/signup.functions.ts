@@ -32,11 +32,7 @@ export const provisionBusiness = createServerFn({ method: "POST" })
     const base = slugify(data.businessName) || "negocio";
     let slug = base;
     for (let attempt = 0; attempt < 25; attempt++) {
-      const taken = await supabaseAdmin
-        .from("businesses")
-        .select("id")
-        .eq("slug", slug)
-        .maybeSingle();
+      const taken = await supabaseAdmin.from("businesses").select("id").eq("slug", slug).maybeSingle();
       if (!taken.data) break;
       slug = `${base}-${attempt + 2}`;
     }
@@ -63,9 +59,7 @@ export const provisionBusiness = createServerFn({ method: "POST" })
       .from("profiles")
       .upsert({ id: userId, full_name: data.ownerName, email, whatsapp }, { onConflict: "id" });
 
-    await supabaseAdmin
-      .from("user_roles")
-      .insert({ user_id: userId, business_id: businessId, role: "owner" });
+    await supabaseAdmin.from("user_roles").insert({ user_id: userId, business_id: businessId, role: "owner" });
 
     // Mon-Fri 09-19, Sat 09-14, Sun closed.
     await supabaseAdmin.from("business_hours").insert(

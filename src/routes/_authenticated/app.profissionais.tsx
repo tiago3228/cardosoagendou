@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Mail, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,10 +32,7 @@ function ProfessionalsPage() {
   const teamManageEnabled =
     ((entitlements?.features ?? {}) as Record<string, unknown>)["team_manage"] === true;
   const businessId = panel.business!.id;
-  const plan = panel.subscription?.plans as {
-    professional_limit?: number | null;
-    name?: string;
-  } | null;
+  const plan = panel.subscription?.plans as { professional_limit?: number | null; name?: string } | null;
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ name: "", commission: "0" });
 
@@ -44,10 +41,7 @@ function ProfessionalsPage() {
   const revokeInvite = useServerFn(revokeProfessionalInvite);
   const [inviteEmail, setInviteEmail] = useState<Record<string, string>>({});
 
-  const invites = useQuery({
-    queryKey: ["professional-invites", businessId],
-    queryFn: () => fetchInvites(),
-  });
+  const invites = useQuery({ queryKey: ["professional-invites", businessId], queryFn: () => fetchInvites() });
 
   const invite = useMutation({
     mutationFn: (input: { professionalId: string; email: string }) => sendInvite({ data: input }),
@@ -74,8 +68,7 @@ function ProfessionalsPage() {
       toast.success("Convite revogado");
       queryClient.invalidateQueries({ queryKey: ["professional-invites", businessId] });
     },
-    onError: (error: Error) =>
-      toast.error("Erro ao revogar", { description: userFacingError(error) }),
+    onError: (error: Error) => toast.error("Erro ao revogar", { description: userFacingError(error) }),
   });
 
   const professionals = useQuery({
@@ -176,10 +169,8 @@ function ProfessionalsPage() {
         if (error) throw new Error(error.message);
       }
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["professional-services", businessId] }),
-    onError: (error: Error) =>
-      toast.error("Erro ao vincular serviço", { description: userFacingError(error) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["professional-services", businessId] }),
+    onError: (error: Error) => toast.error("Erro ao vincular serviço", { description: userFacingError(error) }),
   });
 
   const setActive = useMutation({
@@ -258,15 +249,15 @@ function ProfessionalsPage() {
       }),
   });
 
+
+
   return (
     <div>
       <BackButton />
       <h1 className="font-display text-2xl font-bold text-foreground">Equipe</h1>
       <p className="text-sm text-muted-foreground">
         {panel.usage?.activeProfessionals} ativo(s)
-        {plan?.professional_limit
-          ? ` de ${plan.professional_limit} do plano ${plan.name}`
-          : " · plano ilimitado"}
+        {plan?.professional_limit ? ` de ${plan.professional_limit} do plano ${plan.name}` : " · plano ilimitado"}
       </p>
       {!teamManageEnabled ? (
         <p className="mt-3 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
@@ -331,9 +322,7 @@ function ProfessionalsPage() {
                   size="sm"
                   variant="outline"
                   disabled={!teamManageEnabled}
-                  onClick={() =>
-                    setActive.mutate({ id: professional.id, active: !professional.active })
-                  }
+                  onClick={() => setActive.mutate({ id: professional.id, active: !professional.active })}
                 >
                   {professional.active ? "Ativo" : "Inativo"}
                 </Button>
@@ -367,6 +356,7 @@ function ProfessionalsPage() {
               onSave={(bio) => setBio.mutate({ id: professional.id, bio })}
             />
 
+
             <p className="mt-4 text-xs uppercase tracking-wide text-muted-foreground">
               Serviços que realiza
             </p>
@@ -399,9 +389,7 @@ function ProfessionalsPage() {
                 (i) => i.professional_id === professional.id && i.status === "PENDING",
               )}
               email={inviteEmail[professional.id] ?? ""}
-              onEmailChange={(value) =>
-                setInviteEmail((prev) => ({ ...prev, [professional.id]: value }))
-              }
+              onEmailChange={(value) => setInviteEmail((prev) => ({ ...prev, [professional.id]: value }))}
               onInvite={() =>
                 invite.mutate({
                   professionalId: professional.id,
@@ -450,12 +438,7 @@ function ProfessionalAccess({
             Convite pendente para {pendingInvite.email} · expira em{" "}
             {new Date(pendingInvite.expires_at).toLocaleDateString("pt-BR")}
           </p>
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled={busy}
-            onClick={() => onRevoke(pendingInvite.id)}
-          >
+          <Button size="sm" variant="ghost" disabled={busy} onClick={() => onRevoke(pendingInvite.id)}>
             Revogar
           </Button>
         </div>
@@ -470,12 +453,7 @@ function ProfessionalAccess({
               onChange={(e) => onEmailChange(e.target.value)}
             />
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={busy || email.trim().length < 5}
-            onClick={onInvite}
-          >
+          <Button size="sm" variant="outline" disabled={busy || email.trim().length < 5} onClick={onInvite}>
             <Mail className="size-4" aria-hidden /> Convidar
           </Button>
         </div>
@@ -484,21 +462,8 @@ function ProfessionalAccess({
   );
 }
 
-function ProfessionalHours({
-  professionalId,
-  businessId,
-}: {
-  professionalId: string;
-  businessId: string;
-}) {
+function ProfessionalHours({ professionalId, businessId }: { professionalId: string; businessId: string }) {
   const queryClient = useQueryClient();
-  type HourDraft = {
-    enabled: boolean;
-    starts_at: string;
-    ends_at: string;
-    lunch_starts_at: string | null;
-    lunch_ends_at: string | null;
-  };
   const hours = useQuery({
     queryKey: ["professional-hours", professionalId],
     queryFn: async () => {
@@ -512,60 +477,40 @@ function ProfessionalHours({
     },
   });
 
-  const [drafts, setDrafts] = useState<Record<number, HourDraft>>({});
-  useEffect(() => {
-    if (!hours.data) return;
-    setDrafts(
-      Object.fromEntries(
-        [0, 1, 2, 3, 4, 5, 6].map((weekday) => {
-          const row = hours.data.find((item) => item.weekday === weekday);
-          return [
-            weekday,
-            {
-              enabled: row?.enabled ?? false,
-              starts_at: (row?.starts_at ?? "09:00").slice(0, 5),
-              ends_at: (row?.ends_at ?? "19:00").slice(0, 5),
-              lunch_starts_at: row?.lunch_starts_at?.slice(0, 5) ?? null,
-              lunch_ends_at: row?.lunch_ends_at?.slice(0, 5) ?? null,
-            },
-          ];
-        }),
-      ),
-    );
-  }, [hours.data]);
-
-  const saveHours = useMutation({
-    mutationFn: async () => {
-      for (const weekday of [0, 1, 2, 3, 4, 5, 6]) {
-        const draft = drafts[weekday];
-        if (!draft) continue;
-        const existing = (hours.data ?? []).find((h) => h.weekday === weekday);
-        const payload = {
-          enabled: draft.enabled,
-          starts_at: draft.starts_at,
-          ends_at: draft.ends_at,
-          lunch_starts_at: draft.lunch_starts_at || null,
-          lunch_ends_at: draft.lunch_ends_at || null,
-        };
-        const result = existing
-          ? await supabase.from("professional_hours").update(payload).eq("id", existing.id)
-          : await supabase.from("professional_hours").insert({
-              professional_id: professionalId,
-              business_id: businessId,
-              weekday,
-              ...payload,
-            });
-        if (result.error) throw new Error(result.error.message);
+  const upsert = useMutation({
+    mutationFn: async (input: {
+      weekday: number;
+      enabled: boolean;
+      starts_at: string;
+      ends_at: string;
+      lunch_starts_at: string | null;
+      lunch_ends_at: string | null;
+    }) => {
+      const payload = {
+        enabled: input.enabled,
+        starts_at: input.starts_at,
+        ends_at: input.ends_at,
+        lunch_starts_at: input.lunch_starts_at || null,
+        lunch_ends_at: input.lunch_ends_at || null,
+      };
+      const existing = (hours.data ?? []).find((h) => h.weekday === input.weekday);
+      if (existing) {
+        const { error } = await supabase
+          .from("professional_hours")
+          .update(payload)
+          .eq("id", existing.id);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await supabase.from("professional_hours").insert({
+          professional_id: professionalId,
+          business_id: businessId,
+          weekday: input.weekday,
+          ...payload,
+        });
+        if (error) throw new Error(error.message);
       }
     },
-    onSuccess: () => {
-      toast.success("Horários salvos", {
-        description: "As alterações já estão disponíveis no link público.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["professional-hours", professionalId] });
-    },
-    onError: (error: Error) =>
-      toast.error("Não foi possível salvar os horários", { description: userFacingError(error) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["professional-hours", professionalId] }),
   });
 
   return (
@@ -573,88 +518,61 @@ function ProfessionalHours({
       <p className="text-xs uppercase tracking-wide text-muted-foreground">Horários de trabalho</p>
       <div className="mt-2 space-y-2">
         {[0, 1, 2, 3, 4, 5, 6].map((weekday) => {
-          const draft = drafts[weekday] ?? {
-            enabled: false,
-            starts_at: "09:00",
-            ends_at: "19:00",
-            lunch_starts_at: null,
-            lunch_ends_at: null,
+          const row = (hours.data ?? []).find((h) => h.weekday === weekday);
+          const starts = (row?.starts_at ?? "09:00").slice(0, 5);
+          const ends = (row?.ends_at ?? "19:00").slice(0, 5);
+          const lunchStarts = row?.lunch_starts_at ? row.lunch_starts_at.slice(0, 5) : "";
+          const lunchEnds = row?.lunch_ends_at ? row.lunch_ends_at.slice(0, 5) : "";
+          const enabled = row?.enabled ?? false;
+          const base = {
+            weekday,
+            enabled,
+            starts_at: starts,
+            ends_at: ends,
+            lunch_starts_at: lunchStarts || null,
+            lunch_ends_at: lunchEnds || null,
           };
           return (
             <div key={weekday} className="flex flex-wrap items-center gap-2 text-sm">
               <button
-                type="button"
-                onClick={() =>
-                  setDrafts((current) => ({
-                    ...current,
-                    [weekday]: { ...draft, enabled: !draft.enabled },
-                  }))
-                }
-                className={`w-14 rounded-md border px-2 py-1 ${draft.enabled ? "border-primary bg-primary/10" : "border-border text-muted-foreground"}`}
+                onClick={() => upsert.mutate({ ...base, enabled: !enabled })}
+                className={`w-14 rounded-md border px-2 py-1 ${enabled ? "border-primary bg-primary/10" : "border-border text-muted-foreground"}`}
               >
                 {WEEKDAY_SHORT[weekday]}
               </button>
               <input
                 type="time"
-                value={draft.starts_at}
-                onChange={(e) =>
-                  setDrafts((current) => ({
-                    ...current,
-                    [weekday]: { ...draft, starts_at: e.target.value },
-                  }))
-                }
+                value={starts}
+                onChange={(e) => upsert.mutate({ ...base, starts_at: e.target.value })}
                 className="h-8 rounded-md border border-input bg-background px-2"
               />
               <span className="text-muted-foreground">até</span>
               <input
                 type="time"
-                value={draft.ends_at}
-                onChange={(e) =>
-                  setDrafts((current) => ({
-                    ...current,
-                    [weekday]: { ...draft, ends_at: e.target.value },
-                  }))
-                }
+                value={ends}
+                onChange={(e) => upsert.mutate({ ...base, ends_at: e.target.value })}
                 className="h-8 rounded-md border border-input bg-background px-2"
               />
               <span className="text-muted-foreground">· almoço</span>
               <input
                 type="time"
-                value={draft.lunch_starts_at ?? ""}
+                value={lunchStarts}
                 aria-label="Início do almoço"
-                onChange={(e) =>
-                  setDrafts((current) => ({
-                    ...current,
-                    [weekday]: { ...draft, lunch_starts_at: e.target.value || null },
-                  }))
-                }
+                onChange={(e) => upsert.mutate({ ...base, lunch_starts_at: e.target.value || null })}
                 className="h-8 rounded-md border border-input bg-background px-2"
               />
               <span className="text-muted-foreground">às</span>
               <input
                 type="time"
-                value={draft.lunch_ends_at ?? ""}
+                value={lunchEnds}
                 aria-label="Fim do almoço"
-                onChange={(e) =>
-                  setDrafts((current) => ({
-                    ...current,
-                    [weekday]: { ...draft, lunch_ends_at: e.target.value || null },
-                  }))
-                }
+                onChange={(e) => upsert.mutate({ ...base, lunch_ends_at: e.target.value || null })}
                 className="h-8 rounded-md border border-input bg-background px-2"
               />
             </div>
           );
         })}
       </div>
-      <Button
-        type="button"
-        className="mt-4"
-        disabled={saveHours.isPending || !hours.data}
-        onClick={() => saveHours.mutate()}
-      >
-        {saveHours.isPending ? "Salvando..." : "Salvar alterações"}
-      </Button>
     </div>
   );
 }

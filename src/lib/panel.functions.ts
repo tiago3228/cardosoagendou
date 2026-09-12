@@ -1,53 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { Database } from "@/integrations/supabase/types";
-
-type PanelBusiness = Database["public"]["Tables"]["businesses"]["Row"];
-
-export const updateBusinessSettings = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator(
-    (input: unknown) => input as { businessId?: string; values: Record<string, unknown> },
-  )
-  .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const ownerRole = await supabaseAdmin
-      .from("user_roles")
-      .select("business_id")
-      .eq("user_id", context.userId)
-      .eq("role", "owner")
-      .maybeSingle();
-    const businessId = ownerRole.data?.business_id;
-    if (!businessId) throw new Error("FORBIDDEN: proprietário sem negócio vinculado");
-
-    const { error } = await supabaseAdmin
-      .from("businesses")
-      .update(data.values as never)
-      .eq("id", businessId);
-    if (error) throw new Error(`BUSINESS_UPDATE_FAILED: ${error.message}`);
-    return { saved: true as const };
-  });
 
 /** Everything the panel shell needs: business, role, plan usage and limits. */
 export const getMyPanel = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    let roles = await context.supabase
+    const roles = await context.supabase
       .from("user_roles")
       .select("role, business_id")
       .eq("user_id", context.userId);
-
-    if (!roles.data?.some((role) => role.business_id)) {
-      try {
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        roles = await supabaseAdmin
-          .from("user_roles")
-          .select("role, business_id")
-          .eq("user_id", context.userId);
-      } catch (error) {
-        console.warn("[Panel] Não foi possível consultar o vínculo administrativo:", error);
-      }
-    }
 
     const businessId = roles.data?.find((r) => r.business_id)?.business_id ?? null;
     if (!businessId) {
@@ -61,17 +22,14 @@ export const getMyPanel = createServerFn({ method: "POST" })
       };
     }
 
-    const businessSelect =
-      "id, slug, name, business_type, description, logo_url, cover_url, whatsapp, email, address, show_address, show_whatsapp, agenda_alerts_enabled, confirmation_enabled, confirmation_minutes, booking_share_message, booking_share_niche, booking_share_style, booking_policy, slot_interval_minutes, min_notice_minutes, max_advance_days, cancellation_deadline_hours, primary_color, secondary_color, timezone";
-    const legacyBusinessSelect =
-      "id, slug, name, business_type, description, logo_url, cover_url, whatsapp, email, address, show_address, show_whatsapp, booking_policy, slot_interval_minutes, min_notice_minutes, max_advance_days, cancellation_deadline_hours, primary_color, secondary_color, timezone";
-    const businessQuery = context.supabase
-      .from("businesses")
-      .select(businessSelect)
-      .eq("id", businessId)
-      .maybeSingle();
-    const [businessResult, subscription, professionals, profile] = await Promise.all([
-      businessQuery,
+    const [business, subscription, professionals, profile] = await Promise.all([
+      context.supabase
+        .from("businesses")
+        .select(
+          "id, slug, name, business_type, description, logo_url, cover_url, whatsapp, email, address, show_address, show_whatsapp, booking_policy, slot_interval_minutes, min_notice_minutes, max_advance_days, cancellation_deadline_hours, primary_color, secondary_color, timezone",
+        )
+        .eq("id", businessId)
+        .maybeSingle(),
       context.supabase
         .from("subscriptions")
         .select(
@@ -88,44 +46,16 @@ export const getMyPanel = createServerFn({ method: "POST" })
       context.supabase.from("profiles").select("full_name").eq("id", context.userId).maybeSingle(),
     ]);
 
-    const business = (businessResult.error
-      ? await context.supabase
-          .from("businesses")
-          .select(legacyBusinessSelect)
-          .eq("id", businessId)
-          .maybeSingle()
-      : businessResult) as unknown as {
-      data: Partial<PanelBusiness> | null;
-      error: { message: string } | null;
-    };
-
-    const normalizedBusiness: PanelBusiness | null = business.data
-      ? ({
-          ...business.data,
-          agenda_alerts_enabled: business.data.agenda_alerts_enabled ?? true,
-          confirmation_enabled: business.data.confirmation_enabled ?? true,
-          confirmation_minutes: business.data.confirmation_minutes ?? 0,
-          booking_share_message: business.data.booking_share_message ?? null,
-          booking_share_niche: business.data.booking_share_niche ?? null,
-          booking_share_style: business.data.booking_share_style ?? "professional",
-        } as PanelBusiness)
-      : null;
-
     // Official public domain for the booking link (never the preview/sandbox host).
-    let origin: { data: { value: unknown } | null } = { data: null };
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      origin = await supabaseAdmin
-        .from("platform_settings")
-        .select("value")
-        .eq("key", "app.public_origin")
-        .maybeSingle();
-    } catch (error) {
-      console.warn("[Panel] Usando origem pública do ambiente:", error);
-    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const origin = await supabaseAdmin
+      .from("platform_settings")
+      .select("value")
+      .eq("key", "app.public_origin")
+      .maybeSingle();
 
     return {
-      business: normalizedBusiness,
+      business: business.data ?? null,
       role: roles.data?.find((r) => r.business_id === businessId)?.role ?? null,
       ownerName: profile.data?.full_name ?? null,
       subscription: subscription.data ?? null,

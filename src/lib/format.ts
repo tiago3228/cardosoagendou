@@ -70,15 +70,6 @@ export function whatsappLink(e164: string | null | undefined, message?: string):
   return message ? `${base}?text=${encodeURIComponent(message)}` : base;
 }
 
-/** Opens the official WhatsApp Web send screen without the wa.me desktop redirect. */
-export function whatsappWebLink(e164: string | null | undefined, message?: string): string {
-  const normalized = normalizeBrWhatsapp(e164 ?? "");
-  if (!normalized) return "";
-  const digits = normalized.replace(/\D+/g, "");
-  const base = `https://web.whatsapp.com/send?phone=${digits}`;
-  return message ? `${base}&text=${encodeURIComponent(message)}` : base;
-}
-
 export function normalizeInstagramUrl(input: string | null | undefined): string | null {
   const value = (input ?? "").trim();
   if (!value) return null;

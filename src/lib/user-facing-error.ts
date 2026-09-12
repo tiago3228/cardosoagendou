@@ -31,14 +31,8 @@ const ENGLISH_MESSAGE_PATTERNS: Array<[RegExp, string]> = [
   [/invalid.*(email|e-mail)|email.*invalid/i, "Informe um e-mail válido."],
   [/duplicate key|unique constraint/i, "Este registro já existe."],
   [/not found|does not exist|could not find/i, "O registro solicitado não foi encontrado."],
-  [
-    /permission denied|not authorized|unauthorized/i,
-    "Você não tem permissão para realizar esta ação.",
-  ],
-  [
-    /network|fetch failed|failed to fetch|timeout/i,
-    "Não foi possível conectar ao servidor. Tente novamente.",
-  ],
+  [/permission denied|not authorized|unauthorized/i, "Você não tem permissão para realizar esta ação."],
+  [/network|fetch failed|failed to fetch|timeout/i, "Não foi possível conectar ao servidor. Tente novamente."],
 ];
 
 function extractErrorText(error: unknown): string {
@@ -47,10 +41,7 @@ function extractErrorText(error: unknown): string {
   return "";
 }
 
-export function userFacingError(
-  error: unknown,
-  fallback = "Não foi possível concluir a operação.",
-): string {
+export function userFacingError(error: unknown, fallback = "Não foi possível concluir a operação."): string {
   const raw = extractErrorText(error).trim();
   if (!raw) return fallback;
 

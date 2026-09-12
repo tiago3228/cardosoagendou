@@ -34,12 +34,7 @@ export const getPublicBusiness = createServerFn({ method: "GET" })
       .from("service_compositions")
       .select("composite_service_id, component_service_id")
       .eq("business_id", found.id);
-    return {
-      business,
-      ...catalog,
-      serviceCompositions: serviceCompositions ?? [],
-      acceptsBookings: true as const,
-    };
+    return { business, ...catalog, serviceCompositions: serviceCompositions ?? [], acceptsBookings: true as const };
   });
 
 /** Time slots for a day, computed from the SUM of the selected services' durations. */
