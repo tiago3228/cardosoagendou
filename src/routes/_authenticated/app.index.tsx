@@ -31,6 +31,7 @@ import {
   formatWhatsapp,
   normalizeBrWhatsapp,
   whatsappLink,
+  whatsappWebLink,
 } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { buildBookingShareText, resolvePublicBookingOrigin } from "@/lib/booking-share";
@@ -575,7 +576,11 @@ function AppointmentRow({
                 const result = await createConfirmationLink({
                   data: { appointmentId: appointment.id },
                 });
-                window.open(whatsappLink(result.recipient, result.message), "_blank", "noopener");
+                window.open(
+                  whatsappWebLink(result.recipient, result.message),
+                  "_blank",
+                  "noopener",
+                );
               } catch (error) {
                 toast.error("Não foi possível preparar a confirmação", {
                   description: userFacingError(error),

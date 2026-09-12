@@ -6,7 +6,7 @@ import {
   isValidManageToken,
   messageDedupeKey,
 } from "../src/lib/whatsapp.ts";
-import { normalizeBrWhatsapp, whatsappLink } from "../src/lib/format.ts";
+import { normalizeBrWhatsapp, whatsappLink, whatsappWebLink } from "../src/lib/format.ts";
 
 test("normalizes accepted Brazilian WhatsApp formats to E.164", () => {
   const expected = "+5531999999999";
@@ -26,6 +26,15 @@ test("generates an official wa.me link and URL-encodes the message", () => {
     "https://wa.me/5531999999999?text=Ol%C3%A1!%20Seu%20hor%C3%A1rio%20est%C3%A1%20confirmado.",
   );
   assert.equal(whatsappLink("número inválido", "teste"), "");
+});
+
+test("generates a direct WhatsApp Web link without the blocked API redirect", () => {
+  const link = whatsappWebLink("(31) 99999-9999", "Confirmar presença");
+  assert.equal(
+    link,
+    "https://web.whatsapp.com/send?phone=5531999999999&text=Confirmar%20presen%C3%A7a",
+  );
+  assert.equal(link.includes("api.whatsapp.com"), false);
 });
 
 test("confirmation uses a stable dedupe key", () => {
