@@ -155,12 +155,21 @@ export const createAppointmentConfirmationLink = createServerFn({ method: "POST"
       .eq("id", data.appointmentId)
       .maybeSingle();
     if (!current.data) throw new Error("APPOINTMENT_NOT_FOUND: agendamento não encontrado");
-    const member = await context.supabase
+    let member = await context.supabase
       .from("user_roles")
       .select("business_id")
       .eq("user_id", context.userId)
       .eq("business_id", current.data.business_id)
       .maybeSingle();
+    if (!member.data) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      member = await supabaseAdmin
+        .from("user_roles")
+        .select("business_id")
+        .eq("user_id", context.userId)
+        .eq("business_id", current.data.business_id)
+        .maybeSingle();
+    }
     if (!member.data) throw new Error("FORBIDDEN: sem acesso a este negócio");
     const { data: business } = await context.supabase
       .from("businesses")
