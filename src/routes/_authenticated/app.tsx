@@ -49,7 +49,7 @@ function PanelLayout() {
   const entitlements = useQuery(entitlementsQuery);
   const features = (entitlements.data?.features ?? {}) as Record<string, unknown>;
   const nav = NAV.filter((item) => !("feature" in item) || features[item.feature] === true);
-  const [theme, setTheme] = useState<PanelTheme>("dark");
+  const [theme, setTheme] = useState<PanelTheme>("clean");
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem(PANEL_THEME_KEY);

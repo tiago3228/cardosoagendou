@@ -1,17 +1,22 @@
 {
-  "name": "Agendou Pro",
-  "short_name": "Agendou Pro",
+  "name": "Agendou",
+  "short_name": "Agendou",
   "description": "Agenda online para barbearias, salões, clínicas, estúdios e terapeutas.",
   "lang": "pt-BR",
   "start_url": "/app",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
-  "theme_color": "#0f6f6b",
+  "orientation": "any",
+  "theme_color": "#fdf9f2",
   "background_color": "#fdf9f2",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
