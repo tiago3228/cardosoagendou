@@ -149,35 +149,27 @@ export const createAppointmentConfirmationLink = createServerFn({ method: "POST"
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => input as { appointmentId: string })
   .handler(async ({ data, context }) => {
-    const current = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const current = await supabaseAdmin
       .from("appointments")
       .select("id, business_id, client_name, client_whatsapp, starts_at")
       .eq("id", data.appointmentId)
       .maybeSingle();
     if (!current.data) throw new Error("APPOINTMENT_NOT_FOUND: agendamento não encontrado");
-    let member = await context.supabase
+    const member = await supabaseAdmin
       .from("user_roles")
       .select("business_id")
       .eq("user_id", context.userId)
       .eq("business_id", current.data.business_id)
       .maybeSingle();
-    if (!member.data) {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      member = await supabaseAdmin
-        .from("user_roles")
-        .select("business_id")
-        .eq("user_id", context.userId)
-        .eq("business_id", current.data.business_id)
-        .maybeSingle();
-    }
     if (!member.data) throw new Error("FORBIDDEN: sem acesso a este negócio");
-    const { data: business } = await context.supabase
+    const { data: business } = await supabaseAdmin
       .from("businesses")
       .select("name")
       .eq("id", current.data.business_id)
       .single();
     const token = crypto.randomUUID() + crypto.randomUUID();
-    const { error } = await context.supabase
+    const { error } = await supabaseAdmin
       .from("appointments")
       .update({
         manage_token_hash: createHash("sha256").update(token).digest("hex"),
@@ -185,7 +177,7 @@ export const createAppointmentConfirmationLink = createServerFn({ method: "POST"
       })
       .eq("id", current.data.id);
     if (error) throw new Error(`CONFIRMATION_LINK_FAILED: ${error.message}`);
-    const { data: originSetting } = await context.supabase
+    const { data: originSetting } = await supabaseAdmin
       .from("platform_settings")
       .select("value")
       .eq("key", "app.public_origin")

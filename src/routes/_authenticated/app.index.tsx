@@ -177,11 +177,17 @@ function AgendaPage() {
   const agenda = useQuery({
     queryKey: ["agenda", view, bounds.from, bounds.to],
     queryFn: () => fetchAgenda({ data: bounds }),
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 
   const revenue = useQuery({
     queryKey: ["agenda-revenue", date],
     queryFn: () => fetchRevenue({ data: { date } }),
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 
   const mutation = useMutation({
