@@ -371,6 +371,7 @@ export type Database = {
       businesses: {
         Row: {
           active: boolean;
+          agenda_alerts_enabled: boolean;
           address: string | null;
           booking_policy: string | null;
           business_type: Database["public"]["Enums"]["business_type"];
@@ -400,6 +401,7 @@ export type Database = {
         };
         Insert: {
           active?: boolean;
+          agenda_alerts_enabled?: boolean;
           address?: string | null;
           booking_policy?: string | null;
           business_type?: Database["public"]["Enums"]["business_type"];
@@ -429,6 +431,7 @@ export type Database = {
         };
         Update: {
           active?: boolean;
+          agenda_alerts_enabled?: boolean;
           address?: string | null;
           booking_policy?: string | null;
           business_type?: Database["public"]["Enums"]["business_type"];

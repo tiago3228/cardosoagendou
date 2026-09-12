@@ -32,6 +32,7 @@ function SettingsPage() {
     booking_policy: business.booking_policy ?? "",
     show_address: business.show_address,
     show_whatsapp: business.show_whatsapp,
+    agenda_alerts_enabled: business.agenda_alerts_enabled,
     slot_interval_minutes: String(business.slot_interval_minutes),
     min_notice_minutes: String(business.min_notice_minutes),
     max_advance_days: String(business.max_advance_days),
@@ -53,6 +54,7 @@ function SettingsPage() {
           booking_policy: form.booking_policy.trim() || null,
           show_address: form.show_address,
           show_whatsapp: form.show_whatsapp,
+          agenda_alerts_enabled: form.agenda_alerts_enabled,
           slot_interval_minutes: Number(form.slot_interval_minutes) || 15,
           min_notice_minutes: Number(form.min_notice_minutes) || 0,
           max_advance_days: Number(form.max_advance_days) || 30,
@@ -162,6 +164,21 @@ function SettingsPage() {
             />
             Mostrar endereço para clientes
           </label>
+        </div>
+        <div className="space-y-2 rounded-lg border border-border bg-muted/40 p-3 sm:col-span-2">
+          <p className="text-sm font-medium text-foreground">Alertas da agenda</p>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={form.agenda_alerts_enabled}
+              onChange={(e) => setForm({ ...form, agenda_alerts_enabled: e.target.checked })}
+            />
+            Mostrar alerta quando houver agendamentos na agenda
+          </label>
+          <p className="text-xs text-muted-foreground">
+            Você pode limpar um alerta na agenda; ele reaparece quando houver um novo agendamento.
+          </p>
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Endereço</Label>

@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   CalendarDays,
+  Bell,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -162,6 +163,7 @@ function AgendaPage() {
   const [date, setDate] = useState(today);
   const [view, setView] = useState<ViewMode>("day");
   const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>("ALL");
+  const [dismissedAlertSignature, setDismissedAlertSignature] = useState<string | null>(null);
   const fetchAgenda = useServerFn(getAgenda);
   const fetchRevenue = useServerFn(getAppointmentRevenue);
   const changeStatus = useServerFn(setAppointmentStatus);
@@ -195,6 +197,27 @@ function AgendaPage() {
     panel.publicOrigin ?? (typeof window !== "undefined" ? window.location.origin : "");
   const bookingUrl = panel.business && origin ? `${origin}/${panel.business.slug}` : "";
   const items = (agenda.data ?? []) as AppointmentItem[];
+  const appointmentSignature = items.map((item) => `${item.id}:${item.status}`).join(",");
+  const alertStorageKey = `agenda-alert-dismissed:${panel.business?.id ?? "unknown"}`;
+  useEffect(() => {
+    if (!appointmentSignature || typeof window === "undefined") {
+      setDismissedAlertSignature(null);
+      return;
+    }
+    setDismissedAlertSignature(window.localStorage.getItem(alertStorageKey));
+  }, [alertStorageKey, appointmentSignature]);
+
+  const showAgendaAlert =
+    panel.business?.agenda_alerts_enabled !== false &&
+    items.length > 0 &&
+    dismissedAlertSignature !== appointmentSignature;
+
+  function dismissAgendaAlert() {
+    if (!appointmentSignature || typeof window === "undefined") return;
+    window.localStorage.setItem(alertStorageKey, appointmentSignature);
+    setDismissedAlertSignature(appointmentSignature);
+  }
+
   const visible = useMemo(() => {
     if (filter === "ACTIVE")
       return items.filter((item) => ["PENDING", "CONFIRMED", "IN_PROGRESS"].includes(item.status));
@@ -339,6 +362,32 @@ function AgendaPage() {
             }}
           >
             <Copy aria-hidden /> Copiar
+          </Button>
+        </section>
+      ) : null}
+
+      {showAgendaAlert ? (
+        <section
+          className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/10 p-4 text-primary shadow-soft"
+          role="status"
+          aria-live="polite"
+        >
+          <Bell className="mt-0.5 size-5 shrink-0" aria-hidden />
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold">Você tem agendamentos na agenda</p>
+            <p className="mt-1 text-sm text-primary/80">
+              Confira os horários e acompanhe os pedidos dos seus clientes.
+            </p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="shrink-0 text-primary hover:bg-primary/15 hover:text-primary"
+            onClick={dismissAgendaAlert}
+            aria-label="Limpar alerta da agenda"
+          >
+            Limpar
           </Button>
         </section>
       ) : null}
