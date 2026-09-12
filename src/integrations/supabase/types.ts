@@ -379,8 +379,13 @@ export type Database = {
           active: boolean
           address: string | null
           booking_policy: string | null
+          booking_share_message: string | null
+          booking_share_niche: string | null
+          booking_share_style: string
           business_type: Database["public"]["Enums"]["business_type"]
           cancellation_deadline_hours: number
+          confirmation_enabled: boolean
+          confirmation_minutes: number
           cover_url: string | null
           created_at: string
           description: string | null
@@ -408,8 +413,13 @@ export type Database = {
           active?: boolean
           address?: string | null
           booking_policy?: string | null
+          booking_share_message?: string | null
+          booking_share_niche?: string | null
+          booking_share_style?: string
           business_type?: Database["public"]["Enums"]["business_type"]
           cancellation_deadline_hours?: number
+          confirmation_enabled?: boolean
+          confirmation_minutes?: number
           cover_url?: string | null
           created_at?: string
           description?: string | null
@@ -437,8 +447,13 @@ export type Database = {
           active?: boolean
           address?: string | null
           booking_policy?: string | null
+          booking_share_message?: string | null
+          booking_share_niche?: string | null
+          booking_share_style?: string
           business_type?: Database["public"]["Enums"]["business_type"]
           cancellation_deadline_hours?: number
+          confirmation_enabled?: boolean
+          confirmation_minutes?: number
           cover_url?: string | null
           created_at?: string
           description?: string | null
