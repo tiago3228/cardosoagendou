@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, History, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import { AlertTriangle, History, Minus, Pencil, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery, entitlementsQuery } from "./app";
 import { formatBRL } from "@/lib/format";
@@ -16,6 +16,20 @@ import { PhotoField } from "@/components/ui/photo-field";
 export const Route = createFileRoute("/_authenticated/app/produtos")({
   component: ProductsPage,
 });
+
+type Product = {
+  id: string;
+  name: string;
+  sku: string | null;
+  category: string | null;
+  supplier: string | null;
+  price_cents: number;
+  cost_cents: number;
+  stock_quantity: number;
+  min_stock: number;
+  active: boolean;
+  image_url: string | null;
+};
 
 function ProductsPage() {
   const { data: panel } = useSuspenseQuery(panelQuery);
@@ -37,6 +51,8 @@ function ProductsPage() {
     min: "0",
   });
   const [photo, setPhoto] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [term, setTerm] = useState("");
   const [openHistory, setOpenHistory] = useState<string | null>(null);
 
@@ -56,40 +72,75 @@ function ProductsPage() {
     },
   });
 
-  const create = useMutation({
+  function resetForm() {
+    setForm({
+      name: "",
+      sku: "",
+      category: "",
+      supplier: "",
+      price: "",
+      cost: "",
+      stock: "0",
+      min: "0",
+    });
+    setPhoto(null);
+    setEditingId(null);
+  }
+
+  function editProduct(product: Product) {
+    setEditingId(product.id);
+    setForm({
+      name: product.name,
+      sku: product.sku ?? "",
+      category: product.category ?? "",
+      supplier: product.supplier ?? "",
+      price: (product.price_cents / 100).toFixed(2).replace(".", ","),
+      cost: (product.cost_cents / 100).toFixed(2).replace(".", ","),
+      stock: String(product.stock_quantity),
+      min: String(product.min_stock),
+    });
+    setPhoto(product.image_url);
+    setFormOpen(true);
+  }
+
+  const saveProduct = useMutation({
     mutationFn: async () => {
       if (!form.name.trim()) throw new Error("Informe o nome do produto");
-      const { error } = await supabase.from("products").insert({
-        business_id: businessId,
+      const values = {
         name: form.name.trim(),
         sku: form.sku.trim() || null,
         category: form.category.trim() || null,
         supplier: form.supplier.trim() || null,
         price_cents: Math.round(Number(form.price.replace(",", ".")) * 100) || 0,
         cost_cents: Math.round(Number(form.cost.replace(",", ".")) * 100) || 0,
-        stock_quantity: Number(form.stock) || 0,
         min_stock: Number(form.min) || 0,
         image_url: photo,
-      });
+      };
+      const result = editingId
+        ? await supabase
+            .from("products")
+            .update(values)
+            .eq("id", editingId)
+            .eq("business_id", businessId)
+        : await supabase.from("products").insert({
+            business_id: businessId,
+            ...values,
+            stock_quantity: Number(form.stock) || 0,
+          });
+      const { error } = result;
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      setForm({
-        name: "",
-        sku: "",
-        category: "",
-        supplier: "",
-        price: "",
-        cost: "",
-        stock: "0",
-        min: "0",
-      });
-      setPhoto(null);
-      toast.success("Produto criado com sucesso!");
+      const wasEditing = Boolean(editingId);
+      resetForm();
+      setFormOpen(false);
+      toast.success(wasEditing ? "Produto atualizado com sucesso!" : "Produto criado com sucesso!");
       queryClient.invalidateQueries({ queryKey: ["products", businessId] });
     },
     onError: (error: Error) =>
-      toast.error("Não foi possível salvar", { description: userFacingError(error) }),
+      toast.error(editingId ? "Não foi possível atualizar" : "Não foi possível salvar", {
+        description: userFacingError(error),
+      }),
   });
 
   const move = useMutation({
@@ -206,72 +257,136 @@ function ProductsPage() {
         Produtos com estoque aparecem na sua página de reservas para retirada no local.
       </p>
 
-      <form
-        className="mt-6 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          create.mutate();
-        }}
-      >
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label>Nome</Label>
-          <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+      <div className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4">
+        <div>
+          <p className="font-semibold text-foreground">
+            {editingId ? "Editar produto" : "Cadastro de produtos"}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {editingId
+              ? "Atualize os dados do produto sem alterar o estoque atual."
+              : "Cadastre um novo produto para vender e oferecer na página de reservas."}
+          </p>
         </div>
-        <div className="sm:col-span-2">
-          <PhotoField
-            businessId={businessId}
-            folder="produtos"
-            value={photo}
-            onChange={setPhoto}
-            label="Foto do produto"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Código / SKU</Label>
-          <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Categoria</Label>
-          <Input
-            list="produto-categorias"
-            value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
-          />
-          <datalist id="produto-categorias">
-            {["Cabelo", "Barba", "Pele", "Unhas", "Bebidas", "Acessórios"].map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
-        </div>
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label>Fornecedor</Label>
-          <Input
-            value={form.supplier}
-            onChange={(e) => setForm({ ...form, supplier: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Preço de venda (R$)</Label>
-          <Input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Custo (R$)</Label>
-          <Input value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Estoque inicial</Label>
-          <Input value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Estoque mínimo</Label>
-          <Input value={form.min} onChange={(e) => setForm({ ...form, min: e.target.value })} />
-        </div>
-        <div className="sm:col-span-2">
-          <Button type="submit" disabled={create.isPending}>
-            <Plus className="size-4" aria-hidden /> Adicionar produto
-          </Button>
-        </div>
-      </form>
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => {
+            resetForm();
+            setFormOpen(true);
+          }}
+        >
+          <Plus className="size-4" aria-hidden /> Novo produto
+        </Button>
+      </div>
+
+      {formOpen ? (
+        <form
+          className="mt-3 grid gap-3 rounded-xl border border-primary/25 bg-card p-4 shadow-soft sm:grid-cols-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            saveProduct.mutate();
+          }}
+        >
+          <div className="flex items-center justify-between gap-3 sm:col-span-2">
+            <p className="font-semibold text-foreground">
+              {editingId ? "Editar produto" : "Novo produto"}
+            </p>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              aria-label="Fechar cadastro de produto"
+              onClick={() => {
+                resetForm();
+                setFormOpen(false);
+              }}
+            >
+              <X className="size-4" aria-hidden />
+            </Button>
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Nome</Label>
+            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          </div>
+          <div className="sm:col-span-2">
+            <PhotoField
+              businessId={businessId}
+              folder="produtos"
+              value={photo}
+              onChange={setPhoto}
+              label="Foto do produto"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Código / SKU</Label>
+            <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Categoria</Label>
+            <Input
+              list="produto-categorias"
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+            />
+            <datalist id="produto-categorias">
+              {["Cabelo", "Barba", "Pele", "Unhas", "Bebidas", "Acessórios"].map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Fornecedor</Label>
+            <Input
+              value={form.supplier}
+              onChange={(e) => setForm({ ...form, supplier: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Preço de venda (R$)</Label>
+            <Input
+              value={form.price}
+              onChange={(e) => setForm({ ...form, price: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Custo (R$)</Label>
+            <Input value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>{editingId ? "Estoque atual" : "Estoque inicial"}</Label>
+            <Input
+              value={form.stock}
+              disabled={Boolean(editingId)}
+              onChange={(e) => setForm({ ...form, stock: e.target.value })}
+            />
+            {editingId ? (
+              <p className="text-xs text-muted-foreground">
+                Use os botões de entrada e saída para alterar o estoque e preservar o histórico.
+              </p>
+            ) : null}
+          </div>
+          <div className="space-y-1.5">
+            <Label>Estoque mínimo</Label>
+            <Input value={form.min} onChange={(e) => setForm({ ...form, min: e.target.value })} />
+          </div>
+          <div className="sm:col-span-2">
+            <Button type="submit" disabled={saveProduct.isPending}>
+              {editingId ? "Salvar alterações" : "Adicionar produto"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                resetForm();
+                setFormOpen(false);
+              }}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      ) : null}
 
       <Input
         className="mt-6"
@@ -320,6 +435,14 @@ function ProductsPage() {
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    aria-label={`Editar ${product.name}`}
+                    onClick={() => editProduct(product)}
+                  >
+                    <Pencil className="size-4" aria-hidden /> Editar
+                  </Button>
                   <Button
                     size="sm"
                     onClick={() => sell.mutate(product)}
