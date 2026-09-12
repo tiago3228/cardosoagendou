@@ -84,7 +84,9 @@ export class MercadoPagoProvider implements PaymentProvider {
 
   private async request<T>(path: string, init?: { method?: string; body?: unknown }): Promise<T> {
     if (!this.isConfigured()) {
-      throw new Error("PAYMENT_PROVIDER_NOT_CONFIGURED: credencial do provedor de pagamento ausente");
+      throw new Error(
+        "PAYMENT_PROVIDER_NOT_CONFIGURED: credencial do provedor de pagamento ausente",
+      );
     }
     const response = await fetch(`${API}${path}`, {
       method: init?.method ?? "GET",
@@ -148,7 +150,9 @@ export class MercadoPagoProvider implements PaymentProvider {
     };
   }
 
-  async getSubscriptionCharge(providerSubscriptionId: string): Promise<SubscriptionChargeInfo | null> {
+  async getSubscriptionCharge(
+    providerSubscriptionId: string,
+  ): Promise<SubscriptionChargeInfo | null> {
     const preapproval = await this.request<Preapproval>(`/preapproval/${providerSubscriptionId}`);
     if (preapproval.status === "cancelled") return null;
     return {

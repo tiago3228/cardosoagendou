@@ -5,6 +5,7 @@
 Hoje o app não tem o arquivo que o navegador exige para oferecer a instalação, então o botão nunca recebe o convite nativo e o clique fica sem efeito.
 
 O que muda:
+
 - Passa a existir esse arquivo (service worker simples, apenas para habilitar a instalação, sem cache agressivo) registrado quando o app abre.
 - Quando o navegador oferecer a instalação, o clique abre a janela nativa "Instalar Agendou Pro".
 - Quando o navegador não oferecer (iPhone, ou app aberto dentro do editor), o clique passa a mostrar o passo a passo do aparelho e um aviso claro, em vez de não fazer nada.

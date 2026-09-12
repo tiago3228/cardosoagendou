@@ -15,7 +15,8 @@ export const Route = createFileRoute("/_authenticated/master/planos")({
       { title: "Modo de teste de planos — Master · Agendou Pro" },
       {
         name: "description",
-        content: "Alterne o plano de qualquer negócio para testar limites e recursos da assinatura.",
+        content:
+          "Alterne o plano de qualquer negócio para testar limites e recursos da assinatura.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -65,9 +66,7 @@ function MasterPlansPage() {
     return (
       <div>
         <h1 className="font-display text-2xl font-bold">Acesso restrito</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Esta área é exclusiva da conta master.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">Esta área é exclusiva da conta master.</p>
         <Button asChild variant="outline" className="mt-4">
           <Link to="/app">Voltar ao painel</Link>
         </Button>
@@ -81,7 +80,7 @@ function MasterPlansPage() {
     <div className="space-y-6">
       <header>
         <BackButton />
-      <h1 className="font-display text-2xl font-bold">Modo de teste de planos</h1>
+        <h1 className="font-display text-2xl font-bold">Modo de teste de planos</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Coloque qualquer negócio em um plano para validar limites e recursos. As restrições são
           aplicadas no banco de dados — não apenas na tela.
@@ -106,7 +105,11 @@ function MasterPlansPage() {
                   {Object.entries(FEATURE_LABEL).map(([key, label]) => (
                     <li
                       key={key}
-                      className={features[key] === true ? "text-foreground" : "text-muted-foreground line-through"}
+                      className={
+                        features[key] === true
+                          ? "text-foreground"
+                          : "text-muted-foreground line-through"
+                      }
                     >
                       {label}
                     </li>

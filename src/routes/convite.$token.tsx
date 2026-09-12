@@ -88,7 +88,11 @@ function InvitePage() {
               placeholder="Como você quer ser chamado"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={activate.isPending || fullName.trim().length < 2}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={activate.isPending || fullName.trim().length < 2}
+          >
             Ativar meu acesso
           </Button>
         </form>

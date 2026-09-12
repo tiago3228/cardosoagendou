@@ -74,7 +74,13 @@ export function PhotoField({
           {value ? "Trocar foto" : "Escolher foto"}
         </Button>
         {value ? (
-          <Button type="button" size="sm" variant="ghost" disabled={busy} onClick={() => onChange(null)}>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={busy}
+            onClick={() => onChange(null)}
+          >
             <X className="size-4" aria-hidden /> Remover
           </Button>
         ) : null}

@@ -24,7 +24,8 @@ export const setAppointmentStatus = createServerFn({ method: "POST" })
       .eq("id", data.appointmentId)
       .maybeSingle();
     if (!current.data) throw new Error("APPOINTMENT_NOT_FOUND: agendamento não encontrado");
-    if (current.data.status === data.status) return { status: data.status, changed: false as const };
+    if (current.data.status === data.status)
+      return { status: data.status, changed: false as const };
     if (!canTransition(current.data.status, data.status)) {
       throw new Error(
         `INVALID_TRANSITION: não é possível mudar de ${current.data.status} para ${data.status}`,
@@ -126,9 +127,17 @@ export const rescheduleAppointment = createServerFn({ method: "POST" })
       throw new Error(`RESCHEDULE_FAILED: ${update.error.message}`);
     }
 
-    await logAudit(context.supabase, current.data.business_id, context.userId, "appointment.rescheduled", "appointment", current.data.id, {
-      starts_at: update.data.starts_at,
-    });
+    await logAudit(
+      context.supabase,
+      current.data.business_id,
+      context.userId,
+      "appointment.rescheduled",
+      "appointment",
+      current.data.id,
+      {
+        starts_at: update.data.starts_at,
+      },
+    );
     return { startsAt: update.data.starts_at, endsAt: update.data.ends_at };
   });
 
@@ -188,7 +197,15 @@ export const createManualAppointment = createServerFn({ method: "POST" })
       duration_minutes: number;
       total_price_cents: number;
     };
-    await logAudit(context.supabase, data.businessId, context.userId, "appointment.created_manual", "appointment", result.id, {});
+    await logAudit(
+      context.supabase,
+      data.businessId,
+      context.userId,
+      "appointment.created_manual",
+      "appointment",
+      result.id,
+      {},
+    );
 
     return {
       id: result.id,

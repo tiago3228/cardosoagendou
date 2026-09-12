@@ -56,7 +56,10 @@ function SettingsPage() {
           slot_interval_minutes: Number(form.slot_interval_minutes) || 15,
           min_notice_minutes: Number(form.min_notice_minutes) || 0,
           max_advance_days: Number(form.max_advance_days) || 30,
-          cancellation_deadline_hours: Math.max(0, Math.min(720, Number(form.cancellation_deadline_hours) || 1)),
+          cancellation_deadline_hours: Math.max(
+            0,
+            Math.min(720, Number(form.cancellation_deadline_hours) || 1),
+          ),
           primary_color: form.primary_color,
           secondary_color: form.secondary_color,
         })
@@ -67,7 +70,8 @@ function SettingsPage() {
       toast.success("Configurações salvas");
       queryClient.invalidateQueries({ queryKey: ["panel"] });
     },
-    onError: (error: Error) => toast.error("Não foi possível salvar", { description: userFacingError(error) }),
+    onError: (error: Error) =>
+      toast.error("Não foi possível salvar", { description: userFacingError(error) }),
   });
 
   const hours = useQuery({
@@ -84,7 +88,12 @@ function SettingsPage() {
   });
 
   const saveHour = useMutation({
-    mutationFn: async (input: { id: string; opens_at: string; closes_at: string; closed: boolean }) => {
+    mutationFn: async (input: {
+      id: string;
+      opens_at: string;
+      closes_at: string;
+      closed: boolean;
+    }) => {
       const { error } = await supabase
         .from("business_hours")
         .update({ opens_at: input.opens_at, closes_at: input.closes_at, closed: input.closed })
@@ -122,7 +131,10 @@ function SettingsPage() {
         </div>
         <div className="space-y-1.5">
           <Label>WhatsApp</Label>
-          <WhatsappInput value={form.whatsapp} onChange={(v) => setForm({ ...form, whatsapp: v })} />
+          <WhatsappInput
+            value={form.whatsapp}
+            onChange={(v) => setForm({ ...form, whatsapp: v })}
+          />
         </div>
 
         <div className="space-y-1.5">
@@ -153,7 +165,10 @@ function SettingsPage() {
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Endereço</Label>
-          <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+          <Input
+            value={form.address}
+            onChange={(e) => setForm({ ...form, address: e.target.value })}
+          />
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Política de agendamento</Label>
@@ -178,8 +193,16 @@ function SettingsPage() {
         </div>
         <div className="space-y-1.5">
           <Label>Prazo Limite para Cancelamento (em horas)</Label>
-          <Input type="number" min="0" max="720" value={form.cancellation_deadline_hours} onChange={(e) => setForm({ ...form, cancellation_deadline_hours: e.target.value })} />
-          <p className="text-xs text-muted-foreground">Cancelamentos fora desse prazo estão sujeitos a multa de 10%.</p>
+          <Input
+            type="number"
+            min="0"
+            max="720"
+            value={form.cancellation_deadline_hours}
+            onChange={(e) => setForm({ ...form, cancellation_deadline_hours: e.target.value })}
+          />
+          <p className="text-xs text-muted-foreground">
+            Cancelamentos fora desse prazo estão sujeitos a multa de 10%.
+          </p>
         </div>
         <div className="space-y-1.5">
           <Label>Antecedência máxima (dias)</Label>
@@ -190,17 +213,71 @@ function SettingsPage() {
         </div>
         <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-3 sm:col-span-2">
           <Label>Logo do negócio</Label>
-          {business.logo_url ? <img src={business.logo_url} alt="Logo atual" className="size-16 rounded-full object-cover" /> : null}
-          <Input type="file" accept="image/*" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const url = await uploadBusinessMedia(business.id, "logo", file); const { error } = await supabase.from("businesses").update({ logo_url: url }).eq("id", business.id); if (error) throw error; await queryClient.invalidateQueries({ queryKey: ["panel"] }); toast.success("Logo atualizada"); } catch (error) { toast.error("Não foi possível enviar a logo", { description: userFacingError(error) }); } }} />
+          {business.logo_url ? (
+            <img
+              src={business.logo_url}
+              alt="Logo atual"
+              className="size-16 rounded-full object-cover"
+            />
+          ) : null}
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              try {
+                const url = await uploadBusinessMedia(business.id, "logo", file);
+                const { error } = await supabase
+                  .from("businesses")
+                  .update({ logo_url: url })
+                  .eq("id", business.id);
+                if (error) throw error;
+                await queryClient.invalidateQueries({ queryKey: ["panel"] });
+                toast.success("Logo atualizada");
+              } catch (error) {
+                toast.error("Não foi possível enviar a logo", {
+                  description: userFacingError(error),
+                });
+              }
+            }}
+          />
         </div>
         <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-3 sm:col-span-2">
           <p className="text-sm font-medium text-foreground">Cores da página pública</p>
           <div className="flex flex-wrap gap-4">
-            <label className="grid gap-1 text-sm">Primária <input type="color" value={form.primary_color} onChange={(e) => setForm({ ...form, primary_color: e.target.value })} /></label>
-            <label className="grid gap-1 text-sm">Secundária <input type="color" value={form.secondary_color} onChange={(e) => setForm({ ...form, secondary_color: e.target.value })} /></label>
-            <Button type="button" variant="outline" onClick={() => setForm({ ...form, primary_color: "#B4884F", secondary_color: "#14120F" })}>Restaurar Cores Padrão</Button>
+            <label className="grid gap-1 text-sm">
+              Primária{" "}
+              <input
+                type="color"
+                value={form.primary_color}
+                onChange={(e) => setForm({ ...form, primary_color: e.target.value })}
+              />
+            </label>
+            <label className="grid gap-1 text-sm">
+              Secundária{" "}
+              <input
+                type="color"
+                value={form.secondary_color}
+                onChange={(e) => setForm({ ...form, secondary_color: e.target.value })}
+              />
+            </label>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                setForm({ ...form, primary_color: "#B4884F", secondary_color: "#14120F" })
+              }
+            >
+              Restaurar Cores Padrão
+            </Button>
           </div>
-          <div className="rounded-lg p-3" style={{ backgroundColor: form.secondary_color, color: form.primary_color }}>Pré-visualização do tema público</div>
+          <div
+            className="rounded-lg p-3"
+            style={{ backgroundColor: form.secondary_color, color: form.primary_color }}
+          >
+            Pré-visualização do tema público
+          </div>
         </div>
         <div className="sm:col-span-2">
           <Button type="submit" disabled={save.isPending}>
@@ -209,7 +286,9 @@ function SettingsPage() {
         </div>
       </form>
 
-      <h2 className="mt-8 font-display text-lg font-semibold text-foreground">Horário de funcionamento</h2>
+      <h2 className="mt-8 font-display text-lg font-semibold text-foreground">
+        Horário de funcionamento
+      </h2>
       <div className="mt-3 space-y-2 rounded-xl border border-border bg-card p-4">
         {(hours.data ?? []).map((hour) => (
           <div key={hour.id} className="flex flex-wrap items-center gap-2 text-sm">

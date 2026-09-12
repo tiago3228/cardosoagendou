@@ -39,9 +39,8 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { applyBillingEvent, recordEventOnce, markEventProcessed, discardEvent } = await import(
-          "@/lib/billing.server"
-        );
+        const { applyBillingEvent, recordEventOnce, markEventProcessed, discardEvent } =
+          await import("@/lib/billing.server");
 
         const isNew = await recordEventOnce(supabaseAdmin, provider.name, event);
         if (!isNew) {

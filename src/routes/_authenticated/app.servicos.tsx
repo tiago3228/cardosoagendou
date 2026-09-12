@@ -205,10 +205,13 @@ function ServicesPage() {
 
   const deleteSegment = useMutation({
     mutationFn: async (segmentId: string) => {
-      const { error } = await db.rpc("delete_business_segment" as never, {
-        _business_id: businessId,
-        _business_segment_id: segmentId,
-      } as never);
+      const { error } = await db.rpc(
+        "delete_business_segment" as never,
+        {
+          _business_id: businessId,
+          _business_segment_id: segmentId,
+        } as never,
+      );
       if (error) throw new Error(error.message);
     },
     onSuccess: async () => {
@@ -224,8 +227,6 @@ function ServicesPage() {
     onError: (error: Error) =>
       toast.error("Não foi possível excluir o segmento", { description: userFacingError(error) }),
   });
-
-
 
   const copyTemplates = useMutation({
     mutationFn: async (input: { segmentId: string; templateIds: string[] }) => {
@@ -295,7 +296,9 @@ function ServicesPage() {
       toast.success(`${count} serviço(s) adicionado(s)`);
     },
     onError: (error: Error) =>
-      toast.error("Não foi possível adicionar os serviços", { description: userFacingError(error) }),
+      toast.error("Não foi possível adicionar os serviços", {
+        description: userFacingError(error),
+      }),
   });
 
   const toggleProfessionalService = useMutation({
@@ -321,7 +324,9 @@ function ServicesPage() {
       await queryClient.invalidateQueries({ queryKey: ["professional-services", businessId] });
     },
     onError: (error: Error) =>
-      toast.error("Não foi possível atualizar os profissionais", { description: userFacingError(error) }),
+      toast.error("Não foi possível atualizar os profissionais", {
+        description: userFacingError(error),
+      }),
   });
 
   const create = useMutation({
@@ -332,23 +337,30 @@ function ServicesPage() {
       if (!Number.isFinite(price) || price < 0) throw new Error("Preço inválido");
       if (!Number.isFinite(duration) || duration < 5)
         throw new Error("Duração mínima de 5 minutos");
-      const { data: created, error } = await db.from("services").insert({
-        business_id: businessId,
-        name: form.name.trim(),
-        category: form.category.trim() || null,
-        price_cents: price,
-        duration_minutes: duration,
-        ...(form.segment_id ? { segment_id: form.segment_id } : {}),
-        allows_parallel: form.allows_parallel,
-        is_composite: false,
-      }).select("id").single();
+      const { data: created, error } = await db
+        .from("services")
+        .insert({
+          business_id: businessId,
+          name: form.name.trim(),
+          category: form.category.trim() || null,
+          price_cents: price,
+          duration_minutes: duration,
+          ...(form.segment_id ? { segment_id: form.segment_id } : {}),
+          allows_parallel: form.allows_parallel,
+          is_composite: false,
+        })
+        .select("id")
+        .single();
       if (error) throw new Error(error.message);
-      const { error: compositionError } = await db.rpc("save_service_composition" as never, {
-        _business_id: businessId,
-        _service_id: created.id,
-        _is_composite: form.is_composite,
-        _component_ids: form.component_ids,
-      } as never);
+      const { error: compositionError } = await db.rpc(
+        "save_service_composition" as never,
+        {
+          _business_id: businessId,
+          _service_id: created.id,
+          _is_composite: form.is_composite,
+          _component_ids: form.component_ids,
+        } as never,
+      );
       if (compositionError) throw new Error(compositionError.message);
     },
     onSuccess: () => {
@@ -415,12 +427,15 @@ function ServicesPage() {
         .eq("id", input.id)
         .eq("business_id", businessId);
       if (error) throw new Error(error.message);
-      const { error: compositionError } = await db.rpc("save_service_composition" as never, {
-        _business_id: businessId,
-        _service_id: input.id,
-        _is_composite: input.is_composite,
-        _component_ids: input.component_ids,
-      } as never);
+      const { error: compositionError } = await db.rpc(
+        "save_service_composition" as never,
+        {
+          _business_id: businessId,
+          _service_id: input.id,
+          _is_composite: input.is_composite,
+          _component_ids: input.component_ids,
+        } as never,
+      );
       if (compositionError) throw new Error(compositionError.message);
     },
     onSuccess: () => {
@@ -518,9 +533,7 @@ function ServicesPage() {
                           size="sm"
                           variant="ghost"
                           aria-label={`Excluir segmento ${segment.name}`}
-                          onClick={() =>
-                            setSegmentToDelete({ id: segment.id, name: segment.name })
-                          }
+                          onClick={() => setSegmentToDelete({ id: segment.id, name: segment.name })}
                         >
                           <Trash2 className="size-4" aria-hidden />
                         </Button>
@@ -729,7 +742,9 @@ function ServicesPage() {
               {(services.data ?? [])
                 .filter((service: { is_composite: boolean }) => !service.is_composite)
                 .map((service: { id: string; name: string }) => (
-                <option key={service.id} value={service.id}>{service.name}</option>
+                  <option key={service.id} value={service.id}>
+                    {service.name}
+                  </option>
                 ))}
             </select>
           </label>

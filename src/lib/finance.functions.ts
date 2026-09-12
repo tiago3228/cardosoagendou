@@ -37,10 +37,7 @@ async function requireBusiness(
   userId: string,
   feature?: string,
 ): Promise<string> {
-  const roles = await supabase
-    .from("user_roles")
-    .select("role, business_id")
-    .eq("user_id", userId);
+  const roles = await supabase.from("user_roles").select("role, business_id").eq("user_id", userId);
   const businessId = roles.data?.find((r) => r.business_id)?.business_id ?? null;
   if (!businessId) throw new Error("NO_BUSINESS: usuário sem negócio vinculado");
   if (feature) {
@@ -181,7 +178,10 @@ export const getFinanceOverview = createServerFn({ method: "POST" })
 
     return {
       date: data.date,
-      day: { ...day, balanceCents: day.appointmentRevenueCents + day.otherIncomeCents - day.expensesCents },
+      day: {
+        ...day,
+        balanceCents: day.appointmentRevenueCents + day.otherIncomeCents - day.expensesCents,
+      },
       week: {
         ...week,
         balanceCents: week.appointmentRevenueCents + week.otherIncomeCents - week.expensesCents,

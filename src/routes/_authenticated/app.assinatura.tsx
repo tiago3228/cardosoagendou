@@ -290,14 +290,16 @@ function SubscriptionPage() {
               </p>
               <p className="mt-4 text-2xl font-bold text-foreground">
                 {formatBRL(
-                  interval === "ANNUAL" ? annualMonthlyEquivalentCents(plan) : planPriceCents(plan, interval),
+                  interval === "ANNUAL"
+                    ? annualMonthlyEquivalentCents(plan)
+                    : planPriceCents(plan, interval),
                 )}
                 <span className="text-sm font-normal text-muted-foreground">/mês</span>
               </p>
               {interval === "ANNUAL" ? (
                 <p className="mt-1 text-sm text-primary">
-                  {formatBRL(plan.annual_price_cents)} por ano · {annualFreeMonths(plan)} mês(es) grátis ·
-                  economize {formatBRL(annualSavingsCents(plan))}
+                  {formatBRL(plan.annual_price_cents)} por ano · {annualFreeMonths(plan)} mês(es)
+                  grátis · economize {formatBRL(annualSavingsCents(plan))}
                 </p>
               ) : null}
               {plan.description ? (
@@ -363,11 +365,7 @@ function SubscriptionPage() {
               <p className="mt-1 text-sm text-muted-foreground">
                 Pagamento manual · faça o PIX e aguarde a confirmação da nossa equipe.
               </p>
-              <Button
-                variant="outline"
-                className="mt-4 w-full"
-                onClick={() => setPixOpen(true)}
-              >
+              <Button variant="outline" className="mt-4 w-full" onClick={() => setPixOpen(true)}>
                 Assinar via PIX
               </Button>
             </div>

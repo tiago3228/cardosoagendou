@@ -25,7 +25,6 @@ export const getMyEntitlements = createServerFn({ method: "POST" })
     return { businessId, ...entitlements };
   });
 
-
 /** Re-fetches the open charge (PIX code / invoice link) for the current subscription. */
 export const getOpenCharge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

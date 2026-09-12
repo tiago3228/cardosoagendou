@@ -22,7 +22,12 @@ import {
   Wallet,
 } from "lucide-react";
 import { listPlans } from "@/lib/public.functions";
-import { annualFreeMonths, annualMonthlyEquivalentCents, planLimitLabel, type PlanRow } from "@/lib/plans";
+import {
+  annualFreeMonths,
+  annualMonthlyEquivalentCents,
+  planLimitLabel,
+  type PlanRow,
+} from "@/lib/plans";
 import { formatBRL } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 
@@ -143,9 +148,18 @@ const SEGMENTS = [
 ] as const;
 
 const STEPS = [
-  { title: "Crie sua conta", text: "Escolha o segmento e receba um catálogo de serviços pronto para editar." },
-  { title: "Ajuste equipe e horários", text: "Cadastre profissionais, serviços, preços e horários de atendimento." },
-  { title: "Compartilhe seu link", text: "Divulgue no Instagram e no WhatsApp e receba agendamentos 24h por dia." },
+  {
+    title: "Crie sua conta",
+    text: "Escolha o segmento e receba um catálogo de serviços pronto para editar.",
+  },
+  {
+    title: "Ajuste equipe e horários",
+    text: "Cadastre profissionais, serviços, preços e horários de atendimento.",
+  },
+  {
+    title: "Compartilhe seu link",
+    text: "Divulgue no Instagram e no WhatsApp e receba agendamentos 24h por dia.",
+  },
 ] as const;
 
 const PLAN_BENEFITS: Record<string, string[]> = {
@@ -230,12 +244,14 @@ function Landing() {
               </Button>
             </div>
             <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
-              {["Sem cartão para testar", "Cancele quando quiser", "Suporte por WhatsApp"].map((item) => (
-                <li key={item} className="flex items-center gap-1.5">
-                  <BadgeCheck className="size-4 text-primary" aria-hidden />
-                  {item}
-                </li>
-              ))}
+              {["Sem cartão para testar", "Cancele quando quiser", "Suporte por WhatsApp"].map(
+                (item) => (
+                  <li key={item} className="flex items-center gap-1.5">
+                    <BadgeCheck className="size-4 text-primary" aria-hidden />
+                    {item}
+                  </li>
+                ),
+              )}
             </ul>
           </div>
 
@@ -243,8 +259,12 @@ function Landing() {
           <div className="relative mx-auto w-full max-w-sm">
             <div className="rounded-[2rem] border border-border bg-card p-4 shadow-xl">
               <div className="rounded-2xl bg-secondary/50 p-4">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">agendou.app/seu-negocio</p>
-                <p className="mt-2 font-display text-lg font-bold text-card-foreground">Studio Central</p>
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  agendou.app/seu-negocio
+                </p>
+                <p className="mt-2 font-display text-lg font-bold text-card-foreground">
+                  Studio Central
+                </p>
                 <div className="mt-4 space-y-2">
                   {[
                     { name: "Corte masculino", meta: "30 min · R$ 45,00" },
@@ -264,14 +284,16 @@ function Landing() {
                   ))}
                 </div>
                 <div className="mt-4 grid grid-cols-4 gap-2">
-                  {["09:00", "09:30", "10:00", "10:30", "11:00", "13:00", "13:30", "14:00"].map((h, i) => (
-                    <span
-                      key={h}
-                      className={`rounded-lg px-1 py-1.5 text-center text-[11px] font-medium ${i === 3 ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"}`}
-                    >
-                      {h}
-                    </span>
-                  ))}
+                  {["09:00", "09:30", "10:00", "10:30", "11:00", "13:00", "13:30", "14:00"].map(
+                    (h, i) => (
+                      <span
+                        key={h}
+                        className={`rounded-lg px-1 py-1.5 text-center text-[11px] font-medium ${i === 3 ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"}`}
+                      >
+                        {h}
+                      </span>
+                    ),
+                  )}
                 </div>
                 <div className="mt-4 rounded-xl bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground">
                   Confirmar agendamento
@@ -389,23 +411,33 @@ function Landing() {
                         Mais escolhido
                       </span>
                     ) : null}
-                    <h3 className="font-display text-xl font-bold text-card-foreground">{plan.name}</h3>
+                    <h3 className="font-display text-xl font-bold text-card-foreground">
+                      {plan.name}
+                    </h3>
                     <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
                     <p className="mt-5 text-3xl font-bold text-foreground">
-                      {formatBRL(annual ? annualMonthlyEquivalentCents(plan) : plan.monthly_price_cents)}
+                      {formatBRL(
+                        annual ? annualMonthlyEquivalentCents(plan) : plan.monthly_price_cents,
+                      )}
                       <span className="text-base font-normal text-muted-foreground">/mês</span>
                     </p>
                     {annual ? (
                       <p className="mt-1 text-sm text-primary">
-                        {formatBRL(plan.annual_price_cents)} por ano — {annualFreeMonths(plan)} meses grátis
+                        {formatBRL(plan.annual_price_cents)} por ano — {annualFreeMonths(plan)}{" "}
+                        meses grátis
                       </p>
                     ) : (
                       <p className="mt-1 text-sm text-muted-foreground">cobrado mensalmente</p>
                     )}
-                    <p className="mt-4 text-sm font-semibold text-card-foreground">{planLimitLabel(plan)}</p>
+                    <p className="mt-4 text-sm font-semibold text-card-foreground">
+                      {planLimitLabel(plan)}
+                    </p>
                     <ul className="mt-3 space-y-2">
                       {(PLAN_BENEFITS[plan.code] ?? []).map((benefit) => (
-                        <li key={benefit} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <li
+                          key={benefit}
+                          className="flex items-start gap-2 text-sm text-muted-foreground"
+                        >
                           <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
                           {benefit}
                         </li>
@@ -451,7 +483,9 @@ function Landing() {
 
       <footer className="border-t border-border py-8">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 text-sm text-muted-foreground">
-          <span>© {new Date().getFullYear()} Agendou. Agendamento online para negócios de serviço.</span>
+          <span>
+            © {new Date().getFullYear()} Agendou. Agendamento online para negócios de serviço.
+          </span>
           <span>Por: Tiago Cardoso</span>
         </div>
       </footer>

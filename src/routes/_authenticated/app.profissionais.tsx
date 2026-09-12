@@ -32,7 +32,10 @@ function ProfessionalsPage() {
   const teamManageEnabled =
     ((entitlements?.features ?? {}) as Record<string, unknown>)["team_manage"] === true;
   const businessId = panel.business!.id;
-  const plan = panel.subscription?.plans as { professional_limit?: number | null; name?: string } | null;
+  const plan = panel.subscription?.plans as {
+    professional_limit?: number | null;
+    name?: string;
+  } | null;
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ name: "", commission: "0" });
 
@@ -41,7 +44,10 @@ function ProfessionalsPage() {
   const revokeInvite = useServerFn(revokeProfessionalInvite);
   const [inviteEmail, setInviteEmail] = useState<Record<string, string>>({});
 
-  const invites = useQuery({ queryKey: ["professional-invites", businessId], queryFn: () => fetchInvites() });
+  const invites = useQuery({
+    queryKey: ["professional-invites", businessId],
+    queryFn: () => fetchInvites(),
+  });
 
   const invite = useMutation({
     mutationFn: (input: { professionalId: string; email: string }) => sendInvite({ data: input }),
@@ -68,7 +74,8 @@ function ProfessionalsPage() {
       toast.success("Convite revogado");
       queryClient.invalidateQueries({ queryKey: ["professional-invites", businessId] });
     },
-    onError: (error: Error) => toast.error("Erro ao revogar", { description: userFacingError(error) }),
+    onError: (error: Error) =>
+      toast.error("Erro ao revogar", { description: userFacingError(error) }),
   });
 
   const professionals = useQuery({
@@ -169,8 +176,10 @@ function ProfessionalsPage() {
         if (error) throw new Error(error.message);
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["professional-services", businessId] }),
-    onError: (error: Error) => toast.error("Erro ao vincular serviço", { description: userFacingError(error) }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["professional-services", businessId] }),
+    onError: (error: Error) =>
+      toast.error("Erro ao vincular serviço", { description: userFacingError(error) }),
   });
 
   const setActive = useMutation({
@@ -249,15 +258,15 @@ function ProfessionalsPage() {
       }),
   });
 
-
-
   return (
     <div>
       <BackButton />
       <h1 className="font-display text-2xl font-bold text-foreground">Equipe</h1>
       <p className="text-sm text-muted-foreground">
         {panel.usage?.activeProfessionals} ativo(s)
-        {plan?.professional_limit ? ` de ${plan.professional_limit} do plano ${plan.name}` : " · plano ilimitado"}
+        {plan?.professional_limit
+          ? ` de ${plan.professional_limit} do plano ${plan.name}`
+          : " · plano ilimitado"}
       </p>
       {!teamManageEnabled ? (
         <p className="mt-3 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
@@ -322,7 +331,9 @@ function ProfessionalsPage() {
                   size="sm"
                   variant="outline"
                   disabled={!teamManageEnabled}
-                  onClick={() => setActive.mutate({ id: professional.id, active: !professional.active })}
+                  onClick={() =>
+                    setActive.mutate({ id: professional.id, active: !professional.active })
+                  }
                 >
                   {professional.active ? "Ativo" : "Inativo"}
                 </Button>
@@ -356,7 +367,6 @@ function ProfessionalsPage() {
               onSave={(bio) => setBio.mutate({ id: professional.id, bio })}
             />
 
-
             <p className="mt-4 text-xs uppercase tracking-wide text-muted-foreground">
               Serviços que realiza
             </p>
@@ -389,7 +399,9 @@ function ProfessionalsPage() {
                 (i) => i.professional_id === professional.id && i.status === "PENDING",
               )}
               email={inviteEmail[professional.id] ?? ""}
-              onEmailChange={(value) => setInviteEmail((prev) => ({ ...prev, [professional.id]: value }))}
+              onEmailChange={(value) =>
+                setInviteEmail((prev) => ({ ...prev, [professional.id]: value }))
+              }
               onInvite={() =>
                 invite.mutate({
                   professionalId: professional.id,
@@ -438,7 +450,12 @@ function ProfessionalAccess({
             Convite pendente para {pendingInvite.email} · expira em{" "}
             {new Date(pendingInvite.expires_at).toLocaleDateString("pt-BR")}
           </p>
-          <Button size="sm" variant="ghost" disabled={busy} onClick={() => onRevoke(pendingInvite.id)}>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={busy}
+            onClick={() => onRevoke(pendingInvite.id)}
+          >
             Revogar
           </Button>
         </div>
@@ -453,7 +470,12 @@ function ProfessionalAccess({
               onChange={(e) => onEmailChange(e.target.value)}
             />
           </div>
-          <Button size="sm" variant="outline" disabled={busy || email.trim().length < 5} onClick={onInvite}>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy || email.trim().length < 5}
+            onClick={onInvite}
+          >
             <Mail className="size-4" aria-hidden /> Convidar
           </Button>
         </div>
@@ -462,7 +484,13 @@ function ProfessionalAccess({
   );
 }
 
-function ProfessionalHours({ professionalId, businessId }: { professionalId: string; businessId: string }) {
+function ProfessionalHours({
+  professionalId,
+  businessId,
+}: {
+  professionalId: string;
+  businessId: string;
+}) {
   const queryClient = useQueryClient();
   const hours = useQuery({
     queryKey: ["professional-hours", professionalId],
@@ -510,7 +538,8 @@ function ProfessionalHours({ professionalId, businessId }: { professionalId: str
         if (error) throw new Error(error.message);
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["professional-hours", professionalId] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["professional-hours", professionalId] }),
   });
 
   return (
@@ -558,7 +587,9 @@ function ProfessionalHours({ professionalId, businessId }: { professionalId: str
                 type="time"
                 value={lunchStarts}
                 aria-label="Início do almoço"
-                onChange={(e) => upsert.mutate({ ...base, lunch_starts_at: e.target.value || null })}
+                onChange={(e) =>
+                  upsert.mutate({ ...base, lunch_starts_at: e.target.value || null })
+                }
                 className="h-8 rounded-md border border-input bg-background px-2"
               />
               <span className="text-muted-foreground">às</span>

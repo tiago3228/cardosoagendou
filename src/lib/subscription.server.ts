@@ -12,7 +12,8 @@ export async function requireOwnedBusinessId(db: Db, userId: string): Promise<st
     .eq("user_id", userId)
     .eq("role", "owner")
     .maybeSingle();
-  if (!data?.business_id) throw new Error("FORBIDDEN: apenas o responsável pelo negócio pode fazer isso");
+  if (!data?.business_id)
+    throw new Error("FORBIDDEN: apenas o responsável pelo negócio pode fazer isso");
   return data.business_id;
 }
 

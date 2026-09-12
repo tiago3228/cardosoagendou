@@ -7,7 +7,8 @@ import { checkoutSchema, planChangeSchema } from "./schemas";
 export const getMySubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { requireOwnedBusinessId, countActiveProfessionals } = await import("./subscription.server");
+    const { requireOwnedBusinessId, countActiveProfessionals } =
+      await import("./subscription.server");
     const businessId = await requireOwnedBusinessId(context.supabase, context.userId);
 
     const [subscription, plans, activeProfessionals] = await Promise.all([
@@ -45,8 +46,10 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => checkoutSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { requireOwnedBusinessId, loadPlanByCode, logAudit } = await import("./subscription.server");
-    const { resolveProvider, loadSubscriptionByBusiness, dueDateString } = await import("./billing.server");
+    const { requireOwnedBusinessId, loadPlanByCode, logAudit } =
+      await import("./subscription.server");
+    const { resolveProvider, loadSubscriptionByBusiness, dueDateString } =
+      await import("./billing.server");
     const { planPriceCents } = await import("./plans");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -71,7 +74,9 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
 
     const email = business.data?.email;
     if (!email) {
-      throw new Error("BUSINESS_EMAIL_REQUIRED: cadastre um e-mail de cobrança em Ajustes antes de assinar");
+      throw new Error(
+        "BUSINESS_EMAIL_REQUIRED: cadastre um e-mail de cobrança em Ajustes antes de assinar",
+      );
     }
 
     const customer = await provider.ensureCustomer({
@@ -105,7 +110,9 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
       method: data.method,
       // Trials keep their remaining days: first charge lands when the trial ends.
       nextDueDate:
-        current.status === "TRIALING" && current.trial_ends_at && new Date(current.trial_ends_at) > new Date()
+        current.status === "TRIALING" &&
+        current.trial_ends_at &&
+        new Date(current.trial_ends_at) > new Date()
           ? dueDateString(new Date(current.trial_ends_at))
           : dueDateString(new Date()),
       returnUrl: `${origin}/app/assinatura?checkout=done`,
@@ -118,9 +125,14 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
         provider_customer_id: customer.providerCustomerId,
         provider_subscription_id: created.providerSubscriptionId,
         payment_method: data.method,
-        pending_plan_id: plan.id === current.plan_id && data.interval === current.billing_interval ? null : plan.id,
+        pending_plan_id:
+          plan.id === current.plan_id && data.interval === current.billing_interval
+            ? null
+            : plan.id,
         pending_billing_interval:
-          plan.id === current.plan_id && data.interval === current.billing_interval ? null : data.interval,
+          plan.id === current.plan_id && data.interval === current.billing_interval
+            ? null
+            : data.interval,
         amount_cents: amountCents,
         cancel_at_period_end: false,
         canceled_at: null,
@@ -165,9 +177,8 @@ export const schedulePlanChange = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => planChangeSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { requireOwnedBusinessId, loadPlanByCode, countActiveProfessionals, logAudit } = await import(
-      "./subscription.server"
-    );
+    const { requireOwnedBusinessId, loadPlanByCode, countActiveProfessionals, logAudit } =
+      await import("./subscription.server");
     const { classifyPlanChange, fitsLimit } = await import("./plans");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -235,7 +246,9 @@ export const schedulePlanChange = createServerFn({ method: "POST" })
           providerSubscriptionId: gatewaySubscriptionId.data.provider_subscription_id,
           amountCents: planPriceCents(nextPlan, data.interval),
           interval: data.interval,
-          method: (current.data as { payment_method?: "PIX" | "CREDIT_CARD" | null }).payment_method ?? "PIX",
+          method:
+            (current.data as { payment_method?: "PIX" | "CREDIT_CARD" | null }).payment_method ??
+            "PIX",
           // Only future charges change — never rewrite the current paid period.
           updatePendingPayments: false,
         });
@@ -259,14 +272,22 @@ export const schedulePlanChange = createServerFn({ method: "POST" })
       .eq("business_id", businessId);
     if (scheduled.error) throw new Error(scheduled.error.message);
 
-    await logAudit(supabaseAdmin, businessId, context.userId, "subscription.change_scheduled", "subscription", businessId, {
-      from: currentPlan.code,
-      to: nextPlan.code,
-      interval: data.interval,
-      kind,
-      gatewaySynced,
-      gatewaySyncError,
-    });
+    await logAudit(
+      supabaseAdmin,
+      businessId,
+      context.userId,
+      "subscription.change_scheduled",
+      "subscription",
+      businessId,
+      {
+        from: currentPlan.code,
+        to: nextPlan.code,
+        interval: data.interval,
+        kind,
+        gatewaySynced,
+        gatewaySyncError,
+      },
+    );
 
     return {
       kind,
@@ -303,10 +324,23 @@ export const cancelSubscription = createServerFn({ method: "POST" })
 
     await supabaseAdmin
       .from("subscriptions")
-      .update({ cancel_at_period_end: true, canceled_at: new Date().toISOString(), pending_plan_id: null, pending_billing_interval: null })
+      .update({
+        cancel_at_period_end: true,
+        canceled_at: new Date().toISOString(),
+        pending_plan_id: null,
+        pending_billing_interval: null,
+      })
       .eq("business_id", businessId);
 
-    await logAudit(supabaseAdmin, businessId, context.userId, "subscription.canceled", "subscription", businessId, {});
+    await logAudit(
+      supabaseAdmin,
+      businessId,
+      context.userId,
+      "subscription.canceled",
+      "subscription",
+      businessId,
+      {},
+    );
     return { canceledAt: new Date().toISOString(), activeUntil: current.data.current_period_end };
   });
 
@@ -323,7 +357,15 @@ export const reactivateSubscription = createServerFn({ method: "POST" })
       .update({ cancel_at_period_end: false, canceled_at: null })
       .eq("business_id", businessId);
 
-    await logAudit(supabaseAdmin, businessId, context.userId, "subscription.reactivated", "subscription", businessId, {});
+    await logAudit(
+      supabaseAdmin,
+      businessId,
+      context.userId,
+      "subscription.reactivated",
+      "subscription",
+      businessId,
+      {},
+    );
     return { ok: true as const };
   });
 

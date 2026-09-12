@@ -72,7 +72,9 @@ export const Route = createFileRoute("/$slug")({
     <main className="flex min-h-screen items-center justify-center px-5 text-center">
       <div>
         <h1 className="font-display text-2xl font-bold">Página de reservas não encontrada</h1>
-        <p className="mt-2 text-sm text-[var(--public-muted)]">Confira o link com o estabelecimento.</p>
+        <p className="mt-2 text-sm text-[var(--public-muted)]">
+          Confira o link com o estabelecimento.
+        </p>
         <Button asChild className="mt-6">
           <Link to="/">Ir para o início</Link>
         </Button>
@@ -178,7 +180,10 @@ function BookingPage() {
   const chosenProducts = (data!.products ?? []).filter((product) =>
     selectedProducts.includes(product.id),
   );
-  const productsTotalCents = chosenProducts.reduce((sum, product) => sum + product.price_cents * (productQuantities[product.id] ?? 1), 0);
+  const productsTotalCents = chosenProducts.reduce(
+    (sum, product) => sum + product.price_cents * (productQuantities[product.id] ?? 1),
+    0,
+  );
   const chosenProfessionalName =
     data!.professionals.find((professional) => professional.id === chosen?.professionalId)?.name ??
     "Profissional disponível";
@@ -368,9 +373,15 @@ function BookingPage() {
   }
 
   return (
-    <main className="public-theme min-h-screen text-[var(--public-text)]" style={{ backgroundColor: business.secondary_color ?? "#0B0A08" }}>
+    <main
+      className="public-theme min-h-screen text-[var(--public-text)]"
+      style={{ backgroundColor: business.secondary_color ?? "#0B0A08" }}
+    >
       <style>{`.public-theme { --public-primary: ${business.primary_color ?? "#B4884F"}; --public-secondary: ${business.secondary_color ?? "#0B0A08"}; --public-accent: ${business.primary_color ?? "#D1A66C"}; --public-text: #F2EDE4; --public-muted: #9C948A; --public-surface: #1E1B17; --public-card: #262220; --public-border: #35302A; --public-bg: ${business.secondary_color ?? "#14120F"}; }`}</style>
-      <div className="mx-auto min-h-screen max-w-[460px] overflow-hidden pb-32 shadow-2xl" style={{ backgroundColor: business.secondary_color ?? "#14120F" }}>
+      <div
+        className="mx-auto min-h-screen max-w-[460px] overflow-hidden pb-32 shadow-2xl"
+        style={{ backgroundColor: business.secondary_color ?? "#14120F" }}
+      >
         <div className="h-1 bg-[linear-gradient(90deg,var(--public-primary)_0%,var(--public-primary)_60%,transparent_60%,transparent_70%,var(--public-primary)_70%,var(--public-primary)_100%)]" />
         <div className="border-b border-[var(--public-border)] px-5 py-6">
           {business.cover_url ? (
@@ -401,9 +412,11 @@ function BookingPage() {
               </h1>
             </div>
           </div>
-          
+
           {business.description ? (
-            <p className="mt-4 text-sm leading-6 text-[var(--public-muted)]">{business.description}</p>
+            <p className="mt-4 text-sm leading-6 text-[var(--public-muted)]">
+              {business.description}
+            </p>
           ) : null}
           {business.address ? (
             <a
@@ -424,7 +437,10 @@ function BookingPage() {
               ) : null}
             </a>
           ) : null}
-          <p className="mt-4 rounded-xl border border-[var(--public-primary)] bg-[var(--public-surface)] p-3 text-sm text-[var(--public-accent)]">Cancelamentos fora de {business.cancellation_deadline_hours ?? 1} hora(s) do horário estão sujeitos a multa de 10% do valor total dos serviços.</p>
+          <p className="mt-4 rounded-xl border border-[var(--public-primary)] bg-[var(--public-surface)] p-3 text-sm text-[var(--public-accent)]">
+            Cancelamentos fora de {business.cancellation_deadline_hours ?? 1} hora(s) do horário
+            estão sujeitos a multa de 10% do valor total dos serviços.
+          </p>
           {business.whatsapp ? (
             <a
               href={whatsappLink(
@@ -441,7 +457,10 @@ function BookingPage() {
           {normalizeInstagramUrl(business.instagram_url) ? (
             <div className="mt-5 rounded-2xl border border-[var(--public-border)] bg-[var(--public-surface)] p-4">
               <div className="flex items-start gap-3">
-                <Instagram className="mt-0.5 size-5 shrink-0 text-[var(--public-primary)]" aria-hidden />
+                <Instagram
+                  className="mt-0.5 size-5 shrink-0 text-[var(--public-primary)]"
+                  aria-hidden
+                />
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--public-primary)]">
                     Siga nosso trabalho
@@ -532,10 +551,15 @@ function BookingPage() {
                           {professional.name}
                         </span>
                         {professional.bio ? (
-                          <span className="text-sm text-[var(--public-muted)]">{professional.bio}</span>
+                          <span className="text-sm text-[var(--public-muted)]">
+                            {professional.bio}
+                          </span>
                         ) : null}
                       </span>
-                      <ArrowRight className="ml-auto size-4 text-[var(--public-primary)]" aria-hidden />
+                      <ArrowRight
+                        className="ml-auto size-4 text-[var(--public-primary)]"
+                        aria-hidden
+                      />
                     </button>
                   </li>
                 ))}
@@ -648,7 +672,9 @@ function BookingPage() {
                             />
                           ) : null}
                           <span className="min-w-0 flex-1">
-                            <span className="block font-medium text-[var(--public-text)]">{product.name}</span>
+                            <span className="block font-medium text-[var(--public-text)]">
+                              {product.name}
+                            </span>
                             <span className="text-sm text-[var(--public-accent)]">
                               {formatBRL(product.price_cents)} · Estoque: {product.stock_quantity}
                             </span>
@@ -694,7 +720,8 @@ function BookingPage() {
                                 </button>
                                 {inCart ? (
                                   <span className="ml-auto flex items-center gap-1 text-xs text-[var(--public-accent)]">
-                                    <Check className="size-4" aria-hidden /> {cartQty} no agendamento
+                                    <Check className="size-4" aria-hidden /> {cartQty} no
+                                    agendamento
                                   </span>
                                 ) : null}
                               </div>
@@ -766,7 +793,9 @@ function BookingPage() {
                   .filter((p) => p.slots.length > 0)
                   .map((p) => (
                     <div key={p.professionalId} className="mt-6">
-                      <h3 className="text-sm font-semibold text-[var(--public-accent)]">{p.professionalName}</h3>
+                      <h3 className="text-sm font-semibold text-[var(--public-accent)]">
+                        {p.professionalName}
+                      </h3>
                       <div className="mt-2 grid grid-cols-3 gap-2">
                         {p.slots.map((slot) => (
                           <button

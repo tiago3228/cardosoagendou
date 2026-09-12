@@ -52,7 +52,8 @@ function SignupPage() {
       if (!alive) return;
       setSignedIn(Boolean(data.session));
       const email = data.session?.user.email;
-      const name = (data.session?.user.user_metadata as { full_name?: string } | undefined)?.full_name;
+      const name = (data.session?.user.user_metadata as { full_name?: string } | undefined)
+        ?.full_name;
       if (email) setForm((prev) => ({ ...prev, email, ownerName: prev.ownerName || (name ?? "") }));
     });
     return () => {
@@ -89,7 +90,9 @@ function SignupPage() {
 
         // E-mail já cadastrado: entra na conta existente e segue criando o negócio.
         if (signUp.error) {
-          const already = /already registered|already exists|User already/i.test(signUp.error.message);
+          const already = /already registered|already exists|User already/i.test(
+            signUp.error.message,
+          );
           if (!already) throw new Error(signUp.error.message);
           const signIn = await supabase.auth.signInWithPassword({
             email: form.email,
@@ -148,13 +151,16 @@ function SignupPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           {signedIn ? (
             <>
-              Você já está logado como {form.email || "sua conta"}. Complete os dados do negócio para
-              acessar o painel.
+              Você já está logado como {form.email || "sua conta"}. Complete os dados do negócio
+              para acessar o painel.
             </>
           ) : (
             <>
               14 dias grátis, sem cartão de crédito. Já tem conta?{" "}
-              <Link to="/auth" className="font-medium text-primary underline-offset-4 hover:underline">
+              <Link
+                to="/auth"
+                className="font-medium text-primary underline-offset-4 hover:underline"
+              >
                 Entrar
               </Link>
             </>
@@ -163,7 +169,10 @@ function SignupPage() {
 
         <form onSubmit={submit} className="mt-8 space-y-4">
           <Field label="Nome do negócio" error={errors["businessName"]}>
-            <Input value={form.businessName} onChange={(e) => set("businessName", e.target.value)} />
+            <Input
+              value={form.businessName}
+              onChange={(e) => set("businessName", e.target.value)}
+            />
           </Field>
 
           <Field label="Tipo de negócio" error={errors["businessType"]}>
@@ -188,11 +197,14 @@ function SignupPage() {
             <WhatsappInput value={form.whatsapp} onChange={(v) => set("whatsapp", v)} />
           </Field>
 
-
           {signedIn ? null : (
             <>
               <Field label="E-mail" error={errors["email"]}>
-                <Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} />
+                <Input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => set("email", e.target.value)}
+                />
               </Field>
 
               <Field label="Senha" error={errors["password"]} hint="Mínimo de 8 caracteres">
