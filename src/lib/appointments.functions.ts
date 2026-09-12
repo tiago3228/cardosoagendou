@@ -150,25 +150,35 @@ export const createAppointmentConfirmationLink = createServerFn({ method: "POST"
   .inputValidator((input: unknown) => input as { appointmentId: string })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const current = await supabaseAdmin
+    const scopedCurrent = await context.supabase
       .from("appointments")
       .select("id, business_id, client_name, client_whatsapp, starts_at")
       .eq("id", data.appointmentId)
       .maybeSingle();
+    const current = scopedCurrent.data
+      ? scopedCurrent
+      : await supabaseAdmin
+          .from("appointments")
+          .select("id, business_id, client_name, client_whatsapp, starts_at")
+          .eq("id", data.appointmentId)
+          .maybeSingle();
     if (!current.data) throw new Error("APPOINTMENT_NOT_FOUND: agendamento não encontrado");
-    const member = await supabaseAdmin
-      .from("user_roles")
-      .select("business_id")
-      .eq("user_id", context.userId)
-      .eq("business_id", current.data.business_id)
-      .maybeSingle();
-    let isMember = Boolean(member.data);
+    let isMember = Boolean(scopedCurrent.data);
     if (!isMember) {
-      const membership = await supabaseAdmin.rpc("is_business_member", {
-        _user_id: context.userId,
-        _business_id: current.data.business_id,
-      });
-      isMember = membership.data === true;
+      const member = await supabaseAdmin
+        .from("user_roles")
+        .select("business_id")
+        .eq("user_id", context.userId)
+        .eq("business_id", current.data.business_id)
+        .maybeSingle();
+      isMember = Boolean(member.data);
+      if (!isMember) {
+        const membership = await supabaseAdmin.rpc("is_business_member", {
+          _user_id: context.userId,
+          _business_id: current.data.business_id,
+        });
+        isMember = membership.data === true;
+      }
     }
     if (!isMember) throw new Error("FORBIDDEN: sem acesso a este negócio");
     const { data: business } = await supabaseAdmin
