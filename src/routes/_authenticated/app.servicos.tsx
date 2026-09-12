@@ -31,6 +31,7 @@ export const Route = createFileRoute("/_authenticated/app/servicos")({
 interface EditForm {
   id: string;
   name: string;
+  description: string;
   category: string;
   price: string;
   duration: string;
@@ -55,6 +56,7 @@ function ServicesPage() {
   const db = supabase as unknown as SupabaseClient;
   const [form, setForm] = useState({
     name: "",
+    description: "",
     category: "",
     price: "",
     duration: "30",
@@ -142,7 +144,7 @@ function ServicesPage() {
       const { data, error } = await db
         .from("services")
         .select(
-          "id, name, category, price_cents, duration_minutes, active, segment_id, allows_parallel, is_composite",
+          "id, name, description, category, price_cents, duration_minutes, active, segment_id, allows_parallel, is_composite",
         )
         .eq("business_id", businessId)
         .is("deleted_at", null)
@@ -342,6 +344,7 @@ function ServicesPage() {
         .insert({
           business_id: businessId,
           name: form.name.trim(),
+          description: form.description.trim() || null,
           category: form.category.trim() || null,
           price_cents: price,
           duration_minutes: duration,
@@ -366,6 +369,7 @@ function ServicesPage() {
     onSuccess: () => {
       setForm({
         name: "",
+        description: "",
         category: "",
         price: "",
         duration: "30",
@@ -418,6 +422,7 @@ function ServicesPage() {
         .from("services")
         .update({
           name: input.name.trim(),
+          description: input.description.trim() || null,
           category: input.category.trim() || null,
           price_cents: price,
           duration_minutes: duration,
@@ -661,6 +666,16 @@ function ServicesPage() {
           <Label>Nome</Label>
           <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label>Descrição para o cliente</Label>
+          <textarea
+            className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            placeholder="Explique o que está incluído neste serviço ou pacote"
+            maxLength={500}
+          />
+        </div>
         <div className="space-y-1.5">
           <Label>Categoria</Label>
           <Input
@@ -761,6 +776,7 @@ function ServicesPage() {
           (service: {
             id: string;
             name: string;
+            description: string | null;
             category: string | null;
             price_cents: number;
             duration_minutes: number;
@@ -783,6 +799,16 @@ function ServicesPage() {
                     <Input
                       value={edit!.name}
                       onChange={(e) => setEdit({ ...edit!, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>Descrição para o cliente</Label>
+                    <textarea
+                      className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                      value={edit!.description}
+                      onChange={(e) => setEdit({ ...edit!, description: e.target.value })}
+                      placeholder="Explique o que está incluído neste serviço ou pacote"
+                      maxLength={500}
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -967,6 +993,7 @@ function ServicesPage() {
                         setEdit({
                           id: service.id,
                           name: service.name,
+                          description: service.description ?? "",
                           category: service.category ?? "",
                           price: (service.price_cents / 100).toFixed(2).replace(".", ","),
                           duration: String(service.duration_minutes),

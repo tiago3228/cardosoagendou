@@ -614,6 +614,11 @@ function BookingPage() {
                               <span className="block font-medium text-[var(--public-text)]">
                                 {service.name}
                               </span>
+                              {service.description ? (
+                                <span className="mt-1 block text-sm leading-relaxed text-[var(--public-muted)]">
+                                  {service.description}
+                                </span>
+                              ) : null}
                               <span className="mt-1 flex items-center gap-1 text-sm text-[var(--public-accent)]">
                                 <Clock className="size-3.5" aria-hidden />
                                 {formatDuration(service.duration_minutes)} ·{" "}
