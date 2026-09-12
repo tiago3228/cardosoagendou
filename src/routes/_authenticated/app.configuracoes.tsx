@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery } from "./app";
+import { updateBusinessSettings } from "@/lib/panel.functions";
 import { WEEKDAY_LABELS } from "@/lib/format";
 import { userFacingError } from "@/lib/user-facing-error";
 import { Button } from "@/components/ui/button";
@@ -36,6 +38,7 @@ function SettingsPage() {
   const { data: panel } = useSuspenseQuery(panelQuery);
   const business = panel.business!;
   const queryClient = useQueryClient();
+  const saveBusinessSettings = useServerFn(updateBusinessSettings);
   const [form, setForm] = useState({
     name: business.name,
     description: business.description ?? "",
@@ -61,38 +64,39 @@ function SettingsPage() {
 
   const save = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
-        .from("businesses")
-        .update({
-          name: form.name.trim(),
-          description: form.description.trim() || null,
-          whatsapp: form.whatsapp.trim() || null,
-          email: form.email.trim() || null,
-          address: form.address.trim() || null,
-          booking_policy: form.booking_policy.trim() || null,
-          show_address: form.show_address,
-          show_whatsapp: form.show_whatsapp,
-          agenda_alerts_enabled: form.agenda_alerts_enabled,
-          confirmation_enabled: form.confirmation_enabled,
-          confirmation_minutes: Math.max(
-            0,
-            Math.min(10080, Number(form.confirmation_minutes) || 0),
-          ),
-          booking_share_message: form.booking_share_message.trim() || null,
-          booking_share_niche: form.booking_share_niche,
-          booking_share_style: form.booking_share_style,
-          slot_interval_minutes: Number(form.slot_interval_minutes) || 15,
-          min_notice_minutes: Number(form.min_notice_minutes) || 0,
-          max_advance_days: Number(form.max_advance_days) || 30,
-          cancellation_deadline_hours: Math.max(
-            0,
-            Math.min(720, Number(form.cancellation_deadline_hours) || 1),
-          ),
-          primary_color: form.primary_color,
-          secondary_color: form.secondary_color,
-        })
-        .eq("id", business.id);
-      if (error) throw new Error(error.message);
+      await saveBusinessSettings({
+        data: {
+          businessId: business.id,
+          values: {
+            name: form.name.trim(),
+            description: form.description.trim() || null,
+            whatsapp: form.whatsapp.trim() || null,
+            email: form.email.trim() || null,
+            address: form.address.trim() || null,
+            booking_policy: form.booking_policy.trim() || null,
+            show_address: form.show_address,
+            show_whatsapp: form.show_whatsapp,
+            agenda_alerts_enabled: form.agenda_alerts_enabled,
+            confirmation_enabled: form.confirmation_enabled,
+            confirmation_minutes: Math.max(
+              0,
+              Math.min(10080, Number(form.confirmation_minutes) || 0),
+            ),
+            booking_share_message: form.booking_share_message.trim() || null,
+            booking_share_niche: form.booking_share_niche,
+            booking_share_style: form.booking_share_style,
+            slot_interval_minutes: Number(form.slot_interval_minutes) || 15,
+            min_notice_minutes: Number(form.min_notice_minutes) || 0,
+            max_advance_days: Number(form.max_advance_days) || 30,
+            cancellation_deadline_hours: Math.max(
+              0,
+              Math.min(720, Number(form.cancellation_deadline_hours) || 1),
+            ),
+            primary_color: form.primary_color,
+            secondary_color: form.secondary_color,
+          },
+        },
+      });
     },
     onSuccess: () => {
       toast.success("Configurações salvas");
