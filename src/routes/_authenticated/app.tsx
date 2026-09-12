@@ -3,6 +3,7 @@ import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import {
   CalendarDays,
   CreditCard,
+  FileText,
   LogOut,
   Moon,
   Package,
@@ -45,6 +46,7 @@ const NAV = [
   { to: "/app/servicos", label: "Serviços", icon: Scissors },
   { to: "/app/profissionais", label: "Equipe", icon: UserSquare },
   { to: "/app/clientes", label: "Clientes", icon: Users },
+  { to: "/app/orcamentos", label: "Orçamentos", icon: FileText },
   { to: "/app/produtos", label: "Produtos", icon: Package, feature: "inventory" },
   { to: "/app/faturamento", label: "Faturamento", icon: Wallet, feature: "finance" },
   { to: "/app/assinatura", label: "Assinatura", icon: CreditCard },
