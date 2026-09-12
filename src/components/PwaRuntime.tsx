@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 export function PwaRuntime() {
   const [offline, setOffline] = useState(false);
   const [updateReady, setUpdateReady] = useState(false);
+  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
 
   useEffect(() => {
     setOffline(!navigator.onLine);
@@ -15,12 +16,16 @@ export function PwaRuntime() {
       void navigator.serviceWorker
         .register("/sw.js", { updateViaCache: "none" })
         .then((registration) => {
-          if (registration.waiting) setUpdateReady(true);
+          if (registration.waiting) {
+            setWaitingWorker(registration.waiting);
+            setUpdateReady(true);
+          }
           registration.addEventListener("updatefound", () => {
             const worker = registration.installing;
             if (!worker) return;
             worker.addEventListener("statechange", () => {
               if (worker.state === "installed" && navigator.serviceWorker.controller) {
+                setWaitingWorker(registration.waiting ?? worker);
                 setUpdateReady(true);
               }
             });
@@ -31,9 +36,16 @@ export function PwaRuntime() {
         });
     }
 
+    const onControllerChange = () => {
+      setWaitingWorker(null);
+      setUpdateReady(false);
+    };
+    navigator.serviceWorker?.addEventListener("controllerchange", onControllerChange);
+
     return () => {
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
+      navigator.serviceWorker?.removeEventListener("controllerchange", onControllerChange);
     };
   }, []);
 
@@ -52,8 +64,11 @@ export function PwaRuntime() {
             type="button"
             className="shrink-0 rounded-md bg-primary px-3 py-2 font-medium text-primary-foreground"
             onClick={() => {
-              navigator.serviceWorker.controller?.postMessage({ type: "SKIP_WAITING" });
-              window.location.reload();
+              setUpdateReady(false);
+              waitingWorker?.postMessage({ type: "SKIP_WAITING" });
+              const reload = () => window.location.reload();
+              navigator.serviceWorker.addEventListener("controllerchange", reload, { once: true });
+              window.setTimeout(reload, 1500);
             }}
           >
             Atualizar agora
