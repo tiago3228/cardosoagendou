@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery } from "./app";
@@ -108,20 +108,54 @@ function SettingsPage() {
     },
   });
 
-  const saveHour = useMutation({
-    mutationFn: async (input: {
-      id: string;
-      opens_at: string;
-      closes_at: string;
-      closed: boolean;
-    }) => {
-      const { error } = await supabase
-        .from("business_hours")
-        .update({ opens_at: input.opens_at, closes_at: input.closes_at, closed: input.closed })
-        .eq("id", input.id);
-      if (error) throw new Error(error.message);
+  type BusinessHourDraft = { opens_at: string; closes_at: string; closed: boolean };
+  const [hourDrafts, setHourDrafts] = useState<Record<number, BusinessHourDraft>>({});
+  useEffect(() => {
+    if (!hours.data) return;
+    setHourDrafts(
+      Object.fromEntries(
+        [0, 1, 2, 3, 4, 5, 6].map((weekday) => {
+          const row = hours.data.find((item) => item.weekday === weekday);
+          return [
+            weekday,
+            {
+              opens_at: (row?.opens_at ?? "09:00").slice(0, 5),
+              closes_at: (row?.closes_at ?? "19:00").slice(0, 5),
+              closed: row?.closed ?? true,
+            },
+          ];
+        }),
+      ),
+    );
+  }, [hours.data]);
+
+  const saveHours = useMutation({
+    mutationFn: async () => {
+      for (const weekday of [0, 1, 2, 3, 4, 5, 6]) {
+        const draft = hourDrafts[weekday];
+        if (!draft) continue;
+        const existing = (hours.data ?? []).find((item) => item.weekday === weekday);
+        const payload = {
+          business_id: business.id,
+          weekday,
+          opens_at: draft.opens_at,
+          closes_at: draft.closes_at,
+          closed: draft.closed,
+        };
+        const result = existing
+          ? await supabase.from("business_hours").update(payload).eq("id", existing.id)
+          : await supabase.from("business_hours").insert(payload);
+        if (result.error) throw new Error(result.error.message);
+      }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["business-hours", business.id] }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["business-hours", business.id] });
+      toast.success("Horário de funcionamento salvo", {
+        description: "A disponibilidade pública foi atualizada.",
+      });
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível salvar o horário", { description: userFacingError(error) }),
   });
 
   return (
@@ -395,52 +429,62 @@ function SettingsPage() {
         Horário de funcionamento
       </h2>
       <div className="mt-3 space-y-2 rounded-xl border border-border bg-card p-4">
-        {(hours.data ?? []).map((hour) => (
-          <div key={hour.id} className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="w-24 text-muted-foreground">{WEEKDAY_LABELS[hour.weekday]}</span>
-            <Button
-              size="sm"
-              variant={hour.closed ? "ghost" : "outline"}
-              onClick={() =>
-                saveHour.mutate({
-                  id: hour.id,
-                  opens_at: hour.opens_at,
-                  closes_at: hour.closes_at,
-                  closed: !hour.closed,
-                })
-              }
-            >
-              {hour.closed ? "Fechado" : "Aberto"}
-            </Button>
-            <input
-              type="time"
-              value={hour.opens_at.slice(0, 5)}
-              onChange={(e) =>
-                saveHour.mutate({
-                  id: hour.id,
-                  opens_at: e.target.value,
-                  closes_at: hour.closes_at,
-                  closed: hour.closed,
-                })
-              }
-              className="h-8 rounded-md border border-input bg-background px-2"
-            />
-            <span className="text-muted-foreground">até</span>
-            <input
-              type="time"
-              value={hour.closes_at.slice(0, 5)}
-              onChange={(e) =>
-                saveHour.mutate({
-                  id: hour.id,
-                  opens_at: hour.opens_at,
-                  closes_at: e.target.value,
-                  closed: hour.closed,
-                })
-              }
-              className="h-8 rounded-md border border-input bg-background px-2"
-            />
-          </div>
-        ))}
+        {[0, 1, 2, 3, 4, 5, 6].map((weekday) => {
+          const draft = hourDrafts[weekday] ?? {
+            opens_at: "09:00",
+            closes_at: "19:00",
+            closed: true,
+          };
+          return (
+            <div key={weekday} className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="w-24 text-muted-foreground">{WEEKDAY_LABELS[weekday]}</span>
+              <Button
+                type="button"
+                size="sm"
+                variant={draft.closed ? "ghost" : "outline"}
+                onClick={() =>
+                  setHourDrafts((current) => ({
+                    ...current,
+                    [weekday]: { ...draft, closed: !draft.closed },
+                  }))
+                }
+              >
+                {draft.closed ? "Fechado" : "Aberto"}
+              </Button>
+              <input
+                type="time"
+                value={draft.opens_at}
+                onChange={(e) =>
+                  setHourDrafts((current) => ({
+                    ...current,
+                    [weekday]: { ...draft, opens_at: e.target.value },
+                  }))
+                }
+                className="h-8 rounded-md border border-input bg-background px-2"
+              />
+              <span className="text-muted-foreground">até</span>
+              <input
+                type="time"
+                value={draft.closes_at}
+                onChange={(e) =>
+                  setHourDrafts((current) => ({
+                    ...current,
+                    [weekday]: { ...draft, closes_at: e.target.value },
+                  }))
+                }
+                className="h-8 rounded-md border border-input bg-background px-2"
+              />
+            </div>
+          );
+        })}
+        <Button
+          type="button"
+          className="mt-3"
+          disabled={saveHours.isPending || !hours.data}
+          onClick={() => saveHours.mutate()}
+        >
+          {saveHours.isPending ? "Salvando..." : "Salvar horário de funcionamento"}
+        </Button>
       </div>
 
       <InstallAppSection />
