@@ -162,7 +162,15 @@ export const createAppointmentConfirmationLink = createServerFn({ method: "POST"
       .eq("user_id", context.userId)
       .eq("business_id", current.data.business_id)
       .maybeSingle();
-    if (!member.data) throw new Error("FORBIDDEN: sem acesso a este negócio");
+    let isMember = Boolean(member.data);
+    if (!isMember) {
+      const membership = await supabaseAdmin.rpc("is_business_member", {
+        _user_id: context.userId,
+        _business_id: current.data.business_id,
+      });
+      isMember = membership.data === true;
+    }
+    if (!isMember) throw new Error("FORBIDDEN: sem acesso a este negócio");
     const { data: business } = await supabaseAdmin
       .from("businesses")
       .select("name")
