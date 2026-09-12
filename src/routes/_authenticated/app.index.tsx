@@ -30,7 +30,7 @@ import {
   whatsappLink,
 } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-import { buildBookingShareText } from "@/lib/booking-share";
+import { buildBookingShareText, resolvePublicBookingOrigin } from "@/lib/booking-share";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   head: () => ({
@@ -194,8 +194,10 @@ function AgendaPage() {
       toast.error("Não foi possível atualizar", { description: userFacingError(error) }),
   });
 
-  const origin =
-    panel.publicOrigin ?? (typeof window !== "undefined" ? window.location.origin : "");
+  const origin = resolvePublicBookingOrigin(
+    panel.publicOrigin,
+    typeof window !== "undefined" ? window.location.origin : undefined,
+  );
   const bookingUrl = panel.business && origin ? `${origin}/${panel.business.slug}` : "";
   const bookingShareText = buildBookingShareText(
     panel.business?.booking_share_message ?? "",
