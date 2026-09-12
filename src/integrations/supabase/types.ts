@@ -373,6 +373,9 @@ export type Database = {
           active: boolean;
           agenda_alerts_enabled: boolean;
           address: string | null;
+          booking_share_message: string | null;
+          booking_share_niche: string | null;
+          booking_share_style: string;
           booking_policy: string | null;
           business_type: Database["public"]["Enums"]["business_type"];
           cancellation_deadline_hours: number;
@@ -403,6 +406,9 @@ export type Database = {
           active?: boolean;
           agenda_alerts_enabled?: boolean;
           address?: string | null;
+          booking_share_message?: string | null;
+          booking_share_niche?: string | null;
+          booking_share_style?: string;
           booking_policy?: string | null;
           business_type?: Database["public"]["Enums"]["business_type"];
           cancellation_deadline_hours?: number;
@@ -433,6 +439,9 @@ export type Database = {
           active?: boolean;
           agenda_alerts_enabled?: boolean;
           address?: string | null;
+          booking_share_message?: string | null;
+          booking_share_niche?: string | null;
+          booking_share_style?: string;
           booking_policy?: string | null;
           business_type?: Database["public"]["Enums"]["business_type"];
           cancellation_deadline_hours?: number;

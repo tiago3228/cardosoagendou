@@ -14,6 +14,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { useInstallApp } from "@/lib/use-install-app";
 import { BackButton } from "@/components/BackButton";
 import { uploadBusinessMedia } from "@/lib/media";
+import { generateBookingShareMessage, SHARE_STYLES, type ShareStyle } from "@/lib/booking-share";
+
+const SHARE_NICHES = [
+  ["BARBERSHOP", "Barbearia"],
+  ["HAIR_SALON", "Salão de beleza"],
+  ["BEAUTY_SALON", "Espaço de beleza"],
+  ["AESTHETIC_CLINIC", "Clínica de estética"],
+  ["NAIL_SALON", "Espaço de unhas"],
+  ["MASSAGE", "Bem-estar e massagem"],
+  ["TATTOO", "Estúdio de tatuagem"],
+  ["THERAPY", "Consultório"],
+  ["OTHER", "Outro negócio"],
+] as const;
 
 export const Route = createFileRoute("/_authenticated/app/configuracoes")({
   component: SettingsPage,
@@ -33,6 +46,9 @@ function SettingsPage() {
     show_address: business.show_address,
     show_whatsapp: business.show_whatsapp,
     agenda_alerts_enabled: business.agenda_alerts_enabled,
+    booking_share_message: business.booking_share_message ?? "",
+    booking_share_niche: business.booking_share_niche ?? business.business_type,
+    booking_share_style: (business.booking_share_style ?? "professional") as ShareStyle,
     slot_interval_minutes: String(business.slot_interval_minutes),
     min_notice_minutes: String(business.min_notice_minutes),
     max_advance_days: String(business.max_advance_days),
@@ -55,6 +71,9 @@ function SettingsPage() {
           show_address: form.show_address,
           show_whatsapp: form.show_whatsapp,
           agenda_alerts_enabled: form.agenda_alerts_enabled,
+          booking_share_message: form.booking_share_message.trim() || null,
+          booking_share_niche: form.booking_share_niche,
+          booking_share_style: form.booking_share_style,
           slot_interval_minutes: Number(form.slot_interval_minutes) || 15,
           min_notice_minutes: Number(form.min_notice_minutes) || 0,
           max_advance_days: Number(form.max_advance_days) || 30,
@@ -179,6 +198,75 @@ function SettingsPage() {
           <p className="text-xs text-muted-foreground">
             Você pode limpar um alerta na agenda; ele reaparece quando houver um novo agendamento.
           </p>
+        </div>
+        <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/5 p-4 sm:col-span-2">
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              Mensagem do link de agendamentos
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Compartilhe o link com seus clientes para eles encontrarem horários e agendarem
+              sozinhos.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="grid gap-1.5 text-sm text-muted-foreground">
+              Nicho
+              <select
+                className="h-10 rounded-md border border-input bg-background px-3 text-foreground"
+                value={form.booking_share_niche}
+                onChange={(e) => setForm({ ...form, booking_share_niche: e.target.value })}
+              >
+                {SHARE_NICHES.map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1.5 text-sm text-muted-foreground">
+              Estilo da frase
+              <select
+                className="h-10 rounded-md border border-input bg-background px-3 text-foreground"
+                value={form.booking_share_style}
+                onChange={(e) =>
+                  setForm({ ...form, booking_share_style: e.target.value as ShareStyle })
+                }
+              >
+                {SHARE_STYLES.map((style) => (
+                  <option key={style.value} value={style.value}>
+                    {style.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <Textarea
+            value={form.booking_share_message}
+            onChange={(e) => setForm({ ...form, booking_share_message: e.target.value })}
+            placeholder="Crie uma frase para acompanhar o seu link..."
+          />
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                setForm({
+                  ...form,
+                  booking_share_message: generateBookingShareMessage(
+                    form.name,
+                    form.booking_share_niche,
+                    form.booking_share_style,
+                  ),
+                })
+              }
+            >
+              Criar frase do link
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Você pode editar a sugestão antes de salvar.
+            </span>
+          </div>
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Endereço</Label>

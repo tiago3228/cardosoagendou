@@ -30,6 +30,7 @@ import {
   whatsappLink,
 } from "@/lib/format";
 import { Button } from "@/components/ui/button";
+import { buildBookingShareText } from "@/lib/booking-share";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   head: () => ({
@@ -196,6 +197,10 @@ function AgendaPage() {
   const origin =
     panel.publicOrigin ?? (typeof window !== "undefined" ? window.location.origin : "");
   const bookingUrl = panel.business && origin ? `${origin}/${panel.business.slug}` : "";
+  const bookingShareText = buildBookingShareText(
+    panel.business?.booking_share_message ?? "",
+    bookingUrl,
+  );
   const items = (agenda.data ?? []) as AppointmentItem[];
   const appointmentSignature = items.map((item) => `${item.id}:${item.status}`).join(",");
   const alertStorageKey = `agenda-alert-dismissed:${panel.business?.id ?? "unknown"}`;
@@ -346,23 +351,43 @@ function AgendaPage() {
       </section>
 
       {bookingUrl ? (
-        <section className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase text-muted-foreground">
-              Sua página de reservas
-            </p>
-            <p className="truncate text-sm font-medium">{bookingUrl}</p>
+        <section className="overflow-hidden rounded-xl border-2 border-primary/30 bg-primary/5 shadow-soft">
+          <div className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase tracking-wide text-primary">
+                Compartilhe sua página de agendamentos
+              </p>
+              <p className="mt-1 text-lg font-bold text-foreground">Sua página de reservas</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Envie este link aos seus clientes para que eles escolham o serviço e agendem o
+                melhor horário.
+              </p>
+              <p className="mt-3 truncate rounded-md bg-background/70 px-3 py-2 text-sm font-medium text-foreground">
+                {bookingUrl}
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Button
+                size="sm"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(bookingShareText);
+                  toast.success("Mensagem e link copiados!");
+                }}
+              >
+                <MessageCircle aria-hidden /> Copiar mensagem + link
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(bookingUrl);
+                  toast.success("Somente o link foi copiado!");
+                }}
+              >
+                <Copy aria-hidden /> Copiar só o link
+              </Button>
+            </div>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={async () => {
-              await navigator.clipboard.writeText(bookingUrl);
-              toast.success("Link copiado!");
-            }}
-          >
-            <Copy aria-hidden /> Copiar
-          </Button>
         </section>
       ) : null}
 
