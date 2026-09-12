@@ -31,7 +31,6 @@ import {
   formatWhatsapp,
   normalizeBrWhatsapp,
   whatsappLink,
-  whatsappWebLink,
 } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { buildBookingShareText, resolvePublicBookingOrigin } from "@/lib/booking-share";
@@ -576,11 +575,15 @@ function AppointmentRow({
                 const result = await createConfirmationLink({
                   data: { appointmentId: appointment.id },
                 });
-                window.open(
-                  whatsappWebLink(result.recipient, result.message),
-                  "_blank",
-                  "noopener",
-                );
+                if (typeof navigator.share === "function") {
+                  await navigator.share({ text: result.message });
+                  toast.success("Mensagem pronta para compartilhar no WhatsApp.");
+                } else {
+                  await navigator.clipboard.writeText(result.message);
+                  toast.success("Mensagem copiada", {
+                    description: `Cole no WhatsApp para ${formatWhatsapp(result.recipient)}.`,
+                  });
+                }
               } catch (error) {
                 toast.error("Não foi possível preparar a confirmação", {
                   description: userFacingError(error),
