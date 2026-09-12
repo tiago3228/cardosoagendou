@@ -581,14 +581,15 @@ function AppointmentRow({
                 const result = await createConfirmationLink({
                   data: { appointmentId: appointment.id },
                 });
-                if (typeof navigator.share === "function") {
-                  await navigator.share({ text: result.message });
-                  toast.success("Mensagem pronta para compartilhar no WhatsApp.");
-                } else {
+                const whatsappUrl = whatsappLink(result.recipient, result.message);
+                const whatsappWindow = window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+                if (!whatsappWindow) {
                   await navigator.clipboard.writeText(result.message);
-                  toast.success("Mensagem copiada", {
-                    description: `Cole no WhatsApp para ${formatWhatsapp(result.recipient)}.`,
+                  toast.warning("O navegador bloqueou a abertura do WhatsApp", {
+                    description: `A mensagem foi copiada para ${formatWhatsapp(result.recipient)}.`,
                   });
+                } else {
+                  toast.success("WhatsApp aberto com a confirmação pronta.");
                 }
               } catch (error) {
                 toast.error("Não foi possível preparar a confirmação", {
