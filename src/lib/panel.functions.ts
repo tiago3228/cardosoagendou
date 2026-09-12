@@ -5,7 +5,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const getMyPanel = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const roles = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const roles = await supabaseAdmin
       .from("user_roles")
       .select("role, business_id")
       .eq("user_id", context.userId);
@@ -47,7 +48,6 @@ export const getMyPanel = createServerFn({ method: "POST" })
     ]);
 
     // Official public domain for the booking link (never the preview/sandbox host).
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const origin = await supabaseAdmin
       .from("platform_settings")
       .select("value")
