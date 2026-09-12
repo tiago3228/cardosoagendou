@@ -589,6 +589,16 @@ function BookingPage() {
                     {group.services.map((service) => {
                       const active = selected.includes(service.id);
                       const blocked = blockedService(service.id);
+                      const packageItems = compositionRules
+                        .filter((rule) => rule.composite_service_id === service.id)
+                        .map(
+                          (rule) =>
+                            data!.services.find(
+                              (candidate) => candidate.id === rule.component_service_id,
+                            )?.name,
+                        )
+                        .filter((name): name is string => Boolean(name));
+                      const isPackage = packageItems.length > 0;
                       return (
                         <li key={service.id}>
                           <button
@@ -609,6 +619,11 @@ function BookingPage() {
                                 {formatDuration(service.duration_minutes)} ·{" "}
                                 {formatBRL(service.price_cents)}
                               </span>
+                              {isPackage ? (
+                                <span className="mt-1 block text-xs text-[var(--public-muted)]">
+                                  Pacote inclui: {packageItems.join(", ")}
+                                </span>
+                              ) : null}
                               {blocked ? (
                                 <span className="mt-1 block text-xs text-[var(--public-muted)]">
                                   {blockedReason(service.id)}

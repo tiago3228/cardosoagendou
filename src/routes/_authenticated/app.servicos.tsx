@@ -723,11 +723,11 @@ function ServicesPage() {
               setForm({ ...form, is_composite: event.target.checked, component_ids: [] })
             }
           />
-          Serviço composto/conjunto
+          Pacote para venda (conjunto de serviços)
         </label>
         {form.is_composite ? (
           <label className="space-y-1.5 text-sm text-muted-foreground sm:col-span-2">
-            <span className="block">Serviços componentes</span>
+            <span className="block">Serviços incluídos no pacote</span>
             <select
               multiple
               className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
@@ -848,11 +848,11 @@ function ServicesPage() {
                         setEdit({ ...edit!, is_composite: event.target.checked })
                       }
                     />
-                    Serviço composto/conjunto
+                    Pacote para venda (conjunto de serviços)
                   </label>
                   {edit!.is_composite ? (
                     <label className="space-y-1.5 text-sm text-muted-foreground sm:col-span-2">
-                      <span className="block">Serviços componentes</span>
+                      <span className="block">Serviços incluídos no pacote</span>
                       <select
                         multiple
                         className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
@@ -897,7 +897,29 @@ function ServicesPage() {
                       {service.category ? `${service.category} · ` : ""}
                       {formatDuration(service.duration_minutes)} · {formatBRL(service.price_cents)}
                       {service.allows_parallel ? " · Simultâneo" : ""}
+                      {service.is_composite ? " · Pacote" : ""}
                     </p>
+                    {service.is_composite ? (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Inclui:{" "}
+                        {(compositions.data ?? [])
+                          .filter(
+                            (composition: {
+                              composite_service_id: string;
+                              component_service_id: string;
+                            }) => composition.composite_service_id === service.id,
+                          )
+                          .map(
+                            (composition: { component_service_id: string }) =>
+                              (services.data ?? []).find(
+                                (component: { id: string }) =>
+                                  component.id === composition.component_service_id,
+                              )?.name,
+                          )
+                          .filter(Boolean)
+                          .join(", ") || "Nenhum serviço incluído"}
+                      </p>
+                    ) : null}
                     <div className="mt-2 flex flex-wrap gap-2">
                       {(professionals.data ?? []).map(
                         (professional: { id: string; name: string }) => {
