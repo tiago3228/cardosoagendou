@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-rout
 import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import {
   CalendarDays,
+  CircleHelp,
   CreditCard,
   FileText,
   LogOut,
@@ -50,6 +51,7 @@ const NAV = [
   { to: "/app/produtos", label: "Produtos", icon: Package, feature: "inventory" },
   { to: "/app/faturamento", label: "Faturamento", icon: Wallet, feature: "finance" },
   { to: "/app/assinatura", label: "Assinatura", icon: CreditCard },
+  { to: "/app/como-funciona", label: "Como funciona", icon: CircleHelp },
   { to: "/app/configuracoes", label: "Ajustes", icon: Settings },
 ] as const;
 

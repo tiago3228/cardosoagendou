@@ -20,6 +20,7 @@ import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppAssinaturaRouteImport } from './routes/_authenticated/app.assinatura'
 import { Route as AuthenticatedAppClientesRouteImport } from './routes/_authenticated/app.clientes'
+import { Route as AuthenticatedAppComoFuncionaRouteImport } from './routes/_authenticated/app.como-funciona'
 import { Route as AuthenticatedAppConfiguracoesRouteImport } from './routes/_authenticated/app.configuracoes'
 import { Route as AuthenticatedAppFaturamentoRouteImport } from './routes/_authenticated/app.faturamento'
 import { Route as AuthenticatedAppOrcamentosRouteImport } from './routes/_authenticated/app.orcamentos'
@@ -85,6 +86,12 @@ const AuthenticatedAppClientesRoute =
   AuthenticatedAppClientesRouteImport.update({
     id: '/clientes',
     path: '/clientes',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppComoFuncionaRoute =
+  AuthenticatedAppComoFuncionaRouteImport.update({
+    id: '/como-funciona',
+    path: '/como-funciona',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
 const AuthenticatedAppConfiguracoesRoute =
@@ -157,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/convite/$token': typeof ConviteTokenRoute
   '/app/assinatura': typeof AuthenticatedAppAssinaturaRoute
   '/app/clientes': typeof AuthenticatedAppClientesRoute
+  '/app/como-funciona': typeof AuthenticatedAppComoFuncionaRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/app/faturamento': typeof AuthenticatedAppFaturamentoRoute
   '/app/orcamentos': typeof AuthenticatedAppOrcamentosRoute
@@ -178,6 +186,7 @@ export interface FileRoutesByTo {
   '/convite/$token': typeof ConviteTokenRoute
   '/app/assinatura': typeof AuthenticatedAppAssinaturaRoute
   '/app/clientes': typeof AuthenticatedAppClientesRoute
+  '/app/como-funciona': typeof AuthenticatedAppComoFuncionaRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/app/faturamento': typeof AuthenticatedAppFaturamentoRoute
   '/app/orcamentos': typeof AuthenticatedAppOrcamentosRoute
@@ -202,6 +211,7 @@ export interface FileRoutesById {
   '/convite/$token': typeof ConviteTokenRoute
   '/_authenticated/app/assinatura': typeof AuthenticatedAppAssinaturaRoute
   '/_authenticated/app/clientes': typeof AuthenticatedAppClientesRoute
+  '/_authenticated/app/como-funciona': typeof AuthenticatedAppComoFuncionaRoute
   '/_authenticated/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/_authenticated/app/faturamento': typeof AuthenticatedAppFaturamentoRoute
   '/_authenticated/app/orcamentos': typeof AuthenticatedAppOrcamentosRoute
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
     | '/convite/$token'
     | '/app/assinatura'
     | '/app/clientes'
+    | '/app/como-funciona'
     | '/app/configuracoes'
     | '/app/faturamento'
     | '/app/orcamentos'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/convite/$token'
     | '/app/assinatura'
     | '/app/clientes'
+    | '/app/como-funciona'
     | '/app/configuracoes'
     | '/app/faturamento'
     | '/app/orcamentos'
@@ -270,6 +282,7 @@ export interface FileRouteTypes {
     | '/convite/$token'
     | '/_authenticated/app/assinatura'
     | '/_authenticated/app/clientes'
+    | '/_authenticated/app/como-funciona'
     | '/_authenticated/app/configuracoes'
     | '/_authenticated/app/faturamento'
     | '/_authenticated/app/orcamentos'
@@ -374,6 +387,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppClientesRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/como-funciona': {
+      id: '/_authenticated/app/como-funciona'
+      path: '/como-funciona'
+      fullPath: '/app/como-funciona'
+      preLoaderRoute: typeof AuthenticatedAppComoFuncionaRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/configuracoes': {
       id: '/_authenticated/app/configuracoes'
       path: '/configuracoes'
@@ -450,6 +470,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAssinaturaRoute: typeof AuthenticatedAppAssinaturaRoute
   AuthenticatedAppClientesRoute: typeof AuthenticatedAppClientesRoute
+  AuthenticatedAppComoFuncionaRoute: typeof AuthenticatedAppComoFuncionaRoute
   AuthenticatedAppConfiguracoesRoute: typeof AuthenticatedAppConfiguracoesRoute
   AuthenticatedAppFaturamentoRoute: typeof AuthenticatedAppFaturamentoRoute
   AuthenticatedAppOrcamentosRoute: typeof AuthenticatedAppOrcamentosRoute
@@ -462,6 +483,7 @@ interface AuthenticatedAppRouteChildren {
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppAssinaturaRoute: AuthenticatedAppAssinaturaRoute,
   AuthenticatedAppClientesRoute: AuthenticatedAppClientesRoute,
+  AuthenticatedAppComoFuncionaRoute: AuthenticatedAppComoFuncionaRoute,
   AuthenticatedAppConfiguracoesRoute: AuthenticatedAppConfiguracoesRoute,
   AuthenticatedAppFaturamentoRoute: AuthenticatedAppFaturamentoRoute,
   AuthenticatedAppOrcamentosRoute: AuthenticatedAppOrcamentosRoute,
