@@ -908,7 +908,33 @@ function BookingPage() {
         </div>
 
         <footer className="border-t border-[var(--public-border)] px-5 py-6 text-center">
-          <p className="text-xs text-[var(--public-muted)]">
+          <button
+            onClick={async () => {
+              const shareData = {
+                title: "Agendou",
+                text: "Conhece alguém que tem lojinha ou vende algo e ainda não está automatizada? Indica o Agendou — agenda online completa.",
+                url: "https://agendou-br.lovable.app",
+              };
+              if (navigator.share) {
+                try {
+                  await navigator.share(shareData);
+                } catch {
+                  // usuário cancelou
+                }
+              } else {
+                try {
+                  await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+                  toast.success("Link copiado! Cola onde quiser indicar o Agendou.");
+                } catch {
+                  toast.error("Não foi possível copiar o link.");
+                }
+              }
+            }}
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--public-primary)] bg-[var(--public-primary)]/10 px-4 py-2 text-sm font-semibold text-[var(--public-primary)] transition hover:bg-[var(--public-primary)] hover:text-[var(--public-bg)]"
+          >
+            <Share className="size-4" aria-hidden /> Indicar o Agendou
+          </button>
+          <p className="mt-4 text-xs text-[var(--public-muted)]">
             Reservas online por{" "}
             <a
               href="https://agendou-br.lovable.app"
