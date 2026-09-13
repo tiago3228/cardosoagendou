@@ -141,6 +141,10 @@ const SEGMENTS = [
   "Estética automotiva",
   "Pet shop e banho e tosa",
   "Consultórios em geral",
+  "Videomaker",
+  "Quadras",
+  "Drones",
+  "Cursos e Aulas",
   "Outro negócio por horário",
 ] as const;
 
