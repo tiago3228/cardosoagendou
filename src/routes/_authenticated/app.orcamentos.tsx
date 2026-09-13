@@ -39,6 +39,7 @@ type Quote = {
   subtotal_cents: number;
   discount_cents: number;
   total_cents: number;
+  total_override_cents: number | null;
   notes: string | null;
   quote_items?: QuoteItem[];
   quote_inclusions?: Inclusion[];
@@ -87,6 +88,7 @@ function emptyQuote(): Omit<Quote, "id"> {
     subtotal_cents: 0,
     discount_cents: 0,
     total_cents: 0,
+    total_override_cents: null,
     notes: null,
     quote_items: [emptyItem(0)],
     quote_inclusions: [],
@@ -148,7 +150,8 @@ function QuotesPage() {
     () => items.reduce((sum, item) => sum + Math.round(item.quantity * item.unit_price_cents), 0),
     [items],
   );
-  const total = Math.max(0, subtotal - (editing?.discount_cents ?? 0));
+  const calculatedTotal = Math.max(0, subtotal - (editing?.discount_cents ?? 0));
+  const total = editing?.total_override_cents ?? calculatedTotal;
 
   function selectService(index: number, serviceId: string) {
     const service = (services.data ?? []).find((item) => item.id === serviceId);
@@ -192,6 +195,7 @@ function QuotesPage() {
       subtotal_cents: subtotal,
       discount_cents: editing.discount_cents ?? 0,
       total_cents: total,
+      total_override_cents: editing.total_override_cents ?? null,
       notes: editing.notes?.trim() || null,
     };
     const result =
@@ -252,7 +256,22 @@ function QuotesPage() {
     setShowInclusions((copy.quote_inclusions?.length ?? 0) > 0);
   }
   function printQuote() {
-    window.print();
+    const printable = document.querySelector<HTMLElement>("[data-quote-print]");
+    if (!printable) return;
+    const printWindow = window.open("", "_blank", "noopener,noreferrer,width=900,height=1100");
+    if (!printWindow) {
+      alert("Permita pop-ups para gerar o PDF.");
+      return;
+    }
+    printWindow.document.write(
+      `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${editing?.title || "Orçamento"}</title><style>body{font-family:Arial,sans-serif;color:#17202a;margin:48px;line-height:1.45}h1{font-size:26px;margin:0 0 6px}h2{font-size:15px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid #d7dde3;padding-bottom:6px;margin:28px 0 10px}.muted{color:#64748b;font-size:13px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 28px}.item{padding:10px 0;border-bottom:1px solid #e5e7eb}.item-title{font-weight:700}.item-desc{color:#64748b;font-size:13px}.total{text-align:right;font-size:20px;font-weight:700;margin-top:22px}.inclusions{margin:8px 0;padding-left:20px}</style></head><body>${printable.innerHTML}</body></html>`,
+    );
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.onload = () => {
+      printWindow.print();
+      printWindow.close();
+    };
   }
 
   if (editing)
@@ -626,7 +645,23 @@ function QuoteEditor({
             <p>
               Subtotal: <strong>{formatBRL(subtotal)}</strong>
             </p>
-            <p className="text-xl font-bold">Total: {formatBRL(total)}</p>
+            <Label className="mt-2 block">Total final</Label>
+            <Input
+              className="mt-1 w-40 text-xl font-bold"
+              inputMode="decimal"
+              value={centsToMoney(total)}
+              onChange={(e) => update({ total_override_cents: moneyToCents(e.target.value) })}
+            />
+            {editing.total_override_cents !== null ? (
+              <Button
+                type="button"
+                variant="link"
+                className="h-auto px-0 text-xs"
+                onClick={() => update({ total_override_cents: null })}
+              >
+                Usar cálculo automático
+              </Button>
+            ) : null}
           </div>
           <div className="no-print flex gap-2">
             <Button variant="outline" onClick={printQuote}>
@@ -655,6 +690,57 @@ function QuoteEditor({
             <p className="whitespace-pre-wrap">{editing.notes}</p>
           </section>
         ) : null}
+        <section data-quote-print className="hidden">
+          <h1>{editing.title || "Orçamento"}</h1>
+          <p className="muted">{editing.quote_number || "Proposta comercial"}</p>
+          <h2>Cliente</h2>
+          <div className="grid">
+            <div>
+              <strong>Nome:</strong> {editing.customer_name || "—"}
+            </div>
+            <div>
+              <strong>WhatsApp:</strong> {editing.customer_phone || "—"}
+            </div>
+            <div>
+              <strong>Data:</strong> {editing.issue_date || "—"}
+            </div>
+            <div>
+              <strong>Validade:</strong> {editing.valid_until || "—"}
+            </div>
+          </div>
+          <h2>Serviços</h2>
+          {items
+            .filter((item) => item.name.trim())
+            .map((item, index) => (
+              <div className="item" key={`${item.id ?? "item"}-${index}`}>
+                <div className="item-title">
+                  {item.quantity} × {item.name} — {formatBRL(item.quantity * item.unit_price_cents)}
+                </div>
+                {item.description.trim() ? (
+                  <div className="item-desc">{item.description}</div>
+                ) : null}
+              </div>
+            ))}
+          {inclusions.filter((item) => item.label.trim()).length > 0 ? (
+            <>
+              <h2>O que está incluso</h2>
+              <ul className="inclusions">
+                {inclusions
+                  .filter((item) => item.label.trim())
+                  .map((item, index) => (
+                    <li key={index}>{item.label}</li>
+                  ))}
+              </ul>
+            </>
+          ) : null}
+          {editing.notes?.trim() ? (
+            <>
+              <h2>Observações</h2>
+              <p>{editing.notes}</p>
+            </>
+          ) : null}
+          <p className="total">Total: {formatBRL(total)}</p>
+        </section>
       </article>
       <style>{`@media print { .no-print { display:none!important } .print-only { display:block!important } body { background:white!important } .quote-editor { margin:0!important } } .print-only { display:none }`}</style>
     </div>
