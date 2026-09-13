@@ -46,8 +46,8 @@ updated AS (
       duration_minutes = q.duration_minutes,
       active = true,
       updated_at = now()
-  FROM quadra_services q
-  JOIN public.segments s ON s.id = st.segment_id
+  FROM quadra_services q,
+       public.segments s
   WHERE st.business_id IS NULL
     AND s.slug = 'quadra'
     AND lower(st.name) = lower(q.name)
