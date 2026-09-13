@@ -258,19 +258,18 @@ function QuotesPage() {
   function printQuote() {
     const printable = document.querySelector<HTMLElement>("[data-quote-print]");
     if (!printable) return;
-    const printWindow = window.open("", "_blank", "noopener,noreferrer,width=900,height=1100");
+    const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${editing?.title || "Orçamento"}</title><style>body{font-family:Arial,sans-serif;color:#17202a;margin:48px;line-height:1.45}h1{font-size:26px;margin:0 0 6px}h2{font-size:15px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid #d7dde3;padding-bottom:6px;margin:28px 0 10px}.muted{color:#64748b;font-size:13px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 28px}.item{padding:10px 0;border-bottom:1px solid #e5e7eb}.item-title{font-weight:700}.item-desc{color:#64748b;font-size:13px}.total{text-align:right;font-size:20px;font-weight:700;margin-top:22px}.inclusions{margin:8px 0;padding-left:20px}</style></head><body>${printable.innerHTML}</body></html>`;
+    const blobUrl = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
+    const printWindow = window.open(blobUrl, "_blank");
     if (!printWindow) {
+      URL.revokeObjectURL(blobUrl);
       alert("Permita pop-ups para gerar o PDF.");
       return;
     }
-    printWindow.document.write(
-      `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${editing?.title || "Orçamento"}</title><style>body{font-family:Arial,sans-serif;color:#17202a;margin:48px;line-height:1.45}h1{font-size:26px;margin:0 0 6px}h2{font-size:15px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid #d7dde3;padding-bottom:6px;margin:28px 0 10px}.muted{color:#64748b;font-size:13px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 28px}.item{padding:10px 0;border-bottom:1px solid #e5e7eb}.item-title{font-weight:700}.item-desc{color:#64748b;font-size:13px}.total{text-align:right;font-size:20px;font-weight:700;margin-top:22px}.inclusions{margin:8px 0;padding-left:20px}</style></head><body>${printable.innerHTML}</body></html>`,
-    );
-    printWindow.document.close();
-    printWindow.focus();
     printWindow.onload = () => {
+      URL.revokeObjectURL(blobUrl);
+      printWindow.focus();
       printWindow.print();
-      printWindow.close();
     };
   }
 
