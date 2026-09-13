@@ -1239,6 +1239,192 @@ export type Database = {
         }
         Relationships: []
       }
+      quote_inclusions: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          is_custom: boolean
+          label: string
+          quote_id: string
+          sort_order: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          is_custom?: boolean
+          label: string
+          quote_id: string
+          sort_order?: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          is_custom?: boolean
+          label?: string
+          quote_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_inclusions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_inclusions_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_items: {
+        Row: {
+          business_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_custom: boolean
+          name: string
+          quantity: number
+          quote_id: string
+          service_id: string | null
+          sort_order: number
+          total_cents: number
+          unit_price_cents: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_custom?: boolean
+          name: string
+          quantity?: number
+          quote_id: string
+          service_id?: string | null
+          sort_order?: number
+          total_cents?: number
+          unit_price_cents?: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_custom?: boolean
+          name?: string
+          quantity?: number
+          quote_id?: string
+          service_id?: string | null
+          sort_order?: number
+          total_cents?: number
+          unit_price_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_items_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          business_id: string
+          company_name: string | null
+          contractor_name: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          discount_cents: number
+          id: string
+          issue_date: string
+          notes: string | null
+          quote_number: string
+          status: string
+          subtotal_cents: number
+          title: string
+          total_cents: number
+          total_override_cents: number | null
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          business_id: string
+          company_name?: string | null
+          contractor_name?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          discount_cents?: number
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          quote_number: string
+          status?: string
+          subtotal_cents?: number
+          title?: string
+          total_cents?: number
+          total_override_cents?: number | null
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          business_id?: string
+          company_name?: string | null
+          contractor_name?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          discount_cents?: number
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          quote_number?: string
+          status?: string
+          subtotal_cents?: number
+          title?: string
+          total_cents?: number
+          total_override_cents?: number | null
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       segments: {
         Row: {
           active: boolean
