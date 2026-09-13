@@ -52,15 +52,18 @@ alter table public.quotes enable row level security;
 alter table public.quote_items enable row level security;
 alter table public.quote_inclusions enable row level security;
 
+drop policy if exists "business members can manage quotes" on public.quotes;
 create policy "business members can manage quotes" on public.quotes
-  for all using (public.is_business_member(business_id))
-  with check (public.is_business_member(business_id));
+  for all using (public.is_business_member(auth.uid(), business_id))
+  with check (public.is_business_member(auth.uid(), business_id));
+drop policy if exists "business members can manage quote items" on public.quote_items;
 create policy "business members can manage quote items" on public.quote_items
-  for all using (public.is_business_member(business_id))
-  with check (public.is_business_member(business_id));
+  for all using (public.is_business_member(auth.uid(), business_id))
+  with check (public.is_business_member(auth.uid(), business_id));
+drop policy if exists "business members can manage quote inclusions" on public.quote_inclusions;
 create policy "business members can manage quote inclusions" on public.quote_inclusions
-  for all using (public.is_business_member(business_id))
-  with check (public.is_business_member(business_id));
+  for all using (public.is_business_member(auth.uid(), business_id))
+  with check (public.is_business_member(auth.uid(), business_id));
 
 create or replace function public.set_quotes_updated_at()
 returns trigger language plpgsql as $$
