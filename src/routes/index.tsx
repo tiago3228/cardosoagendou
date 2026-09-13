@@ -150,6 +150,8 @@ const SEGMENTS = [
   "Quadra",
   "Drones",
   "Cursos e Aulas",
+  "Informática",
+  "Marido de Aluguel",
   "Outro negócio por horário",
 ].sort((a, b) => a.localeCompare(b, "pt-BR"));
 
