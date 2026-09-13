@@ -11,7 +11,6 @@ import {
   MapPin,
   MessageCircle,
   Navigation,
-  Share,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
