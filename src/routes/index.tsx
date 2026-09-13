@@ -120,7 +120,11 @@ const FEATURES = [
   },
 ] as const;
 
-const SEGMENTS = [
+type SegmentItem =
+  | string
+  | { group: string; items: string[] };
+
+const SEGMENTS: SegmentItem[] = [
   "Barbearia",
   "Salão de cabelo",
   "Salão de beleza",
@@ -148,26 +152,30 @@ const SEGMENTS = [
   "Pet shop e banho e tosa",
   "Consultórios em geral",
   "Videomaker",
-  "Quadra",
-  "Drone",
-  "Cursos",
-  "Cursos de Design",
-  "Cursos de Finanças e Negócios",
-  "Cursos de Gastronomia",
-  "Cursos de Idiomas",
-  "Cursos de Marketing e Vendas",
-  "Cursos de Música e Artes",
-  "Cursos de Tecnologia e Programação",
-  "Cursos de Beleza e Estética",
-  "Cursos Preparatórios",
-  "Cursos Profissionalizantes",
+  "Quadras",
+  "Drones",
+  {
+    group: "Cursos",
+    items: [
+      "Cursos de Beleza e Estética",
+      "Cursos de Design",
+      "Cursos de Finanças e Negócios",
+      "Cursos de Gastronomia",
+      "Cursos de Idiomas",
+      "Cursos de Marketing e Vendas",
+      "Cursos de Música e Artes",
+      "Cursos de Tecnologia e Programação",
+      "Cursos Preparatórios",
+      "Cursos Profissionalizantes",
+    ],
+  },
   "Informática",
   "Marido de Aluguel",
   "Marketing Digital",
   "Consultoria Financeira",
   "Programador",
   "Outro negócio por horário",
-].sort((a, b) => a.localeCompare(b, "pt-BR"));
+];
 
 const STEPS = [
   {
