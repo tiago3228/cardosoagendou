@@ -450,9 +450,8 @@ function Landing() {
       </section>
 
       <footer className="border-t border-border py-8">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 text-sm text-muted-foreground">
-          <span>© {new Date().getFullYear()} Agendou. Agendamento online para negócios de serviço.</span>
-          <span>Por: Tiago Cardoso</span>
+        <div className="mx-auto max-w-6xl px-5 text-center text-sm text-muted-foreground">
+          © {new Date().getFullYear()} Agendou. Agendamento online para negócios de serviço.
         </div>
       </footer>
     </main>
