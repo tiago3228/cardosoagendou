@@ -1,6 +1,19 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { CalendarDays, CreditCard, LogOut, Moon, Package, Scissors, Settings, Sun, Users, UserSquare, Wallet } from "lucide-react";
+import {
+  CalendarDays,
+  CreditCard,
+  FileText,
+  LogOut,
+  Moon,
+  Package,
+  Scissors,
+  Settings,
+  Sun,
+  Users,
+  UserSquare,
+  Wallet,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyPanel } from "@/lib/panel.functions";
 import { getMasterStatus } from "@/lib/manual-pix.functions";
@@ -33,6 +46,7 @@ const NAV = [
   { to: "/app/servicos", label: "Serviços", icon: Scissors },
   { to: "/app/profissionais", label: "Equipe", icon: UserSquare },
   { to: "/app/clientes", label: "Clientes", icon: Users },
+  { to: "/app/orcamentos", label: "Orçamentos", icon: FileText },
   { to: "/app/produtos", label: "Produtos", icon: Package, feature: "inventory" },
   { to: "/app/faturamento", label: "Faturamento", icon: Wallet, feature: "finance" },
   { to: "/app/assinatura", label: "Assinatura", icon: CreditCard },
@@ -80,7 +94,9 @@ function PanelLayout() {
   const plan = data.subscription?.plans as { name?: string } | null | undefined;
 
   return (
-    <div className={`agenda-theme ${theme === "clean" ? "agenda-theme-clean" : ""} min-h-screen bg-background pb-20 text-foreground md:flex md:pb-0`}>
+    <div
+      className={`agenda-theme ${theme === "clean" ? "agenda-theme-clean" : ""} min-h-screen bg-background pb-20 text-foreground md:flex md:pb-0`}
+    >
       <aside className="hidden w-60 shrink-0 border-r border-sidebar-border bg-sidebar p-5 md:flex md:flex-col">
         <span className="font-display text-xl font-bold text-sidebar-foreground">Agendou</span>
         <p className="mt-1 truncate text-sm text-muted-foreground">{data.business.name}</p>
@@ -140,7 +156,10 @@ function PanelLayout() {
         <header className="flex items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur md:px-8 md:py-4">
           <span className="min-w-0 truncate font-display font-bold">{data.business.name}</span>
           <div className="flex shrink-0 items-center gap-2">
-            <div className="flex items-center rounded-md border border-border bg-secondary/65 p-1" aria-label="Aparência do painel">
+            <div
+              className="flex items-center rounded-md border border-border bg-secondary/65 p-1"
+              aria-label="Aparência do painel"
+            >
               <Button
                 type="button"
                 variant={theme === "dark" ? "default" : "ghost"}
@@ -173,7 +192,8 @@ function PanelLayout() {
                 navigate({ to: "/auth" });
               }}
             >
-              <LogOut className="size-4" aria-hidden /> <span className="hidden sm:inline">Sair</span>
+              <LogOut className="size-4" aria-hidden />{" "}
+              <span className="hidden sm:inline">Sair</span>
             </Button>
           </div>
         </header>
