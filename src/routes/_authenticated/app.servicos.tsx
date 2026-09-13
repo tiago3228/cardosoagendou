@@ -13,6 +13,14 @@ import { BackButton } from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -205,10 +213,13 @@ function ServicesPage() {
 
   const deleteSegment = useMutation({
     mutationFn: async (segmentId: string) => {
-      const { error } = await db.rpc("delete_business_segment" as never, {
-        _business_id: businessId,
-        _business_segment_id: segmentId,
-      } as never);
+      const { error } = await db.rpc(
+        "delete_business_segment" as never,
+        {
+          _business_id: businessId,
+          _business_segment_id: segmentId,
+        } as never,
+      );
       if (error) throw new Error(error.message);
     },
     onSuccess: async () => {
@@ -224,8 +235,6 @@ function ServicesPage() {
     onError: (error: Error) =>
       toast.error("Não foi possível excluir o segmento", { description: userFacingError(error) }),
   });
-
-
 
   const copyTemplates = useMutation({
     mutationFn: async (input: { segmentId: string; templateIds: string[] }) => {
@@ -295,7 +304,9 @@ function ServicesPage() {
       toast.success(`${count} serviço(s) adicionado(s)`);
     },
     onError: (error: Error) =>
-      toast.error("Não foi possível adicionar os serviços", { description: userFacingError(error) }),
+      toast.error("Não foi possível adicionar os serviços", {
+        description: userFacingError(error),
+      }),
   });
 
   const toggleProfessionalService = useMutation({
@@ -321,7 +332,9 @@ function ServicesPage() {
       await queryClient.invalidateQueries({ queryKey: ["professional-services", businessId] });
     },
     onError: (error: Error) =>
-      toast.error("Não foi possível atualizar os profissionais", { description: userFacingError(error) }),
+      toast.error("Não foi possível atualizar os profissionais", {
+        description: userFacingError(error),
+      }),
   });
 
   const create = useMutation({
@@ -332,23 +345,30 @@ function ServicesPage() {
       if (!Number.isFinite(price) || price < 0) throw new Error("Preço inválido");
       if (!Number.isFinite(duration) || duration < 5)
         throw new Error("Duração mínima de 5 minutos");
-      const { data: created, error } = await db.from("services").insert({
-        business_id: businessId,
-        name: form.name.trim(),
-        category: form.category.trim() || null,
-        price_cents: price,
-        duration_minutes: duration,
-        ...(form.segment_id ? { segment_id: form.segment_id } : {}),
-        allows_parallel: form.allows_parallel,
-        is_composite: false,
-      }).select("id").single();
+      const { data: created, error } = await db
+        .from("services")
+        .insert({
+          business_id: businessId,
+          name: form.name.trim(),
+          category: form.category.trim() || null,
+          price_cents: price,
+          duration_minutes: duration,
+          ...(form.segment_id ? { segment_id: form.segment_id } : {}),
+          allows_parallel: form.allows_parallel,
+          is_composite: false,
+        })
+        .select("id")
+        .single();
       if (error) throw new Error(error.message);
-      const { error: compositionError } = await db.rpc("save_service_composition" as never, {
-        _business_id: businessId,
-        _service_id: created.id,
-        _is_composite: form.is_composite,
-        _component_ids: form.component_ids,
-      } as never);
+      const { error: compositionError } = await db.rpc(
+        "save_service_composition" as never,
+        {
+          _business_id: businessId,
+          _service_id: created.id,
+          _is_composite: form.is_composite,
+          _component_ids: form.component_ids,
+        } as never,
+      );
       if (compositionError) throw new Error(compositionError.message);
     },
     onSuccess: () => {
@@ -415,12 +435,15 @@ function ServicesPage() {
         .eq("id", input.id)
         .eq("business_id", businessId);
       if (error) throw new Error(error.message);
-      const { error: compositionError } = await db.rpc("save_service_composition" as never, {
-        _business_id: businessId,
-        _service_id: input.id,
-        _is_composite: input.is_composite,
-        _component_ids: input.component_ids,
-      } as never);
+      const { error: compositionError } = await db.rpc(
+        "save_service_composition" as never,
+        {
+          _business_id: businessId,
+          _service_id: input.id,
+          _is_composite: input.is_composite,
+          _component_ids: input.component_ids,
+        } as never,
+      );
       if (compositionError) throw new Error(compositionError.message);
     },
     onSuccess: () => {
@@ -451,19 +474,22 @@ function ServicesPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <select
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground"
-              value={catalogSegmentId}
-              onChange={(event) => setCatalogSegmentId(event.currentTarget.value)}
-              aria-label="Segmento do catálogo"
-            >
-              <option value="">Selecionar segmento</option>
-              {(catalogSegments.data ?? []).map((segment: { id: string; name: string }) => (
-                <option key={segment.id} value={segment.id}>
-                  {segment.name}
-                </option>
-              ))}
-            </select>
+            <Select value={catalogSegmentId} onValueChange={setCatalogSegmentId}>
+              <SelectTrigger className="h-10 w-[240px]" aria-label="Segmento do catálogo">
+                <SelectValue
+                  placeholder={
+                    catalogSegments.isLoading ? "Carregando segmentos..." : "Selecionar segmento"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent className="z-[100] max-h-80">
+                {(catalogSegments.data ?? []).map((segment: { id: string; name: string }) => (
+                  <SelectItem key={segment.id} value={segment.id}>
+                    {segment.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button
               type="button"
               disabled={createSegment.isPending}
@@ -518,9 +544,7 @@ function ServicesPage() {
                           size="sm"
                           variant="ghost"
                           aria-label={`Excluir segmento ${segment.name}`}
-                          onClick={() =>
-                            setSegmentToDelete({ id: segment.id, name: segment.name })
-                          }
+                          onClick={() => setSegmentToDelete({ id: segment.id, name: segment.name })}
                         >
                           <Trash2 className="size-4" aria-hidden />
                         </Button>
@@ -663,18 +687,21 @@ function ServicesPage() {
         </div>
         <div className="space-y-1.5">
           <Label>Segmento</Label>
-          <select
-            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground"
+          <Select
             value={form.segment_id}
-            onChange={(event) => setForm({ ...form, segment_id: event.target.value })}
+            onValueChange={(value) => setForm({ ...form, segment_id: value })}
           >
-            <option value="">Sem segmento</option>
-            {(segments.data ?? []).map((segment: { id: string; name: string }) => (
-              <option key={segment.id} value={segment.id}>
-                {segment.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="h-10 w-full">
+              <SelectValue placeholder="Sem segmento" />
+            </SelectTrigger>
+            <SelectContent className="z-[100]">
+              {(segments.data ?? []).map((segment: { id: string; name: string }) => (
+                <SelectItem key={segment.id} value={segment.id}>
+                  {segment.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
@@ -729,7 +756,9 @@ function ServicesPage() {
               {(services.data ?? [])
                 .filter((service: { is_composite: boolean }) => !service.is_composite)
                 .map((service: { id: string; name: string }) => (
-                <option key={service.id} value={service.id}>{service.name}</option>
+                  <option key={service.id} value={service.id}>
+                    {service.name}
+                  </option>
                 ))}
             </select>
           </label>
@@ -779,18 +808,21 @@ function ServicesPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label>Segmento</Label>
-                    <select
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                    <Select
                       value={edit!.segment_id}
-                      onChange={(event) => setEdit({ ...edit!, segment_id: event.target.value })}
+                      onValueChange={(value) => setEdit({ ...edit!, segment_id: value })}
                     >
-                      <option value="">Sem segmento</option>
-                      {(segments.data ?? []).map((segment: { id: string; name: string }) => (
-                        <option key={segment.id} value={segment.id}>
-                          {segment.name}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="h-10 w-full">
+                        <SelectValue placeholder="Sem segmento" />
+                      </SelectTrigger>
+                      <SelectContent className="z-[100]">
+                        {(segments.data ?? []).map((segment: { id: string; name: string }) => (
+                          <SelectItem key={segment.id} value={segment.id}>
+                            {segment.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
