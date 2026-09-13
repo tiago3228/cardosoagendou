@@ -148,7 +148,7 @@ const SEGMENTS = [
   "Consultórios em geral",
   "Videomaker",
   "Quadra",
-  "Drones",
+  "Drone",
   "Cursos e Aulas",
   "Informática",
   "Marido de Aluguel",
