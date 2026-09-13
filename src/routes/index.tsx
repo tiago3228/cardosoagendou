@@ -129,6 +129,7 @@ const SEGMENTS = [
   "Design de sobrancelhas",
   "Cílios e extensões",
   "Depilação",
+  "Designer Gráfico e UI/UX",
   "Maquiagem",
   "Trança e penteados",
   "Massagem e terapias",
