@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   BadgeCheck,
   BarChart3,
@@ -15,6 +16,7 @@ import {
   Palette,
   Percent,
   Repeat,
+  Share2,
   ShieldCheck,
   Smartphone,
   Sparkles,
@@ -449,9 +451,37 @@ function Landing() {
         </Button>
       </section>
 
-      <footer className="border-t border-border py-8">
-        <div className="mx-auto max-w-6xl px-5 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Agendou. Agendamento online para negócios de serviço.
+      <footer className="border-t border-border py-10">
+        <div className="mx-auto max-w-6xl px-5 text-center">
+          <button
+            onClick={async () => {
+              const shareData = {
+                title: "Agendou",
+                text: "Conhece alguém que tem lojinha ou vende algo e ainda não está automatizada? Indica o Agendou — agenda online completa.",
+                url: "https://agendou-br.lovable.app",
+              };
+              if (navigator.share) {
+                try {
+                  await navigator.share(shareData);
+                } catch {
+                  // usuário cancelou
+                }
+              } else {
+                try {
+                  await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+                  toast.success("Link copiado! Cola onde quiser indicar o Agendou.");
+                } catch {
+                  toast.error("Não foi possível copiar o link.");
+                }
+              }
+            }}
+            className="inline-flex items-center gap-2 rounded-full border border-primary bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary hover:text-primary-foreground"
+          >
+            <Share2 className="size-4" aria-hidden /> Indicar o Agendou
+          </button>
+          <p className="mt-6 text-sm text-muted-foreground">
+            © {new Date().getFullYear()} Agendou. Agendamento online para negócios de serviço.
+          </p>
         </div>
       </footer>
     </main>
