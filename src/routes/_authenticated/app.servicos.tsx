@@ -83,7 +83,6 @@ function ServicesPage() {
         .from("business_segments")
         .select("id, segment_id, name, slug, description, sort_order, active")
         .eq("business_id", businessId)
-        .order("sort_order")
         .order("name");
       if (error) throw new Error(error.message);
       return data ?? [];
@@ -97,7 +96,7 @@ function ServicesPage() {
         .from("segments")
         .select("id, name, slug, description, sort_order")
         .eq("active", true)
-        .order("sort_order");
+        .order("name");
       if (error) throw new Error(error.message);
       return data ?? [];
     },
