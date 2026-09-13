@@ -28,6 +28,8 @@ type QuoteItem = {
 };
 type Quote = {
   id: string;
+  company_name: string;
+  contractor_name: string;
   quote_number: string;
   customer_name: string;
   customer_phone: string | null;
@@ -77,6 +79,8 @@ function emptyItem(sort_order: number): QuoteItem {
 }
 function emptyQuote(): Omit<Quote, "id"> {
   return {
+    company_name: "",
+    contractor_name: "",
     quote_number: "",
     customer_name: "",
     customer_phone: null,
@@ -131,12 +135,14 @@ function QuotesPage() {
   });
 
   const openNew = () => {
-    setEditing({ id: "new", ...emptyQuote() } as Quote);
+    setEditing({ id: "new", ...emptyQuote(), company_name: panel.business?.name ?? "" } as Quote);
     setShowInclusions(false);
   };
   const loadEdit = (quote: Quote) => {
     setEditing({
       ...quote,
+      company_name: quote.company_name ?? panel.business?.name ?? "",
+      contractor_name: quote.contractor_name ?? "",
       quote_items: quote.quote_items ?? [],
       quote_inclusions: quote.quote_inclusions ?? [],
     });
@@ -184,6 +190,8 @@ function QuotesPage() {
     setSaving(true);
     const payload = {
       business_id: businessId,
+      company_name: editing.company_name.trim() || panel.business?.name || "",
+      contractor_name: editing.contractor_name.trim() || null,
       customer_name: editing.customer_name.trim(),
       customer_phone: editing.customer_phone?.trim() || null,
       customer_email: editing.customer_email?.trim() || null,
@@ -418,8 +426,24 @@ function QuoteEditor({
           />
         </header>
         <section className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Label>Nome da empresa / razão social</Label>
+            <Input
+              value={editing.company_name}
+              onChange={(e) => update({ company_name: e.target.value })}
+              placeholder="Nome da sua empresa"
+            />
+          </div>
           <div>
-            <Label>Cliente</Label>
+            <Label>Nome do contratante</Label>
+            <Input
+              value={editing.contractor_name}
+              onChange={(e) => update({ contractor_name: e.target.value })}
+              placeholder="Responsável pela contratação"
+            />
+          </div>
+          <div>
+            <Label>Nome do cliente</Label>
             <Input
               value={editing.customer_name}
               onChange={(e) => update({ customer_name: e.target.value })}
@@ -567,13 +591,16 @@ function QuoteEditor({
                     <Input
                       value={item.label}
                       placeholder="Item personalizado"
-                      onChange={(e) =>
-                        update({
-                          quote_inclusions: inclusions.map((current) =>
-                            current === item ? { ...current, label: e.target.value } : current,
-                          ),
-                        })
-                      }
+                      onChange={(e) => {
+                        const customItems = inclusions.filter((current) => current.is_custom);
+                        const customIndex = customItems.indexOf(item);
+                        const next = [...inclusions];
+                        const currentIndex = inclusions.indexOf(item);
+                        if (customIndex >= 0 && currentIndex >= 0) {
+                          next[currentIndex] = { ...item, label: e.target.value };
+                          update({ quote_inclusions: next });
+                        }
+                      }}
                     />
                     <Button
                       variant="ghost"
@@ -692,8 +719,15 @@ function QuoteEditor({
         <section data-quote-print className="hidden">
           <h1>{editing.title || "Orçamento"}</h1>
           <p className="muted">{editing.quote_number || "Proposta comercial"}</p>
+          <h2>Dados da empresa</h2>
+          <p>
+            <strong>Empresa:</strong> {editing.company_name || "—"}
+          </p>
           <h2>Cliente</h2>
           <div className="grid">
+            <div>
+              <strong>Contratante:</strong> {editing.contractor_name || "—"}
+            </div>
             <div>
               <strong>Nome:</strong> {editing.customer_name || "—"}
             </div>
