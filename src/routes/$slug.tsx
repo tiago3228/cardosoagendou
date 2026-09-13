@@ -906,6 +906,20 @@ function BookingPage() {
             </section>
           ) : null}
         </div>
+
+        <footer className="border-t border-[var(--public-border)] px-5 py-6 text-center">
+          <p className="text-xs text-[var(--public-muted)]">
+            Reservas online por{" "}
+            <a
+              href="https://agendou-br.lovable.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-semibold text-[var(--public-primary)] hover:underline"
+            >
+              Agendou <ArrowRight className="size-3" aria-hidden />
+            </a>
+          </p>
+        </footer>
       </div>
     </main>
   );
