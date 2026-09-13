@@ -15,6 +15,7 @@ import {
   Palette,
   Percent,
   Repeat,
+  Share2,
   ShieldCheck,
   Smartphone,
   Sparkles,
