@@ -17,7 +17,9 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -482,11 +484,48 @@ function ServicesPage() {
                 />
               </SelectTrigger>
               <SelectContent className="z-[100] max-h-80">
-                {(catalogSegments.data ?? []).map((segment: { id: string; name: string }) => (
-                  <SelectItem key={segment.id} value={segment.id}>
-                    {segment.name}
-                  </SelectItem>
-                ))}
+                {(() => {
+                  const all = catalogSegments.data ?? [];
+                  const courseSegments = all.filter(
+                    (segment: { name: string }) =>
+                      segment.name.startsWith("Cursos") && segment.name !== "Cursos",
+                  );
+                  const otherSegments = all.filter(
+                    (segment: { name: string }) =>
+                      !segment.name.startsWith("Cursos") || segment.name === "Cursos",
+                  );
+                  const cursosIndex = otherSegments.findIndex(
+                    (segment: { name: string }) => segment.name === "Cursos",
+                  );
+                  const before =
+                    cursosIndex >= 0 ? otherSegments.slice(0, cursosIndex + 1) : otherSegments;
+                  const after =
+                    cursosIndex >= 0 ? otherSegments.slice(cursosIndex + 1) : [];
+                  return (
+                    <>
+                      {before.map((segment: { id: string; name: string }) => (
+                        <SelectItem key={segment.id} value={segment.id}>
+                          {segment.name}
+                        </SelectItem>
+                      ))}
+                      {courseSegments.length > 0 && (
+                        <SelectGroup>
+                          <SelectLabel>Cursos</SelectLabel>
+                          {courseSegments.map((segment: { id: string; name: string }) => (
+                            <SelectItem key={segment.id} value={segment.id}>
+                              {segment.name}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      )}
+                      {after.map((segment: { id: string; name: string }) => (
+                        <SelectItem key={segment.id} value={segment.id}>
+                          {segment.name}
+                        </SelectItem>
+                      ))}
+                    </>
+                  );
+                })()}
               </SelectContent>
             </Select>
             <Button

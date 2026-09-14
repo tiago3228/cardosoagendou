@@ -9,7 +9,6 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
-import { Watermark } from "@/components/Watermark";
 
 
 import appCss from "../styles.css?url";
@@ -144,9 +143,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
-      <Watermark />
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
-
   );
 }
