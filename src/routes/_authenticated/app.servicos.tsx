@@ -494,9 +494,16 @@ function ServicesPage() {
                     (segment: { name: string }) =>
                       !segment.name.startsWith("Cursos") || segment.name === "Cursos",
                   );
+                  const cursosIndex = otherSegments.findIndex(
+                    (segment: { name: string }) => segment.name === "Cursos",
+                  );
+                  const before =
+                    cursosIndex >= 0 ? otherSegments.slice(0, cursosIndex + 1) : otherSegments;
+                  const after =
+                    cursosIndex >= 0 ? otherSegments.slice(cursosIndex + 1) : [];
                   return (
                     <>
-                      {otherSegments.map((segment: { id: string; name: string }) => (
+                      {before.map((segment: { id: string; name: string }) => (
                         <SelectItem key={segment.id} value={segment.id}>
                           {segment.name}
                         </SelectItem>
@@ -511,6 +518,11 @@ function ServicesPage() {
                           ))}
                         </SelectGroup>
                       )}
+                      {after.map((segment: { id: string; name: string }) => (
+                        <SelectItem key={segment.id} value={segment.id}>
+                          {segment.name}
+                        </SelectItem>
+                      ))}
                     </>
                   );
                 })()}
