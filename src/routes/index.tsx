@@ -120,11 +120,7 @@ const FEATURES = [
   },
 ] as const;
 
-type SegmentItem =
-  | string
-  | { group: string; items: string[] };
-
-const SEGMENTS: SegmentItem[] = [
+const SEGMENTS: string[] = [
   "Barbearia",
   "Salão de cabelo",
   "Salão de beleza",
@@ -154,21 +150,7 @@ const SEGMENTS: SegmentItem[] = [
   "Videomaker",
   "Quadras",
   "Drones",
-  {
-    group: "Cursos",
-    items: [
-      "Cursos de Beleza e Estética",
-      "Cursos de Design",
-      "Cursos de Finanças e Negócios",
-      "Cursos de Gastronomia",
-      "Cursos de Idiomas",
-      "Cursos de Marketing e Vendas",
-      "Cursos de Música e Artes",
-      "Cursos de Tecnologia e Programação",
-      "Cursos Preparatórios",
-      "Cursos Profissionalizantes",
-    ],
-  },
+  "Cursos e Aulas",
   "Informática",
   "Marido de Aluguel",
   "Marketing Digital",
