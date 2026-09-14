@@ -9,7 +9,6 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
-import { Watermark } from "@/components/Watermark";
 
 
 import appCss from "../styles.css?url";
