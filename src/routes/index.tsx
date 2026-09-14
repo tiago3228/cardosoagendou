@@ -365,36 +365,14 @@ function Landing() {
           Cada segmento vem com serviços, categorias e nomes prontos — e você ajusta como quiser.
         </p>
         <div className="mt-8 flex flex-wrap gap-2">
-          {SEGMENTS.map((segment) => {
-            if (typeof segment === "string") {
-              return (
-                <span
-                  key={segment}
-                  className="rounded-full border border-border bg-card px-4 py-2 text-sm text-card-foreground transition-colors hover:border-primary/50 hover:text-primary"
-                >
-                  {segment}
-                </span>
-              );
-            }
-            return (
-              <div
-                key={segment.group}
-                className="w-full rounded-2xl border border-border bg-card p-4 sm:w-auto"
-              >
-                <p className="mb-2 text-sm font-semibold text-primary">{segment.group}</p>
-                <div className="flex flex-wrap gap-2">
-                  {segment.items.map((item) => (
-                    <span
-                      key={item}
-                      className="rounded-full border border-border bg-secondary px-3 py-1.5 text-sm text-secondary-foreground transition-colors hover:border-primary/50 hover:text-primary"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+          {SEGMENTS.map((segment) => (
+            <span
+              key={segment}
+              className="rounded-full border border-border bg-card px-4 py-2 text-sm text-card-foreground transition-colors hover:border-primary/50 hover:text-primary"
+            >
+              {segment}
+            </span>
+          ))}
         </div>
       </section>
 
