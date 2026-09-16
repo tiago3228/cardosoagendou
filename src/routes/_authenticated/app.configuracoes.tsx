@@ -82,7 +82,7 @@ function SettingsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("business_hours")
-        .select("id, weekday, opens_at, closes_at, closed")
+        .select("id, weekday, opens_at, closes_at, closed, lunch_starts_at, lunch_ends_at")
         .eq("business_id", business.id)
         .order("weekday");
       if (error) throw new Error(error.message);
@@ -96,10 +96,18 @@ function SettingsPage() {
       opens_at: string;
       closes_at: string;
       closed: boolean;
+      lunch_starts_at: string;
+      lunch_ends_at: string;
     }) => {
       const { error } = await supabase
         .from("business_hours")
-        .update({ opens_at: input.opens_at, closes_at: input.closes_at, closed: input.closed })
+        .update({
+          opens_at: input.opens_at,
+          closes_at: input.closes_at,
+          closed: input.closed,
+          lunch_starts_at: input.lunch_starts_at,
+          lunch_ends_at: input.lunch_ends_at,
+        })
         .eq("id", input.id);
       if (error) throw new Error(error.message);
     },
@@ -334,6 +342,8 @@ function SettingsPage() {
                     opens_at: hour.opens_at,
                     closes_at: hour.closes_at,
                     closed: !hour.closed,
+                    lunch_starts_at: hour.lunch_starts_at?.slice(0, 5) ?? "12:00",
+                    lunch_ends_at: hour.lunch_ends_at?.slice(0, 5) ?? "13:00",
                   })
                 }
               >
@@ -348,6 +358,8 @@ function SettingsPage() {
                     opens_at: e.target.value,
                     closes_at: hour.closes_at,
                     closed: hour.closed,
+                    lunch_starts_at: hour.lunch_starts_at?.slice(0, 5) ?? "12:00",
+                    lunch_ends_at: hour.lunch_ends_at?.slice(0, 5) ?? "13:00",
                   })
                 }
                 className="h-8 rounded-md border border-input bg-background px-2"
@@ -362,6 +374,42 @@ function SettingsPage() {
                     opens_at: hour.opens_at,
                     closes_at: e.target.value,
                     closed: hour.closed,
+                    lunch_starts_at: hour.lunch_starts_at?.slice(0, 5) ?? "12:00",
+                    lunch_ends_at: hour.lunch_ends_at?.slice(0, 5) ?? "13:00",
+                  })
+                }
+                className="h-8 rounded-md border border-input bg-background px-2"
+              />
+              <span className="text-muted-foreground">· almoço</span>
+              <input
+                type="time"
+                value={hour.lunch_starts_at?.slice(0, 5) ?? "12:00"}
+                aria-label={`Início do almoço de ${WEEKDAY_LABELS[hour.weekday]}`}
+                onChange={(e) =>
+                  saveHour.mutate({
+                    id: hour.id,
+                    opens_at: hour.opens_at,
+                    closes_at: hour.closes_at,
+                    closed: hour.closed,
+                    lunch_starts_at: e.target.value || "12:00",
+                    lunch_ends_at: hour.lunch_ends_at?.slice(0, 5) ?? "13:00",
+                  })
+                }
+                className="h-8 rounded-md border border-input bg-background px-2"
+              />
+              <span className="text-muted-foreground">às</span>
+              <input
+                type="time"
+                value={hour.lunch_ends_at?.slice(0, 5) ?? "13:00"}
+                aria-label={`Fim do almoço de ${WEEKDAY_LABELS[hour.weekday]}`}
+                onChange={(e) =>
+                  saveHour.mutate({
+                    id: hour.id,
+                    opens_at: hour.opens_at,
+                    closes_at: hour.closes_at,
+                    closed: hour.closed,
+                    lunch_starts_at: hour.lunch_starts_at?.slice(0, 5) ?? "12:00",
+                    lunch_ends_at: e.target.value || "13:00",
                   })
                 }
                 className="h-8 rounded-md border border-input bg-background px-2"

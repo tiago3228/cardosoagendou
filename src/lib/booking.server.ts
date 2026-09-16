@@ -112,7 +112,14 @@ export interface PublicCatalog {
     conflicting_service_id: string;
     reason: string | null;
   }[];
-  businessHours: { weekday: number; opens_at: string; closes_at: string; closed: boolean }[];
+  businessHours: {
+    weekday: number;
+    opens_at: string;
+    closes_at: string;
+    closed: boolean;
+    lunch_starts_at: string | null;
+    lunch_ends_at: string | null;
+  }[];
   professionalHours: {
     professional_id: string;
     weekday: number;
@@ -176,7 +183,7 @@ export async function loadPublicCatalog(db: Db, businessId: string) {
         .eq("business_id", businessId),
       db
         .from("business_hours")
-        .select("weekday, opens_at, closes_at, closed")
+        .select("weekday, opens_at, closes_at, closed, lunch_starts_at, lunch_ends_at")
         .eq("business_id", businessId),
       db
         .from("professional_hours")
@@ -333,6 +340,10 @@ export async function availabilityForDay(
 
   const bh = catalog.businessHours.find((h) => h.weekday === weekday);
   const businessWindow = bh && !bh.closed ? { startsAt: bh.opens_at, endsAt: bh.closes_at } : null;
+  const businessBreakWindow =
+    bh && !bh.closed && bh.lunch_starts_at && bh.lunch_ends_at
+      ? { startsAt: bh.lunch_starts_at, endsAt: bh.lunch_ends_at }
+      : null;
 
   const candidates = catalog.professionals.filter((p) => {
     if (professionalId && p.id !== professionalId) return false;
@@ -364,6 +375,7 @@ export async function availabilityForDay(
       date,
       timeZone: business.timezone,
       businessWindow,
+      breakWindow: businessBreakWindow,
       professionalWindow,
       breakWindow,
       durationMinutes: selection.durationMinutes,
