@@ -74,6 +74,7 @@ function ServicesPage() {
     component_ids: [] as string[],
   });
   const [edit, setEdit] = useState<EditForm | null>(null);
+  const [manualOpen, setManualOpen] = useState(false);
   const [catalogSegmentId, setCatalogSegmentId] = useState("");
   const [expandedSegmentId, setExpandedSegmentId] = useState<string | null>(null);
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
@@ -499,8 +500,7 @@ function ServicesPage() {
                   );
                   const before =
                     cursosIndex >= 0 ? otherSegments.slice(0, cursosIndex + 1) : otherSegments;
-                  const after =
-                    cursosIndex >= 0 ? otherSegments.slice(cursosIndex + 1) : [];
+                  const after = cursosIndex >= 0 ? otherSegments.slice(cursosIndex + 1) : [];
                   return (
                     <>
                       {before.map((segment: { id: string; name: string }) => (
@@ -699,114 +699,133 @@ function ServicesPage() {
         </div>
       </section>
 
-      <form
-        className="mt-6 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          create.mutate();
-        }}
-      >
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label>Nome</Label>
-          <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Categoria</Label>
-          <Input
-            list="categorias"
-            value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
+      <div className="mt-6 rounded-xl border border-border bg-card p-4">
+        <Button
+          type="button"
+          variant={manualOpen ? "secondary" : "outline"}
+          className="w-full justify-between sm:w-auto"
+          onClick={() => setManualOpen((current) => !current)}
+          aria-expanded={manualOpen}
+        >
+          <span>Cadastro manual de serviços</span>
+          <ChevronDown
+            className={`size-4 transition-transform ${manualOpen ? "rotate-180" : ""}`}
           />
-          <datalist id="categorias">
-            {config.categories.map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
-        </div>
-        <div className="space-y-1.5">
-          <Label>Segmento</Label>
-          <Select
-            value={form.segment_id}
-            onValueChange={(value) => setForm({ ...form, segment_id: value })}
-          >
-            <SelectTrigger className="h-10 w-full">
-              <SelectValue placeholder="Sem segmento" />
-            </SelectTrigger>
-            <SelectContent className="z-[100]">
-              {(segments.data ?? []).map((segment: { id: string; name: string }) => (
-                <SelectItem key={segment.id} value={segment.id}>
-                  {segment.name}
-                </SelectItem>
+        </Button>
+      </div>
+      {manualOpen ? (
+        <form
+          className="mt-3 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            create.mutate();
+          }}
+        >
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Nome</Label>
+            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Categoria</Label>
+            <Input
+              list="categorias"
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+            />
+            <datalist id="categorias">
+              {config.categories.map((c) => (
+                <option key={c} value={c} />
               ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label>Preço (R$)</Label>
-            <Input
-              inputMode="decimal"
-              value={form.price}
-              onChange={(e) => setForm({ ...form, price: e.target.value })}
-            />
+            </datalist>
           </div>
           <div className="space-y-1.5">
-            <Label>Duração (min)</Label>
-            <Input
-              inputMode="numeric"
-              value={form.duration}
-              onChange={(e) => setForm({ ...form, duration: e.target.value })}
-            />
-          </div>
-        </div>
-        <label className="flex items-center gap-2 text-sm text-muted-foreground sm:col-span-2">
-          <input
-            type="checkbox"
-            checked={form.allows_parallel}
-            onChange={(event) => setForm({ ...form, allows_parallel: event.target.checked })}
-          />
-          Permite atendimento simultâneo
-        </label>
-        <label className="flex items-center gap-2 text-sm text-muted-foreground sm:col-span-2">
-          <input
-            type="checkbox"
-            checked={form.is_composite}
-            onChange={(event) =>
-              setForm({ ...form, is_composite: event.target.checked, component_ids: [] })
-            }
-          />
-          Serviço composto/conjunto
-        </label>
-        {form.is_composite ? (
-          <label className="space-y-1.5 text-sm text-muted-foreground sm:col-span-2">
-            <span className="block">Serviços componentes</span>
-            <select
-              multiple
-              className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-              value={form.component_ids}
-              onChange={(event) =>
-                setForm({
-                  ...form,
-                  component_ids: Array.from(event.target.selectedOptions, (option) => option.value),
-                })
-              }
+            <Label>Segmento</Label>
+            <Select
+              value={form.segment_id}
+              onValueChange={(value) => setForm({ ...form, segment_id: value })}
             >
-              {(services.data ?? [])
-                .filter((service: { is_composite: boolean }) => !service.is_composite)
-                .map((service: { id: string; name: string }) => (
-                  <option key={service.id} value={service.id}>
-                    {service.name}
-                  </option>
+              <SelectTrigger className="h-10 w-full">
+                <SelectValue placeholder="Sem segmento" />
+              </SelectTrigger>
+              <SelectContent className="z-[100]">
+                {(segments.data ?? []).map((segment: { id: string; name: string }) => (
+                  <SelectItem key={segment.id} value={segment.id}>
+                    {segment.name}
+                  </SelectItem>
                 ))}
-            </select>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Preço (R$)</Label>
+              <Input
+                inputMode="decimal"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Duração (min)</Label>
+              <Input
+                inputMode="numeric"
+                value={form.duration}
+                onChange={(e) => setForm({ ...form, duration: e.target.value })}
+              />
+            </div>
+          </div>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground sm:col-span-2">
+            <input
+              type="checkbox"
+              checked={form.allows_parallel}
+              onChange={(event) => setForm({ ...form, allows_parallel: event.target.checked })}
+            />
+            Permite atendimento simultâneo
           </label>
-        ) : null}
-        <div className="sm:col-span-2">
-          <Button type="submit" disabled={create.isPending}>
-            <Plus className="size-4" aria-hidden /> Adicionar serviço
-          </Button>
-        </div>
-      </form>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground sm:col-span-2">
+            <input
+              type="checkbox"
+              checked={form.is_composite}
+              onChange={(event) =>
+                setForm({ ...form, is_composite: event.target.checked, component_ids: [] })
+              }
+            />
+            Serviço composto/conjunto
+          </label>
+          {form.is_composite ? (
+            <label className="space-y-1.5 text-sm text-muted-foreground sm:col-span-2">
+              <span className="block">Serviços componentes</span>
+              <select
+                multiple
+                className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                value={form.component_ids}
+                onChange={(event) =>
+                  setForm({
+                    ...form,
+                    component_ids: Array.from(
+                      event.target.selectedOptions,
+                      (option) => option.value,
+                    ),
+                  })
+                }
+              >
+                {(services.data ?? [])
+                  .filter((service: { is_composite: boolean }) => !service.is_composite)
+                  .map((service: { id: string; name: string }) => (
+                    <option key={service.id} value={service.id}>
+                      {service.name}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          ) : null}
+          <div className="sm:col-span-2">
+            <Button type="submit" disabled={create.isPending}>
+              <Plus className="size-4" aria-hidden /> Adicionar serviço
+            </Button>
+          </div>
+        </form>
+      ) : null}
 
       <ul className="mt-6 space-y-2">
         {(services.data ?? []).map(
