@@ -2,7 +2,15 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, History, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  History,
+  Minus,
+  Plus,
+  ShoppingCart,
+  Trash2,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery, entitlementsQuery } from "./app";
 import { formatBRL } from "@/lib/format";
@@ -36,6 +44,7 @@ function ProductsPage() {
     stock: "0",
     min: "0",
   });
+  const [manualOpen, setManualOpen] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
   const [term, setTerm] = useState("");
   const [openHistory, setOpenHistory] = useState<string | null>(null);
@@ -45,7 +54,9 @@ function ProductsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, sku, category, supplier, price_cents, cost_cents, stock_quantity, min_stock, active, image_url")
+        .select(
+          "id, name, sku, category, supplier, price_cents, cost_cents, stock_quantity, min_stock, active, image_url",
+        )
         .eq("business_id", businessId)
         .is("deleted_at", null)
         .order("name");
@@ -72,12 +83,22 @@ function ProductsPage() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      setForm({ name: "", sku: "", category: "", supplier: "", price: "", cost: "", stock: "0", min: "0" });
+      setForm({
+        name: "",
+        sku: "",
+        category: "",
+        supplier: "",
+        price: "",
+        cost: "",
+        stock: "0",
+        min: "0",
+      });
       setPhoto(null);
       toast.success("Produto criado com sucesso!");
       queryClient.invalidateQueries({ queryKey: ["products", businessId] });
     },
-    onError: (error: Error) => toast.error("Não foi possível salvar", { description: userFacingError(error) }),
+    onError: (error: Error) =>
+      toast.error("Não foi possível salvar", { description: userFacingError(error) }),
   });
 
   const move = useMutation({
@@ -149,7 +170,8 @@ function ProductsPage() {
       toast.success("Foto do produto atualizada!");
       queryClient.invalidateQueries({ queryKey: ["products", businessId] });
     },
-    onError: (error: Error) => toast.error("Não foi possível atualizar a foto", { description: userFacingError(error) }),
+    onError: (error: Error) =>
+      toast.error("Não foi possível atualizar a foto", { description: userFacingError(error) }),
   });
 
   const remove = useMutation({
@@ -165,7 +187,8 @@ function ProductsPage() {
       toast.success("Produto removido");
       queryClient.invalidateQueries({ queryKey: ["products", businessId] });
     },
-    onError: (error: Error) => toast.error("Não foi possível remover", { description: userFacingError(error) }),
+    onError: (error: Error) =>
+      toast.error("Não foi possível remover", { description: userFacingError(error) }),
   });
 
   if (!inventoryEnabled) {
@@ -192,72 +215,94 @@ function ProductsPage() {
         Produtos com estoque aparecem na sua página de reservas para retirada no local.
       </p>
 
-      <form
-        className="mt-6 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          create.mutate();
-        }}
-      >
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label>Nome</Label>
-          <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        </div>
-        <div className="sm:col-span-2">
-          <PhotoField
-            businessId={businessId}
-            folder="produtos"
-            value={photo}
-            onChange={setPhoto}
-            label="Foto do produto"
+      <div className="mt-6 rounded-xl border border-border bg-card p-4">
+        <Button
+          type="button"
+          variant={manualOpen ? "secondary" : "outline"}
+          className="w-full justify-between sm:w-auto"
+          onClick={() => setManualOpen((current) => !current)}
+          aria-expanded={manualOpen}
+        >
+          <span>Cadastre um produto</span>
+          <ChevronDown
+            className={`size-4 transition-transform ${manualOpen ? "rotate-180" : ""}`}
           />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Código / SKU</Label>
-          <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Categoria</Label>
-          <Input
-            list="produto-categorias"
-            value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
-          />
-          <datalist id="produto-categorias">
-            {["Cabelo", "Barba", "Pele", "Unhas", "Bebidas", "Acessórios"].map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
-        </div>
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label>Fornecedor</Label>
-          <Input
-            value={form.supplier}
-            onChange={(e) => setForm({ ...form, supplier: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Preço de venda (R$)</Label>
-          <Input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Custo (R$)</Label>
-          <Input value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Estoque inicial</Label>
-          <Input value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Estoque mínimo</Label>
-          <Input value={form.min} onChange={(e) => setForm({ ...form, min: e.target.value })} />
-        </div>
-        <div className="sm:col-span-2">
-          <Button type="submit" disabled={create.isPending}>
-            <Plus className="size-4" aria-hidden /> Adicionar produto
-          </Button>
-        </div>
-      </form>
+        </Button>
+      </div>
+      {manualOpen ? (
+        <form
+          className="mt-3 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            create.mutate();
+          }}
+        >
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Nome</Label>
+            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          </div>
+          <div className="sm:col-span-2">
+            <PhotoField
+              businessId={businessId}
+              folder="produtos"
+              value={photo}
+              onChange={setPhoto}
+              label="Foto do produto"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Código / SKU</Label>
+            <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Categoria</Label>
+            <Input
+              list="produto-categorias"
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+            />
+            <datalist id="produto-categorias">
+              {["Cabelo", "Barba", "Pele", "Unhas", "Bebidas", "Acessórios"].map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Fornecedor</Label>
+            <Input
+              value={form.supplier}
+              onChange={(e) => setForm({ ...form, supplier: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Preço de venda (R$)</Label>
+            <Input
+              value={form.price}
+              onChange={(e) => setForm({ ...form, price: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Custo (R$)</Label>
+            <Input value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Estoque inicial</Label>
+            <Input
+              value={form.stock}
+              onChange={(e) => setForm({ ...form, stock: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Estoque mínimo</Label>
+            <Input value={form.min} onChange={(e) => setForm({ ...form, min: e.target.value })} />
+          </div>
+          <div className="sm:col-span-2">
+            <Button type="submit" disabled={create.isPending}>
+              <Plus className="size-4" aria-hidden /> Adicionar produto
+            </Button>
+          </div>
+        </form>
+      ) : null}
 
       <Input
         className="mt-6"
@@ -274,94 +319,94 @@ function ProductsPage() {
               .includes(term.toLowerCase()),
           )
           .map((product) => (
-          <li key={product.id} className="rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                {product.image_url ? (
-                  <img
-                    src={product.image_url}
-                    alt={product.name}
-                    className="size-12 rounded-lg object-cover"
-                  />
-                ) : null}
-                <div>
-                  <p className="font-medium text-card-foreground">{product.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {formatBRL(product.price_cents)} · estoque {product.stock_quantity}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {[
-                      product.sku ? `Cód. ${product.sku}` : null,
-                      product.category,
-                      product.supplier,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
-                  {product.stock_quantity <= product.min_stock ? (
-                    <p className="mt-1 flex items-center gap-1 text-sm text-destructive">
-                      <AlertTriangle className="size-3.5" aria-hidden /> Estoque baixo
-                    </p>
+            <li key={product.id} className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  {product.image_url ? (
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="size-12 rounded-lg object-cover"
+                    />
                   ) : null}
+                  <div>
+                    <p className="font-medium text-card-foreground">{product.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatBRL(product.price_cents)} · estoque {product.stock_quantity}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {[
+                        product.sku ? `Cód. ${product.sku}` : null,
+                        product.category,
+                        product.supplier,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                    {product.stock_quantity <= product.min_stock ? (
+                      <p className="mt-1 flex items-center gap-1 text-sm text-destructive">
+                        <AlertTriangle className="size-3.5" aria-hidden /> Estoque baixo
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => sell.mutate(product)}
+                    disabled={product.stock_quantity < 1}
+                  >
+                    <ShoppingCart className="size-4" aria-hidden /> Vender
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    aria-label="Registrar saída"
+                    onClick={() => move.mutate({ productId: product.id, type: "OUT" })}
+                  >
+                    <Minus className="size-4" aria-hidden />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    aria-label="Registrar entrada"
+                    onClick={() => move.mutate({ productId: product.id, type: "IN" })}
+                  >
+                    <Plus className="size-4" aria-hidden />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    aria-label={`Histórico de ${product.name}`}
+                    onClick={() =>
+                      setOpenHistory((current) => (current === product.id ? null : product.id))
+                    }
+                  >
+                    <History className="size-4" aria-hidden />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    aria-label={`Remover ${product.name}`}
+                    onClick={() => remove.mutate(product.id)}
+                  >
+                    <Trash2 className="size-4" aria-hidden />
+                  </Button>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => sell.mutate(product)}
-                  disabled={product.stock_quantity < 1}
-                >
-                  <ShoppingCart className="size-4" aria-hidden /> Vender
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  aria-label="Registrar saída"
-                  onClick={() => move.mutate({ productId: product.id, type: "OUT" })}
-                >
-                  <Minus className="size-4" aria-hidden />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  aria-label="Registrar entrada"
-                  onClick={() => move.mutate({ productId: product.id, type: "IN" })}
-                >
-                  <Plus className="size-4" aria-hidden />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  aria-label={`Histórico de ${product.name}`}
-                  onClick={() =>
-                    setOpenHistory((current) => (current === product.id ? null : product.id))
-                  }
-                >
-                  <History className="size-4" aria-hidden />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  aria-label={`Remover ${product.name}`}
-                  onClick={() => remove.mutate(product.id)}
-                >
-                  <Trash2 className="size-4" aria-hidden />
-                </Button>
+              <div className="mt-3">
+                <PhotoField
+                  businessId={businessId}
+                  folder="produtos"
+                  value={product.image_url}
+                  onChange={(url) => setProductPhoto.mutate({ id: product.id, url })}
+                  label="Foto"
+                />
               </div>
-            </div>
-            <div className="mt-3">
-              <PhotoField
-                businessId={businessId}
-                folder="produtos"
-                value={product.image_url}
-                onChange={(url) => setProductPhoto.mutate({ id: product.id, url })}
-                label="Foto"
-              />
-            </div>
-            {openHistory === product.id ? (
-              <StockHistory businessId={businessId} productId={product.id} />
-            ) : null}
-          </li>
+              {openHistory === product.id ? (
+                <StockHistory businessId={businessId} productId={product.id} />
+              ) : null}
+            </li>
           ))}
       </ul>
     </div>
@@ -393,9 +438,7 @@ function StockHistory({ businessId, productId }: { businessId: string; productId
 
   return (
     <div className="mt-3 rounded-lg border border-border bg-secondary/30 p-3">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">
-        Histórico de estoque
-      </p>
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">Histórico de estoque</p>
       <ul className="mt-2 space-y-1.5">
         {(movements.data ?? []).map((m) => (
           <li key={m.id} className="flex items-center justify-between gap-3 text-sm">
