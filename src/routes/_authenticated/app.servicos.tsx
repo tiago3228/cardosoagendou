@@ -1103,6 +1103,7 @@ function ConflictRules({
 }) {
   const queryClient = useQueryClient();
   const [pair, setPair] = useState({ a: "", b: "", reason: "" });
+  const [open, setOpen] = useState(false);
 
   const conflicts = useQuery({
     queryKey: ["service-conflicts", businessId],
@@ -1156,92 +1157,111 @@ function ConflictRules({
 
   return (
     <section className="mt-10">
-      <h2 className="font-display text-lg font-bold text-foreground">Serviços incompatíveis</h2>
-      <p className="text-sm text-muted-foreground">
-        Impeça combinações que não fazem sentido no mesmo atendimento (ex.: “Corte + Barba” junto de
-        “Corte Masculino”).
-      </p>
-
-      <form
-        className="mt-4 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          add.mutate();
-        }}
+      <Button
+        type="button"
+        variant={open ? "secondary" : "outline"}
+        className="w-full justify-between sm:w-auto"
+        onClick={() => setOpen((current) => !current)}
+        aria-expanded={open}
       >
-        <div className="space-y-1.5">
-          <Label>Serviço</Label>
-          <select
-            className={selectClass}
-            value={pair.a}
-            onChange={(e) => setPair({ ...pair, a: e.target.value })}
-          >
-            <option value="">Selecione</option>
-            {services.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1.5">
-          <Label>Não pode ser combinado com</Label>
-          <select
-            className={selectClass}
-            value={pair.b}
-            onChange={(e) => setPair({ ...pair, b: e.target.value })}
-          >
-            <option value="">Selecione</option>
-            {services.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label>Motivo (opcional)</Label>
-          <Input
-            value={pair.reason}
-            onChange={(e) => setPair({ ...pair, reason: e.target.value })}
-            placeholder="Serviços equivalentes"
-          />
-        </div>
-        <div className="sm:col-span-2">
-          <Button type="submit" size="sm" disabled={add.isPending}>
-            <Plus className="size-4" aria-hidden /> Criar regra
-          </Button>
-        </div>
-      </form>
+        <span>Serviços incompatíveis</span>
+        <ChevronDown
+          className={`size-4 transition-transform ${open ? "rotate-180" : ""}`}
+          aria-hidden
+        />
+      </Button>
 
-      <ul className="mt-4 space-y-2">
-        {(conflicts.data ?? []).map((rule) => (
-          <li
-            key={rule.id}
-            className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4"
+      {open ? (
+        <div className="mt-3">
+          <p className="text-sm text-muted-foreground">
+            Impeça combinações que não fazem sentido no mesmo atendimento (ex.: “Corte + Barba”
+            junto de “Corte Masculino”).
+          </p>
+
+          <form
+            className="mt-4 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              add.mutate();
+            }}
           >
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-card-foreground">
-                {nameOf(rule.service_id)} ✕ {nameOf(rule.conflicting_service_id)}
-              </p>
-              {rule.reason ? <p className="text-sm text-muted-foreground">{rule.reason}</p> : null}
+            <div className="space-y-1.5">
+              <Label>Serviço</Label>
+              <select
+                className={selectClass}
+                value={pair.a}
+                onChange={(e) => setPair({ ...pair, a: e.target.value })}
+              >
+                <option value="">Selecione</option>
+                {services.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
             </div>
-            <Button
-              size="sm"
-              variant="ghost"
-              aria-label="Remover regra"
-              onClick={() => remove.mutate(rule.id)}
-            >
-              <Trash2 className="size-4" aria-hidden />
-            </Button>
-          </li>
-        ))}
-        {(conflicts.data ?? []).length === 0 ? (
-          <li className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            Nenhuma regra criada. Todos os serviços podem ser combinados.
-          </li>
-        ) : null}
-      </ul>
+            <div className="space-y-1.5">
+              <Label>Não pode ser combinado com</Label>
+              <select
+                className={selectClass}
+                value={pair.b}
+                onChange={(e) => setPair({ ...pair, b: e.target.value })}
+              >
+                <option value="">Selecione</option>
+                {services.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label>Motivo (opcional)</Label>
+              <Input
+                value={pair.reason}
+                onChange={(e) => setPair({ ...pair, reason: e.target.value })}
+                placeholder="Serviços equivalentes"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <Button type="submit" size="sm" disabled={add.isPending}>
+                <Plus className="size-4" aria-hidden /> Criar regra
+              </Button>
+            </div>
+          </form>
+
+          <ul className="mt-4 space-y-2">
+            {(conflicts.data ?? []).map((rule) => (
+              <li
+                key={rule.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-card-foreground">
+                    {nameOf(rule.service_id)} ✕ {nameOf(rule.conflicting_service_id)}
+                  </p>
+                  {rule.reason ? (
+                    <p className="text-sm text-muted-foreground">{rule.reason}</p>
+                  ) : null}
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  aria-label="Remover regra"
+                  onClick={() => remove.mutate(rule.id)}
+                >
+                  <Trash2 className="size-4" aria-hidden />
+                </Button>
+              </li>
+            ))}
+            {(conflicts.data ?? []).length === 0 ? (
+              <li className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                Nenhuma regra criada. Todos os serviços podem ser combinados.
+              </li>
+            ) : null}
+          </ul>
+        </div>
+      ) : null}
     </section>
   );
 }
