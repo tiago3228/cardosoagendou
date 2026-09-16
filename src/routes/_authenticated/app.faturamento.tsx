@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tansta
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ArrowDownCircle, ArrowUpCircle, Plus, Wallet } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ChevronDown, Plus, Wallet } from "lucide-react";
 import { addFinanceEntry, getFinanceOverview } from "@/lib/finance.functions";
 import { entitlementsQuery } from "./app";
 import { formatBRL } from "@/lib/format";
@@ -58,6 +58,7 @@ function FinanceDashboard() {
   const addEntry = useServerFn(addFinanceEntry);
   const queryClient = useQueryClient();
   const [date, setDate] = useState(today());
+  const [newEntryOpen, setNewEntryOpen] = useState(false);
   const [form, setForm] = useState({
     kind: "EXPENSE" as "EXPENSE" | "INCOME",
     amount: "",
@@ -163,76 +164,91 @@ function FinanceDashboard() {
         </div>
       </div>
 
-      <form
-        className="mt-6 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          create.mutate();
-        }}
-      >
-        <p className="font-display text-lg font-bold sm:col-span-2">Novo lançamento</p>
-        <div className="flex gap-2 sm:col-span-2">
-          <Button
-            type="button"
-            size="sm"
-            variant={form.kind === "EXPENSE" ? "default" : "outline"}
-            onClick={() => setForm({ ...form, kind: "EXPENSE" })}
-          >
-            <ArrowDownCircle className="size-4" aria-hidden /> Despesa
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant={form.kind === "INCOME" ? "default" : "outline"}
-            onClick={() => setForm({ ...form, kind: "INCOME" })}
-          >
-            <ArrowUpCircle className="size-4" aria-hidden /> Outra entrada
-          </Button>
-        </div>
-        <div className="space-y-1.5">
-          <Label>Valor (R$)</Label>
-          <Input
-            inputMode="decimal"
-            value={form.amount}
-            onChange={(e) => setForm({ ...form, amount: e.target.value })}
+      <div className="mt-6 rounded-xl border border-border bg-card p-4">
+        <Button
+          type="button"
+          variant={newEntryOpen ? "secondary" : "outline"}
+          className="w-full justify-between sm:w-auto"
+          onClick={() => setNewEntryOpen((current) => !current)}
+          aria-expanded={newEntryOpen}
+        >
+          <span>Novo lançamento</span>
+          <ChevronDown
+            className={`size-4 transition-transform ${newEntryOpen ? "rotate-180" : ""}`}
           />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Data</Label>
-          <Input
-            type="date"
-            value={form.date}
-            onChange={(e) => setForm({ ...form, date: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Descrição</Label>
-          <Input
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Categoria</Label>
-          <Input
-            list="finance-categorias"
-            value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
-          />
-          <datalist id="finance-categorias">
-            {["Aluguel", "Produtos", "Energia", "Água", "Marketing", "Equipamento", "Outros"].map(
-              (c) => (
-                <option key={c} value={c} />
-              ),
-            )}
-          </datalist>
-        </div>
-        <div className="sm:col-span-2">
-          <Button type="submit" disabled={create.isPending}>
-            <Plus className="size-4" aria-hidden /> Registrar
-          </Button>
-        </div>
-      </form>
+        </Button>
+      </div>
+      {newEntryOpen ? (
+        <form
+          className="mt-3 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            create.mutate();
+          }}
+        >
+          <div className="flex gap-2 sm:col-span-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={form.kind === "EXPENSE" ? "default" : "outline"}
+              onClick={() => setForm({ ...form, kind: "EXPENSE" })}
+            >
+              <ArrowDownCircle className="size-4" aria-hidden /> Despesa
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={form.kind === "INCOME" ? "default" : "outline"}
+              onClick={() => setForm({ ...form, kind: "INCOME" })}
+            >
+              <ArrowUpCircle className="size-4" aria-hidden /> Outra entrada
+            </Button>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Valor (R$)</Label>
+            <Input
+              inputMode="decimal"
+              value={form.amount}
+              onChange={(e) => setForm({ ...form, amount: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Data</Label>
+            <Input
+              type="date"
+              value={form.date}
+              onChange={(e) => setForm({ ...form, date: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Descrição</Label>
+            <Input
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Categoria</Label>
+            <Input
+              list="finance-categorias"
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+            />
+            <datalist id="finance-categorias">
+              {["Aluguel", "Produtos", "Energia", "Água", "Marketing", "Equipamento", "Outros"].map(
+                (c) => (
+                  <option key={c} value={c} />
+                ),
+              )}
+            </datalist>
+          </div>
+          <div className="sm:col-span-2">
+            <Button type="submit" disabled={create.isPending}>
+              <Plus className="size-4" aria-hidden /> Registrar
+            </Button>
+          </div>
+        </form>
+      ) : null}
 
       <h2 className="mt-8 font-display text-lg font-bold text-foreground">Lançamentos da semana</h2>
       <ul className="mt-3 space-y-2">
