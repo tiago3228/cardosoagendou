@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   ArrowRight,
   CalendarCheck,
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   CircleHelp,
   CreditCard,
@@ -256,6 +258,8 @@ const GUIDE_SECTIONS: GuideSection[] = [
 ];
 
 function HowItWorksPage() {
+  const [expandedStep, setExpandedStep] = useState<string | null>(null);
+
   return (
     <div className="mx-auto max-w-5xl">
       <BackButton />
@@ -312,36 +316,55 @@ function HowItWorksPage() {
                 </div>
               </div>
               <ol className="mt-5 space-y-3 border-l-2 border-primary/20 pl-5">
-                {section.steps.map((step, index) => (
-                  <li
-                    key={step.title}
-                    className="relative rounded-xl border border-border/80 bg-background/50 p-4"
-                  >
-                    <span className="absolute -left-[2.05rem] top-4 inline-flex size-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                      {index + 1}
-                    </span>
-                    <h3 className="font-semibold text-card-foreground">{step.title}</h3>
-                    <p className="mt-1 text-sm text-foreground">{step.description}</p>
-                    <ul className="mt-2 space-y-1">
-                      {step.details.map((detail) => (
-                        <li key={detail} className="flex gap-2 text-sm text-muted-foreground">
-                          <CheckCircle2
-                            className="mt-0.5 size-4 shrink-0 text-primary"
-                            aria-hidden
-                          />
-                          <span>{detail}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    {step.to && step.action ? (
-                      <Button asChild variant="outline" size="sm" className="mt-3">
-                        <Link to={step.to}>
-                          {step.action} <ArrowRight className="size-4" />
-                        </Link>
-                      </Button>
-                    ) : null}
-                  </li>
-                ))}
+                {section.steps.map((step, index) => {
+                  const stepKey = `${section.title}-${step.title}`;
+                  const expanded = expandedStep === stepKey;
+                  return (
+                    <li
+                      key={step.title}
+                      className="relative rounded-xl border border-border/80 bg-background/50 p-4"
+                    >
+                      <span className="absolute -left-[2.05rem] top-4 inline-flex size-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                        {index + 1}
+                      </span>
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-between gap-3 text-left"
+                        onClick={() => setExpandedStep(expanded ? null : stepKey)}
+                        aria-expanded={expanded}
+                      >
+                        <h3 className="font-semibold text-card-foreground">{step.title}</h3>
+                        <ChevronDown
+                          className={`size-4 shrink-0 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`}
+                          aria-hidden
+                        />
+                      </button>
+                      {expanded ? (
+                        <div className="mt-2">
+                          <p className="text-sm text-foreground">{step.description}</p>
+                          <ul className="mt-2 space-y-1">
+                            {step.details.map((detail) => (
+                              <li key={detail} className="flex gap-2 text-sm text-muted-foreground">
+                                <CheckCircle2
+                                  className="mt-0.5 size-4 shrink-0 text-primary"
+                                  aria-hidden
+                                />
+                                <span>{detail}</span>
+                              </li>
+                            ))}
+                          </ul>
+                          {step.to && step.action ? (
+                            <Button asChild variant="outline" size="sm" className="mt-3">
+                              <Link to={step.to}>
+                                {step.action} <ArrowRight className="size-4" />
+                              </Link>
+                            </Button>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </li>
+                  );
+                })}
               </ol>
             </section>
           );
