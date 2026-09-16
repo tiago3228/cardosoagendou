@@ -481,6 +481,8 @@ export type Database = {
       };
       clients: {
         Row: {
+          address: string | null;
+          birth_date: string | null;
           business_id: string;
           created_at: string;
           email: string | null;
@@ -491,6 +493,8 @@ export type Database = {
           whatsapp: string;
         };
         Insert: {
+          address?: string | null;
+          birth_date?: string | null;
           business_id: string;
           created_at?: string;
           email?: string | null;
@@ -501,6 +505,8 @@ export type Database = {
           whatsapp: string;
         };
         Update: {
+          address?: string | null;
+          birth_date?: string | null;
           business_id?: string;
           created_at?: string;
           email?: string | null;
