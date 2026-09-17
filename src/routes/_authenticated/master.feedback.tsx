@@ -92,7 +92,7 @@ function MasterFeedbackPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8">
-      <BackButton />
+      <BackButton forceFallback />
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">

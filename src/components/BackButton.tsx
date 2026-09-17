@@ -7,7 +7,13 @@ import { Button } from "@/components/ui/button";
  * "Voltar" action for internal pages (PIX, Master, Ajustes, etc.).
  * Uses the browser history when possible and falls back to the panel.
  */
-export function BackButton({ fallbackTo = "/app" }: { fallbackTo?: string }) {
+export function BackButton({
+  fallbackTo = "/app",
+  forceFallback = false,
+}: {
+  fallbackTo?: string;
+  forceFallback?: boolean;
+}) {
   const router = useRouter();
 
   return (
@@ -16,7 +22,7 @@ export function BackButton({ fallbackTo = "/app" }: { fallbackTo?: string }) {
       size="sm"
       className="mb-3 -ml-2 text-muted-foreground"
       onClick={() => {
-        if (typeof window !== "undefined" && window.history.length > 1) {
+        if (!forceFallback && typeof window !== "undefined" && window.history.length > 1) {
           router.history.back();
           return;
         }

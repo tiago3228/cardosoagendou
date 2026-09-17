@@ -105,7 +105,7 @@ function MasterPixPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl px-5 py-8">
-      <BackButton />
+      <BackButton forceFallback />
       <h1 className="font-display text-2xl font-bold text-foreground">Pagamentos PIX</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Analise e libere as assinaturas pagas por PIX direto.
