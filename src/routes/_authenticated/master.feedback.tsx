@@ -11,6 +11,7 @@ import { BackButton } from "@/components/BackButton";
 import { userFacingError } from "@/lib/user-facing-error";
 import { getMasterStatus } from "@/lib/manual-pix.functions";
 import { listMasterAdminData, updateMasterFeedback } from "@/lib/master.functions";
+import { formatWhatsapp, whatsappLink } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/master/feedback")({
   head: () => ({
@@ -252,13 +253,39 @@ function MasterFeedbackPage() {
                       {new Date(business.created_at).toLocaleDateString("pt-BR")}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Responsável: {business.owner?.name ?? "—"}
+                      Proprietário: {business.owner?.name ?? "Nome não informado"}
                       {business.owner?.email
                         ? ` · ${business.owner.email}`
                         : business.email
                           ? ` · ${business.email}`
                           : ""}
                     </p>
+                    {business.owner?.whatsapp ? (
+                      <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                        WhatsApp: {formatWhatsapp(business.owner.whatsapp)}
+                        {whatsappLink(business.owner.whatsapp) ? (
+                          <a
+                            href={whatsappLink(
+                              business.owner.whatsapp,
+                              `Olá, ${business.owner.name ?? "tudo bem"}! Aqui é do Agendou.`,
+                            )}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-medium text-primary underline-offset-4 hover:underline"
+                          >
+                            Falar no WhatsApp
+                          </a>
+                        ) : null}
+                      </p>
+                    ) : business.whatsapp ? (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        WhatsApp do estabelecimento: {formatWhatsapp(business.whatsapp)}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        WhatsApp do proprietário não informado
+                      </p>
+                    )}
                   </div>
                   <span
                     className={`rounded-full px-3 py-1 text-xs ${subscription?.status === "CANCELED" ? "bg-red-100 text-red-800" : "bg-secondary text-muted-foreground"}`}

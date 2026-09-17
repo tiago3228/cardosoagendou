@@ -63,7 +63,7 @@ export const listMasterAdminData = createServerFn({ method: "POST" })
         supabaseAdmin
           .from("businesses")
           .select(
-            "id, name, slug, email, active, created_at, subscriptions(status, provider, amount_cents, billing_interval, canceled_at, cancel_at_period_end, current_period_end, plans(name, code))",
+            "id, name, slug, email, whatsapp, active, created_at, subscriptions(status, provider, amount_cents, billing_interval, canceled_at, cancel_at_period_end, current_period_end, plans(name, code))",
           )
           .order("created_at", { ascending: false })
           .limit(500),
@@ -83,7 +83,10 @@ export const listMasterAdminData = createServerFn({ method: "POST" })
     if (ownersError) throw new Error(`OWNER_LIST_FAILED: ${ownersError.message}`);
 
     const ownerIds = [...new Set((owners ?? []).map((owner: any) => owner.user_id))];
-    const usersById = new Map<string, { email: string | null; name: string | null }>();
+    const usersById = new Map<
+      string,
+      { email: string | null; name: string | null; whatsapp: string | null }
+    >();
     for (let from = 0; from < ownerIds.length; from += 1000) {
       const page = await supabaseAdmin.auth.admin.listUsers({
         page: Math.floor(from / 1000) + 1,
@@ -93,11 +96,29 @@ export const listMasterAdminData = createServerFn({ method: "POST" })
         usersById.set(user.id, {
           email: user.email ?? null,
           name: (user.user_metadata?.full_name as string | undefined) ?? null,
+          whatsapp: null,
         });
       }
       if (page.data.users.length < 1000) break;
     }
-    const ownerByBusiness = new Map<string, { email: string | null; name: string | null }>();
+    const { data: profiles, error: profilesError } = await supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, email, whatsapp")
+      .in("id", ownerIds.length ? ownerIds : ["00000000-0000-0000-0000-000000000000"]);
+    if (profilesError) throw new Error(`PROFILE_LIST_FAILED: ${profilesError.message}`);
+    for (const profile of profiles ?? []) {
+      const existing = usersById.get(profile.id);
+      usersById.set(profile.id, {
+        email: profile.email ?? existing?.email ?? null,
+        name: profile.full_name || existing?.name || null,
+        whatsapp: profile.whatsapp ?? null,
+      });
+    }
+
+    const ownerByBusiness = new Map<
+      string,
+      { email: string | null; name: string | null; whatsapp: string | null }
+    >();
     for (const owner of owners ?? []) {
       const user = usersById.get(owner.user_id);
       if (user) ownerByBusiness.set(owner.business_id, user);
