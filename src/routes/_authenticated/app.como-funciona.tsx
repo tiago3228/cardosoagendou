@@ -241,7 +241,88 @@ const GUIDE_SECTIONS: GuideSection[] = [
   },
   {
     icon: CreditCard,
-    title: "9. Consulte seu plano",
+    title: "9. Recupere clientes que não retornaram",
+    intro: "Identifique clientes sem novo agendamento e entre em contato no momento certo.",
+    steps: [
+      {
+        title: "Configure o período de recuperação",
+        description:
+          "Em Ajustes, abra Clientes em recuperação e informe depois de quantos dias o cliente deve ser considerado inativo.",
+        details: [
+          "O padrão é 60 dias.",
+          "O sistema considera o último atendimento concluído.",
+          "Clientes com agendamento futuro não entram na lista de recuperação.",
+        ],
+        to: "/app/configuracoes",
+        action: "Abrir Ajustes",
+      },
+      {
+        title: "Filtre os clientes em recuperação",
+        description: "Na tela Clientes, selecione o filtro Clientes em recuperação.",
+        details: [
+          "Use a busca por nome, WhatsApp ou e-mail para localizar uma pessoa.",
+          "Abra a ficha para consultar histórico, último atendimento e total movimentado.",
+        ],
+        to: "/app/clientes",
+        action: "Abrir Clientes",
+      },
+      {
+        title: "Entre em contato diretamente",
+        description: "Use os botões do card para abrir o WhatsApp ou o e-mail do cliente.",
+        details: [
+          "O WhatsApp abre uma mensagem pronta para você revisar antes de enviar.",
+          "Você pode informar uma condição especial e convidar o cliente a retornar.",
+        ],
+      },
+    ],
+  },
+  {
+    icon: CreditCard,
+    title: "10. Crie e gerencie cupons",
+    intro: "Ofereça descontos controlados para campanhas de retorno e divulgação.",
+    steps: [
+      {
+        title: "Abra Configurar descontos",
+        description: "Em Ajustes, expanda a seção Configurar descontos.",
+        details: [
+          "A seção fica minimizada para manter a tela organizada.",
+          "Clique em Criar cupom para abrir o formulário.",
+        ],
+        to: "/app/configuracoes",
+        action: "Abrir Ajustes",
+      },
+      {
+        title: "Defina as regras do cupom",
+        description: "Informe o código, percentual, validade e limites da campanha.",
+        details: [
+          "Você pode ativar Uso único por cliente.",
+          "Defina o limite total de utilizações e uma observação interna.",
+          "Cupons podem ser editados, ativados, desativados ou excluídos.",
+        ],
+      },
+      {
+        title: "Divulgue o código",
+        description: "Envie o código por WhatsApp, e-mail ou outros canais de comunicação.",
+        details: [
+          "Exemplo: VOLTE10 para conceder 10% de desconto.",
+          "Informe sempre a data de validade para deixar a campanha clara.",
+        ],
+      },
+      {
+        title: "Acompanhe o uso no autoagendamento",
+        description:
+          "O cliente informa o cupom no formulário público antes de confirmar a reserva.",
+        details: [
+          "O sistema verifica validade, status, limite e regra de uso único.",
+          "O desconto é calculado no backend e registrado junto ao cliente e ao agendamento.",
+          "Cupons inválidos não alteram o valor da reserva.",
+        ],
+      },
+    ],
+  },
+  {
+    icon: CreditCard,
+    title: "11. Consulte seu plano",
     intro: "Veja os recursos, limites e status da sua assinatura.",
     steps: [
       {
