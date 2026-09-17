@@ -23,6 +23,7 @@ import { Route as AuthenticatedAppClientesRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAppComoFuncionaRouteImport } from './routes/_authenticated/app.como-funciona'
 import { Route as AuthenticatedAppConfiguracoesRouteImport } from './routes/_authenticated/app.configuracoes'
 import { Route as AuthenticatedAppFaturamentoRouteImport } from './routes/_authenticated/app.faturamento'
+import { Route as AuthenticatedAppFeedbackRouteImport } from './routes/_authenticated/app.feedback'
 import { Route as AuthenticatedAppOrcamentosRouteImport } from './routes/_authenticated/app.orcamentos'
 import { Route as AuthenticatedAppProdutosRouteImport } from './routes/_authenticated/app.produtos'
 import { Route as AuthenticatedAppProfissionaisRouteImport } from './routes/_authenticated/app.profissionais'
@@ -106,6 +107,12 @@ const AuthenticatedAppFaturamentoRoute =
     path: '/faturamento',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppFeedbackRoute =
+  AuthenticatedAppFeedbackRouteImport.update({
+    id: '/feedback',
+    path: '/feedback',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppOrcamentosRoute =
   AuthenticatedAppOrcamentosRouteImport.update({
     id: '/orcamentos',
@@ -167,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/app/como-funciona': typeof AuthenticatedAppComoFuncionaRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/app/faturamento': typeof AuthenticatedAppFaturamentoRoute
+  '/app/feedback': typeof AuthenticatedAppFeedbackRoute
   '/app/orcamentos': typeof AuthenticatedAppOrcamentosRoute
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
@@ -189,6 +197,7 @@ export interface FileRoutesByTo {
   '/app/como-funciona': typeof AuthenticatedAppComoFuncionaRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/app/faturamento': typeof AuthenticatedAppFaturamentoRoute
+  '/app/feedback': typeof AuthenticatedAppFeedbackRoute
   '/app/orcamentos': typeof AuthenticatedAppOrcamentosRoute
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
@@ -214,6 +223,7 @@ export interface FileRoutesById {
   '/_authenticated/app/como-funciona': typeof AuthenticatedAppComoFuncionaRoute
   '/_authenticated/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/_authenticated/app/faturamento': typeof AuthenticatedAppFaturamentoRoute
+  '/_authenticated/app/feedback': typeof AuthenticatedAppFeedbackRoute
   '/_authenticated/app/orcamentos': typeof AuthenticatedAppOrcamentosRoute
   '/_authenticated/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/_authenticated/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
     | '/app/como-funciona'
     | '/app/configuracoes'
     | '/app/faturamento'
+    | '/app/feedback'
     | '/app/orcamentos'
     | '/app/produtos'
     | '/app/profissionais'
@@ -261,6 +272,7 @@ export interface FileRouteTypes {
     | '/app/como-funciona'
     | '/app/configuracoes'
     | '/app/faturamento'
+    | '/app/feedback'
     | '/app/orcamentos'
     | '/app/produtos'
     | '/app/profissionais'
@@ -285,6 +297,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/como-funciona'
     | '/_authenticated/app/configuracoes'
     | '/_authenticated/app/faturamento'
+    | '/_authenticated/app/feedback'
     | '/_authenticated/app/orcamentos'
     | '/_authenticated/app/produtos'
     | '/_authenticated/app/profissionais'
@@ -408,6 +421,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppFaturamentoRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/feedback': {
+      id: '/_authenticated/app/feedback'
+      path: '/feedback'
+      fullPath: '/app/feedback'
+      preLoaderRoute: typeof AuthenticatedAppFeedbackRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/orcamentos': {
       id: '/_authenticated/app/orcamentos'
       path: '/orcamentos'
@@ -473,6 +493,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppComoFuncionaRoute: typeof AuthenticatedAppComoFuncionaRoute
   AuthenticatedAppConfiguracoesRoute: typeof AuthenticatedAppConfiguracoesRoute
   AuthenticatedAppFaturamentoRoute: typeof AuthenticatedAppFaturamentoRoute
+  AuthenticatedAppFeedbackRoute: typeof AuthenticatedAppFeedbackRoute
   AuthenticatedAppOrcamentosRoute: typeof AuthenticatedAppOrcamentosRoute
   AuthenticatedAppProdutosRoute: typeof AuthenticatedAppProdutosRoute
   AuthenticatedAppProfissionaisRoute: typeof AuthenticatedAppProfissionaisRoute
@@ -486,6 +507,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppComoFuncionaRoute: AuthenticatedAppComoFuncionaRoute,
   AuthenticatedAppConfiguracoesRoute: AuthenticatedAppConfiguracoesRoute,
   AuthenticatedAppFaturamentoRoute: AuthenticatedAppFaturamentoRoute,
+  AuthenticatedAppFeedbackRoute: AuthenticatedAppFeedbackRoute,
   AuthenticatedAppOrcamentosRoute: AuthenticatedAppOrcamentosRoute,
   AuthenticatedAppProdutosRoute: AuthenticatedAppProdutosRoute,
   AuthenticatedAppProfissionaisRoute: AuthenticatedAppProfissionaisRoute,
