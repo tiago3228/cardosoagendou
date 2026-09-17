@@ -11,6 +11,7 @@ import {
   CreditCard,
   ExternalLink,
   MessageCircle,
+  MessageSquare,
   Package,
   Scissors,
   Settings,
@@ -368,6 +369,54 @@ const GUIDE_SECTIONS: GuideSection[] = [
         ],
         to: "/app/assinatura",
         action: "Ver Assinatura",
+      },
+    ],
+  },
+  {
+    icon: MessageSquare,
+    title: "13. Envie feedback e acompanhe respostas",
+    intro:
+      "Ajude a melhorar o Agendou enviando sugestões, problemas ou dúvidas diretamente pelo painel.",
+    steps: [
+      {
+        title: "Abra Feedback",
+        description:
+          "No menu lateral, acesse Feedback para enviar uma mensagem à equipe do Agendou.",
+        details: [
+          "Escolha entre Sugestão de melhoria, Relatar um problema ou Dúvida sobre uma funcionalidade.",
+          "Descreva o feedback com clareza e envie pelo botão Enviar feedback.",
+          "Você possui o limite de 2 feedbacks por mês; a tela mostra quantos já foram usados e quantos ainda estão disponíveis.",
+        ],
+        to: "/app/feedback",
+        action: "Abrir Feedback",
+      },
+      {
+        title: "Acompanhe seus envios",
+        description: "Os feedbacks enviados no mês aparecem no histórico da própria tela.",
+        details: [
+          "O limite é controlado também pelo banco de dados e é renovado no primeiro dia de cada mês.",
+          "As mensagens ficam vinculadas ao seu estabelecimento e ao usuário que realizou o envio.",
+        ],
+      },
+      {
+        title: "Receba a resposta do Agendou",
+        description:
+          "Quando o Administrador Master responder, a resposta oficial aparece no seu histórico.",
+        details: [
+          "A resposta é exibida em um bloco identificado como Resposta do Agendou.",
+          "A data e o horário da resposta também ficam registrados.",
+          "Notas internas do Administrador Master não são exibidas para clientes.",
+        ],
+      },
+      {
+        title: "Administração Master",
+        description:
+          "Somente a conta Administrador Master acessa a área privada de gestão dos feedbacks.",
+        details: [
+          "O Master pode visualizar, responder, adicionar notas internas, revisar, arquivar e reabrir feedbacks.",
+          "A área também reúne dados privados de estabelecimentos, assinaturas e cancelamentos.",
+          "Pagamentos PIX e Testar planos ficam disponíveis por atalhos dentro do painel Master.",
+        ],
       },
     ],
   },
