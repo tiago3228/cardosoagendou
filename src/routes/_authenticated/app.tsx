@@ -119,24 +119,6 @@ function PanelLayout() {
           ))}
           {master.data?.isMaster ? (
             <Link
-              to="/master/pagamentos"
-              activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
-              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
-            >
-              Pagamentos PIX
-            </Link>
-          ) : null}
-          {master.data?.isMaster ? (
-            <Link
-              to="/master/planos"
-              activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
-              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
-            >
-              Testar planos
-            </Link>
-          ) : null}
-          {master.data?.isMaster ? (
-            <Link
               to="/master/feedback"
               activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
