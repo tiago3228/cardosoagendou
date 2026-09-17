@@ -135,6 +135,15 @@ function PanelLayout() {
               Testar planos
             </Link>
           ) : null}
+          {master.data?.isMaster ? (
+            <Link
+              to="/master/feedback"
+              activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
+              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+            >
+              Administração Master
+            </Link>
+          ) : null}
         </nav>
         <div className="mt-auto rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Plano</p>

@@ -28,6 +28,7 @@ import { Route as AuthenticatedAppOrcamentosRouteImport } from './routes/_authen
 import { Route as AuthenticatedAppProdutosRouteImport } from './routes/_authenticated/app.produtos'
 import { Route as AuthenticatedAppProfissionaisRouteImport } from './routes/_authenticated/app.profissionais'
 import { Route as AuthenticatedAppServicosRouteImport } from './routes/_authenticated/app.servicos'
+import { Route as AuthenticatedMasterFeedbackRouteImport } from './routes/_authenticated/master.feedback'
 import { Route as AuthenticatedMasterPagamentosRouteImport } from './routes/_authenticated/master.pagamentos'
 import { Route as AuthenticatedMasterPlanosRouteImport } from './routes/_authenticated/master.planos'
 import { Route as ApiPublicCronBillingRouteImport } from './routes/api/public/cron/billing'
@@ -137,6 +138,12 @@ const AuthenticatedAppServicosRoute =
     path: '/servicos',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedMasterFeedbackRoute =
+  AuthenticatedMasterFeedbackRouteImport.update({
+    id: '/master/feedback',
+    path: '/master/feedback',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMasterPagamentosRoute =
   AuthenticatedMasterPagamentosRouteImport.update({
     id: '/master/pagamentos',
@@ -179,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/app/servicos': typeof AuthenticatedAppServicosRoute
+  '/master/feedback': typeof AuthenticatedMasterFeedbackRoute
   '/master/pagamentos': typeof AuthenticatedMasterPagamentosRoute
   '/master/planos': typeof AuthenticatedMasterPlanosRoute
   '/app/': typeof AuthenticatedAppIndexRoute
@@ -202,6 +210,7 @@ export interface FileRoutesByTo {
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/app/servicos': typeof AuthenticatedAppServicosRoute
+  '/master/feedback': typeof AuthenticatedMasterFeedbackRoute
   '/master/pagamentos': typeof AuthenticatedMasterPagamentosRoute
   '/master/planos': typeof AuthenticatedMasterPlanosRoute
   '/app': typeof AuthenticatedAppIndexRoute
@@ -228,6 +237,7 @@ export interface FileRoutesById {
   '/_authenticated/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/_authenticated/app/profissionais': typeof AuthenticatedAppProfissionaisRoute
   '/_authenticated/app/servicos': typeof AuthenticatedAppServicosRoute
+  '/_authenticated/master/feedback': typeof AuthenticatedMasterFeedbackRoute
   '/_authenticated/master/pagamentos': typeof AuthenticatedMasterPagamentosRoute
   '/_authenticated/master/planos': typeof AuthenticatedMasterPlanosRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
@@ -254,6 +264,7 @@ export interface FileRouteTypes {
     | '/app/produtos'
     | '/app/profissionais'
     | '/app/servicos'
+    | '/master/feedback'
     | '/master/pagamentos'
     | '/master/planos'
     | '/app/'
@@ -277,6 +288,7 @@ export interface FileRouteTypes {
     | '/app/produtos'
     | '/app/profissionais'
     | '/app/servicos'
+    | '/master/feedback'
     | '/master/pagamentos'
     | '/master/planos'
     | '/app'
@@ -302,6 +314,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/produtos'
     | '/_authenticated/app/profissionais'
     | '/_authenticated/app/servicos'
+    | '/_authenticated/master/feedback'
     | '/_authenticated/master/pagamentos'
     | '/_authenticated/master/planos'
     | '/_authenticated/app/'
@@ -456,6 +469,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppServicosRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/master/feedback': {
+      id: '/_authenticated/master/feedback'
+      path: '/master/feedback'
+      fullPath: '/master/feedback'
+      preLoaderRoute: typeof AuthenticatedMasterFeedbackRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/master/pagamentos': {
       id: '/_authenticated/master/pagamentos'
       path: '/master/pagamentos'
@@ -520,12 +540,14 @@ const AuthenticatedAppRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
+  AuthenticatedMasterFeedbackRoute: typeof AuthenticatedMasterFeedbackRoute
   AuthenticatedMasterPagamentosRoute: typeof AuthenticatedMasterPagamentosRoute
   AuthenticatedMasterPlanosRoute: typeof AuthenticatedMasterPlanosRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
+  AuthenticatedMasterFeedbackRoute: AuthenticatedMasterFeedbackRoute,
   AuthenticatedMasterPagamentosRoute: AuthenticatedMasterPagamentosRoute,
   AuthenticatedMasterPlanosRoute: AuthenticatedMasterPlanosRoute,
 }
