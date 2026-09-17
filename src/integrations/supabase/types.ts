@@ -384,6 +384,7 @@ export type Database = {
           booking_share_style: string;
           business_type: Database["public"]["Enums"]["business_type"];
           cancellation_deadline_hours: number;
+          client_recovery_days: number;
           confirmation_enabled: boolean;
           confirmation_minutes: number;
           cover_url: string | null;
@@ -418,6 +419,7 @@ export type Database = {
           booking_share_style?: string;
           business_type?: Database["public"]["Enums"]["business_type"];
           cancellation_deadline_hours?: number;
+          client_recovery_days?: number;
           confirmation_enabled?: boolean;
           confirmation_minutes?: number;
           cover_url?: string | null;
@@ -452,6 +454,7 @@ export type Database = {
           booking_share_style?: string;
           business_type?: Database["public"]["Enums"]["business_type"];
           cancellation_deadline_hours?: number;
+          client_recovery_days?: number;
           confirmation_enabled?: boolean;
           confirmation_minutes?: number;
           cover_url?: string | null;
@@ -476,6 +479,90 @@ export type Database = {
           updated_at?: string;
           whatsapp?: string | null;
           whatsapp_notifications_enabled?: boolean;
+        };
+        Relationships: [];
+      };
+      coupons: {
+        Row: {
+          active: boolean;
+          business_id: string;
+          code: string;
+          created_at: string;
+          discount_percent: number;
+          expires_at: string | null;
+          id: string;
+          notes: string | null;
+          single_use_per_client: boolean;
+          starts_at: string;
+          updated_at: string;
+          usage_limit: number | null;
+        };
+        Insert: {
+          active?: boolean;
+          business_id: string;
+          code: string;
+          created_at?: string;
+          discount_percent: number;
+          expires_at?: string | null;
+          id?: string;
+          notes?: string | null;
+          single_use_per_client?: boolean;
+          starts_at?: string;
+          updated_at?: string;
+          usage_limit?: number | null;
+        };
+        Update: {
+          active?: boolean;
+          business_id?: string;
+          code?: string;
+          created_at?: string;
+          discount_percent?: number;
+          expires_at?: string | null;
+          id?: string;
+          notes?: string | null;
+          single_use_per_client?: boolean;
+          starts_at?: string;
+          updated_at?: string;
+          usage_limit?: number | null;
+        };
+        Relationships: [];
+      };
+      coupon_usages: {
+        Row: {
+          appointment_id: string | null;
+          business_id: string;
+          client_id: string | null;
+          coupon_id: string;
+          discount_amount_cents: number;
+          discount_percent: number;
+          final_amount_cents: number;
+          id: string;
+          original_amount_cents: number;
+          used_at: string;
+        };
+        Insert: {
+          appointment_id?: string | null;
+          business_id: string;
+          client_id?: string | null;
+          coupon_id: string;
+          discount_amount_cents: number;
+          discount_percent: number;
+          final_amount_cents: number;
+          id?: string;
+          original_amount_cents: number;
+          used_at?: string;
+        };
+        Update: {
+          appointment_id?: string | null;
+          business_id?: string;
+          client_id?: string | null;
+          coupon_id?: string;
+          discount_amount_cents?: number;
+          discount_percent?: number;
+          final_amount_cents?: number;
+          id?: string;
+          original_amount_cents?: number;
+          used_at?: string;
         };
         Relationships: [];
       };

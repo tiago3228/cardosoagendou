@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery } from "./app";
 import { WEEKDAY_LABELS } from "@/lib/format";
@@ -26,6 +26,20 @@ function SettingsPage() {
   const queryClient = useQueryClient();
   const [businessSettingsOpen, setBusinessSettingsOpen] = useState(false);
   const [hoursOpen, setHoursOpen] = useState(false);
+  const [recoveryOpen, setRecoveryOpen] = useState(false);
+  const [couponsOpen, setCouponsOpen] = useState(false);
+  const [recoveryDays, setRecoveryDays] = useState(String(business.client_recovery_days ?? 60));
+  const [couponForm, setCouponForm] = useState({
+    id: "",
+    code: "",
+    discount_percent: "",
+    starts_at: "",
+    expires_at: "",
+    active: true,
+    single_use_per_client: false,
+    usage_limit: "",
+    notes: "",
+  });
   const [form, setForm] = useState({
     name: business.name,
     description: business.description ?? "",
@@ -112,6 +126,89 @@ function SettingsPage() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["business-hours", business.id] }),
+  });
+
+  const coupons = useQuery({
+    queryKey: ["coupons", business.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("coupons")
+        .select(
+          "id, code, discount_percent, starts_at, expires_at, active, single_use_per_client, usage_limit, notes",
+        )
+        .eq("business_id", business.id)
+        .order("created_at", { ascending: false });
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  });
+  const saveRecovery = useMutation({
+    mutationFn: async () => {
+      const days = Math.max(1, Math.min(3650, Number(recoveryDays) || 60));
+      const { error } = await supabase
+        .from("businesses")
+        .update({ client_recovery_days: days })
+        .eq("id", business.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Período de recuperação salvo");
+      queryClient.invalidateQueries({ queryKey: ["panel"] });
+    },
+  });
+  const saveCoupon = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        business_id: business.id,
+        code: couponForm.code.trim().toUpperCase(),
+        discount_percent: Number(couponForm.discount_percent),
+        starts_at: couponForm.starts_at || new Date().toISOString().slice(0, 10),
+        expires_at: couponForm.expires_at || null,
+        active: couponForm.active,
+        single_use_per_client: couponForm.single_use_per_client,
+        usage_limit: couponForm.usage_limit ? Number(couponForm.usage_limit) : null,
+        notes: couponForm.notes.trim() || null,
+      };
+      const result = couponForm.id
+        ? await supabase
+            .from("coupons")
+            .update(payload)
+            .eq("id", couponForm.id)
+            .eq("business_id", business.id)
+        : await supabase.from("coupons").insert(payload);
+      if (result.error) throw new Error(result.error.message);
+    },
+    onSuccess: () => {
+      toast.success(couponForm.id ? "Cupom atualizado" : "Cupom criado");
+      setCouponForm({
+        id: "",
+        code: "",
+        discount_percent: "",
+        starts_at: "",
+        expires_at: "",
+        active: true,
+        single_use_per_client: false,
+        usage_limit: "",
+        notes: "",
+      });
+      queryClient.invalidateQueries({ queryKey: ["coupons", business.id] });
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível salvar o cupom", { description: userFacingError(error) }),
+  });
+  const deleteCoupon = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("coupons")
+        .delete()
+        .eq("id", id)
+        .eq("business_id", business.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Cupom excluído");
+      queryClient.invalidateQueries({ queryKey: ["coupons", business.id] });
+    },
   });
 
   return (
@@ -419,6 +516,234 @@ function SettingsPage() {
         </div>
       ) : null}
 
+      <div className="mt-6 rounded-xl border border-border bg-card p-4">
+        <Button
+          type="button"
+          variant={recoveryOpen ? "secondary" : "outline"}
+          className="w-full justify-between sm:w-auto"
+          onClick={() => setRecoveryOpen((current) => !current)}
+          aria-expanded={recoveryOpen}
+        >
+          <span>Clientes em recuperação</span>
+          <ChevronDown
+            className={`size-4 transition-transform ${recoveryOpen ? "rotate-180" : ""}`}
+            aria-hidden
+          />
+        </Button>
+        {recoveryOpen ? (
+          <div className="mt-4 max-w-xl space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Identifique clientes que não retornaram após o período configurado.
+            </p>
+            <div className="flex flex-wrap items-end gap-3">
+              <label className="text-sm">
+                <span className="mb-1 block text-muted-foreground">
+                  Considerar em recuperação após (dias)
+                </span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={3650}
+                  value={recoveryDays}
+                  onChange={(e) => setRecoveryDays(e.target.value)}
+                />
+              </label>
+              <Button onClick={() => saveRecovery.mutate()} disabled={saveRecovery.isPending}>
+                Salvar período
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+      <div className="mt-6 rounded-xl border border-border bg-card p-4">
+        <Button
+          type="button"
+          variant={couponsOpen ? "secondary" : "outline"}
+          className="w-full justify-between sm:w-auto"
+          onClick={() => setCouponsOpen((current) => !current)}
+          aria-expanded={couponsOpen}
+        >
+          <span>Configurar descontos</span>
+          <ChevronDown
+            className={`size-4 transition-transform ${couponsOpen ? "rotate-180" : ""}`}
+            aria-hidden
+          />
+        </Button>
+        {couponsOpen ? (
+          <div className="mt-4 space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Crie e gerencie cupons para campanhas e recuperação de clientes.
+            </p>
+            <form
+              className="grid gap-3 rounded-lg border border-border p-4 sm:grid-cols-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                saveCoupon.mutate();
+              }}
+            >
+              <label className="text-sm">
+                <span className="mb-1 block text-muted-foreground">Código</span>
+                <Input
+                  required
+                  value={couponForm.code}
+                  onChange={(e) => setCouponForm({ ...couponForm, code: e.target.value })}
+                  placeholder="DESCONTO10"
+                />
+              </label>
+              <label className="text-sm">
+                <span className="mb-1 block text-muted-foreground">Desconto (%)</span>
+                <Input
+                  required
+                  type="number"
+                  min={0.01}
+                  max={100}
+                  step={0.01}
+                  value={couponForm.discount_percent}
+                  onChange={(e) =>
+                    setCouponForm({ ...couponForm, discount_percent: e.target.value })
+                  }
+                />
+              </label>
+              <label className="text-sm">
+                <span className="mb-1 block text-muted-foreground">Data de início</span>
+                <Input
+                  type="date"
+                  value={couponForm.starts_at}
+                  onChange={(e) => setCouponForm({ ...couponForm, starts_at: e.target.value })}
+                />
+              </label>
+              <label className="text-sm">
+                <span className="mb-1 block text-muted-foreground">Validade</span>
+                <Input
+                  type="date"
+                  value={couponForm.expires_at}
+                  onChange={(e) => setCouponForm({ ...couponForm, expires_at: e.target.value })}
+                />
+              </label>
+              <label className="text-sm">
+                <span className="mb-1 block text-muted-foreground">Limite total</span>
+                <Input
+                  type="number"
+                  min={1}
+                  value={couponForm.usage_limit}
+                  onChange={(e) => setCouponForm({ ...couponForm, usage_limit: e.target.value })}
+                  placeholder="Opcional"
+                />
+              </label>
+              <label className="flex items-center gap-2 pt-6 text-sm">
+                <input
+                  type="checkbox"
+                  checked={couponForm.single_use_per_client}
+                  onChange={(e) =>
+                    setCouponForm({ ...couponForm, single_use_per_client: e.target.checked })
+                  }
+                />{" "}
+                Uso único por cliente
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={couponForm.active}
+                  onChange={(e) => setCouponForm({ ...couponForm, active: e.target.checked })}
+                />{" "}
+                Cupom ativo
+              </label>
+              <label className="text-sm sm:col-span-2">
+                <span className="mb-1 block text-muted-foreground">Observação</span>
+                <Textarea
+                  value={couponForm.notes}
+                  onChange={(e) => setCouponForm({ ...couponForm, notes: e.target.value })}
+                  placeholder="Campanha de retorno, aniversário..."
+                />
+              </label>
+              <div className="flex gap-2 sm:col-span-2">
+                <Button type="submit" disabled={saveCoupon.isPending}>
+                  <Plus className="size-4" aria-hidden />{" "}
+                  {couponForm.id ? "Salvar cupom" : "Criar cupom"}
+                </Button>
+                {couponForm.id ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      setCouponForm({
+                        id: "",
+                        code: "",
+                        discount_percent: "",
+                        starts_at: "",
+                        expires_at: "",
+                        active: true,
+                        single_use_per_client: false,
+                        usage_limit: "",
+                        notes: "",
+                      })
+                    }
+                  >
+                    Cancelar
+                  </Button>
+                ) : null}
+              </div>
+            </form>
+            <div className="space-y-2">
+              {(coupons.data ?? []).map((coupon) => (
+                <div
+                  key={coupon.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3"
+                >
+                  <div>
+                    <p className="font-semibold">
+                      {coupon.code}{" "}
+                      <span className="font-normal text-muted-foreground">
+                        — {coupon.discount_percent}%
+                      </span>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {coupon.starts_at}
+                      {coupon.expires_at ? ` até ${coupon.expires_at}` : " · sem validade"} ·{" "}
+                      {coupon.active ? "Ativo" : "Inativo"}
+                    </p>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        setCouponForm({
+                          id: coupon.id,
+                          code: coupon.code,
+                          discount_percent: String(coupon.discount_percent),
+                          starts_at: coupon.starts_at,
+                          expires_at: coupon.expires_at ?? "",
+                          active: coupon.active,
+                          single_use_per_client: coupon.single_use_per_client,
+                          usage_limit: coupon.usage_limit ? String(coupon.usage_limit) : "",
+                          notes: coupon.notes ?? "",
+                        })
+                      }
+                    >
+                      <Pencil className="size-4" aria-hidden /> Editar
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => deleteCoupon.mutate(coupon.id)}
+                    >
+                      <Trash2 className="size-4" aria-hidden /> Excluir
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {(coupons.data ?? []).length === 0 ? (
+                <p className="rounded-lg border border-dashed border-border p-5 text-center text-sm text-muted-foreground">
+                  Nenhum cupom cadastrado.
+                </p>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </div>
       <InstallAppSection />
     </div>
   );
