@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown, Mail, MessageCircle, Save, UserRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery } from "./app";
@@ -40,6 +40,7 @@ function ClientsPage() {
   const recoveryDays = panel.business!.client_recovery_days ?? 60;
   const queryClient = useQueryClient();
   const [term, setTerm] = useState("");
+  const [viewFilter, setViewFilter] = useState<"all" | "recovery">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const clients = useQuery({
     queryKey: ["clients", businessId],
@@ -51,6 +52,17 @@ function ClientsPage() {
         .order("name");
       if (error) throw new Error(error.message);
       return data as Client[];
+    },
+  });
+  const recoveryAppointments = useQuery({
+    queryKey: ["client-recovery-appointments", businessId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("client_id, starts_at, status")
+        .eq("business_id", businessId);
+      if (error) throw new Error(error.message);
+      return data ?? [];
     },
   });
   const saveClient = useMutation({
@@ -69,10 +81,33 @@ function ClientsPage() {
     },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["clients", businessId] }),
   });
-  const filtered = (clients.data ?? []).filter((client) =>
-    `${client.name} ${client.whatsapp} ${client.email ?? ""}`
-      .toLowerCase()
-      .includes(term.toLowerCase()),
+  const recoveryIds = useMemo(() => {
+    const now = Date.now();
+    const states = new Map<string, { last: number; next: boolean }>();
+    for (const appointment of recoveryAppointments.data ?? []) {
+      if (!appointment.client_id) continue;
+      const state = states.get(appointment.client_id) ?? { last: 0, next: false };
+      const time = new Date(appointment.starts_at).getTime();
+      if (appointment.status === "COMPLETED") state.last = Math.max(state.last, time);
+      if (!["COMPLETED", "CANCELED", "NO_SHOW"].includes(appointment.status) && time >= now)
+        state.next = true;
+      states.set(appointment.client_id, state);
+    }
+    return new Set(
+      [...states]
+        .filter(
+          ([, state]) =>
+            state.last > 0 && !state.next && now - state.last >= recoveryDays * 86400000,
+        )
+        .map(([id]) => id),
+    );
+  }, [recoveryAppointments.data, recoveryDays]);
+  const filtered = (clients.data ?? []).filter(
+    (client) =>
+      (viewFilter === "all" || recoveryIds.has(client.id)) &&
+      `${client.name} ${client.whatsapp} ${client.email ?? ""}`
+        .toLowerCase()
+        .includes(term.toLowerCase()),
   );
   return (
     <div>
@@ -94,6 +129,22 @@ function ClientsPage() {
         value={term}
         onChange={(e) => setTerm(e.target.value)}
       />
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          variant={viewFilter === "all" ? "default" : "outline"}
+          onClick={() => setViewFilter("all")}
+        >
+          Todos os clientes
+        </Button>
+        <Button
+          size="sm"
+          variant={viewFilter === "recovery" ? "default" : "outline"}
+          onClick={() => setViewFilter("recovery")}
+        >
+          Clientes em recuperação ({recoveryIds.size})
+        </Button>
+      </div>
       <ul className="mt-5 space-y-3">
         {filtered.map((client) => (
           <ClientCard
@@ -101,6 +152,7 @@ function ClientsPage() {
             client={client}
             businessName={businessName}
             recoveryDays={recoveryDays}
+            isRecovery={recoveryIds.has(client.id)}
             expanded={expandedId === client.id}
             onToggle={() => setExpandedId(expandedId === client.id ? null : client.id)}
             onSave={(input) => saveClient.mutate(input)}
@@ -120,6 +172,7 @@ function ClientCard({
   client,
   businessName,
   recoveryDays,
+  isRecovery,
   expanded,
   onToggle,
   onSave,
@@ -128,6 +181,7 @@ function ClientCard({
   client: Client;
   businessName: string;
   recoveryDays: number;
+  isRecovery: boolean;
   expanded: boolean;
   onToggle: () => void;
   onSave: (input: {
@@ -173,10 +227,14 @@ function ClientCard({
     <li
       className={`rounded-xl border bg-card p-4 transition-colors ${expanded ? "border-primary/50" : "border-border"}`}
     >
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         className="flex w-full items-center justify-between gap-3 text-left"
         onClick={onToggle}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") onToggle();
+        }}
         aria-expanded={expanded}
       >
         <span className="flex min-w-0 items-center gap-3">
@@ -196,11 +254,39 @@ function ClientCard({
             ) : null}
           </span>
         </span>
-        <ChevronDown
-          className={`size-5 shrink-0 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`}
-          aria-hidden
-        />
-      </button>
+        <span className="flex shrink-0 items-center gap-2">
+          {isRecovery && e164 ? (
+            <Button
+              size="sm"
+              variant="outline"
+              asChild
+              onClick={(event) => event.stopPropagation()}
+            >
+              <a
+                href={whatsappLink(
+                  e164,
+                  `Olá, ${client.name}! Sentimos sua falta. Podemos ajudar você a agendar um novo atendimento?`,
+                )}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <MessageCircle className="size-4" aria-hidden /> WhatsApp
+              </a>
+            </Button>
+          ) : null}
+          {isRecovery && client.email ? (
+            <Button size="sm" variant="ghost" asChild onClick={(event) => event.stopPropagation()}>
+              <a href={`mailto:${client.email}`}>
+                <Mail className="size-4" aria-hidden />
+              </a>
+            </Button>
+          ) : null}
+          <ChevronDown
+            className={`size-5 shrink-0 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`}
+            aria-hidden
+          />
+        </span>
+      </div>
       {expanded ? (
         <div className="mt-4 space-y-5 border-t border-border pt-4">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
