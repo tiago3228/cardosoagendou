@@ -240,8 +240,43 @@ const GUIDE_SECTIONS: GuideSection[] = [
     ],
   },
   {
+    icon: Users,
+    title: "9. Use o CRM de clientes",
+    intro: "Centralize os dados, o histórico e o relacionamento com cada cliente.",
+    steps: [
+      {
+        title: "Acesse Clientes",
+        description:
+          "Abra Clientes no menu para consultar todos os clientes cadastrados automaticamente pelos agendamentos.",
+        details: [
+          "Pesquise por nome, WhatsApp ou e-mail.",
+          "Use o filtro Todos os clientes para visualizar a base completa.",
+        ],
+        to: "/app/clientes",
+        action: "Abrir CRM",
+      },
+      {
+        title: "Abra a ficha do cliente",
+        description: "Clique no nome do cliente para expandir a ficha sem sair da lista.",
+        details: [
+          "Consulte primeiro atendimento, último atendimento, próximo agendamento e total movimentado.",
+          "Veja o histórico com data, profissional, serviços, status, observações e valor.",
+        ],
+      },
+      {
+        title: "Atualize os dados da ficha",
+        description: "Mantenha informações importantes para o atendimento e relacionamento.",
+        details: [
+          "Edite data de nascimento, endereço e observações.",
+          "Clique em Salvar ficha para guardar as alterações.",
+          "O WhatsApp e o e-mail ficam disponíveis para contato direto quando cadastrados.",
+        ],
+      },
+    ],
+  },
+  {
     icon: CreditCard,
-    title: "9. Recupere clientes que não retornaram",
+    title: "10. Recupere clientes que não retornaram",
     intro: "Identifique clientes sem novo agendamento e entre em contato no momento certo.",
     steps: [
       {
@@ -278,7 +313,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
   },
   {
     icon: CreditCard,
-    title: "10. Crie e gerencie cupons",
+    title: "11. Crie e gerencie cupons",
     intro: "Ofereça descontos controlados para campanhas de retorno e divulgação.",
     steps: [
       {
@@ -322,7 +357,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
   },
   {
     icon: CreditCard,
-    title: "11. Consulte seu plano",
+    title: "12. Consulte seu plano",
     intro: "Veja os recursos, limites e status da sua assinatura.",
     steps: [
       {
