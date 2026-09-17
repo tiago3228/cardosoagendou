@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
@@ -17,6 +17,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { getAgenda } from "@/lib/panel.functions";
 import { getAppointmentRevenue } from "@/lib/finance.functions";
 import { setAppointmentStatus } from "@/lib/appointments.functions";
@@ -177,6 +178,45 @@ function AgendaPage() {
   const revenue = useQuery({
     queryKey: ["agenda-revenue", date],
     queryFn: () => fetchRevenue({ data: { date } }),
+  });
+
+  const recovery = useQuery({
+    queryKey: ["recovery-summary", panel.business!.id, panel.business!.client_recovery_days],
+    queryFn: async () => {
+      const [
+        { data: clients, error: clientsError },
+        { data: appointments, error: appointmentsError },
+      ] = await Promise.all([
+        supabase.from("clients").select("id, name").eq("business_id", panel.business!.id),
+        supabase
+          .from("appointments")
+          .select("client_id, starts_at, status")
+          .eq("business_id", panel.business!.id),
+      ]);
+      if (clientsError || appointmentsError)
+        throw new Error(clientsError?.message ?? appointmentsError?.message);
+      const now = Date.now();
+      const limit = (panel.business!.client_recovery_days ?? 60) * 86400000;
+      const byClient = new Map<string, { last: number; next: number }>();
+      for (const appointment of appointments ?? []) {
+        if (!appointment.client_id) continue;
+        const state = byClient.get(appointment.client_id) ?? { last: 0, next: 0 };
+        const time = new Date(appointment.starts_at).getTime();
+        if (appointment.status === "COMPLETED") state.last = Math.max(state.last, time);
+        if (!["COMPLETED", "CANCELED", "NO_SHOW"].includes(appointment.status) && time >= now)
+          state.next = Math.min(state.next || time, time);
+        byClient.set(appointment.client_id, state);
+      }
+      const recovered = (clients ?? []).filter((client) => {
+        const state = byClient.get(client.id);
+        return state && state.last > 0 && !state.next && now - state.last >= limit;
+      });
+      return {
+        total: clients?.length ?? 0,
+        recovered: recovered.length,
+        names: recovered.slice(0, 3).map((client) => client.name),
+      };
+    },
   });
 
   const mutation = useMutation({
@@ -346,6 +386,49 @@ function AgendaPage() {
                 </a>
               </Button>
             </div>
+          </div>
+        </section>
+      ) : null}
+
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Metric
+          label="Total de clientes"
+          value={String(recovery.data?.total ?? 0)}
+          detail="Clientes cadastrados"
+        />
+        <Metric
+          label="Clientes em recuperação"
+          value={String(recovery.data?.recovered ?? 0)}
+          detail={`Sem retorno há ${panel.business?.client_recovery_days ?? 60}+ dias`}
+        />
+        <Metric
+          label="Clientes ativos"
+          value={String(Math.max(0, (recovery.data?.total ?? 0) - (recovery.data?.recovered ?? 0)))}
+          detail="Com retorno ou agendamento"
+        />
+        <Metric
+          label="Período de recuperação"
+          value={`${panel.business?.client_recovery_days ?? 60} dias`}
+          detail="Configurado em Ajustes"
+        />
+      </section>
+
+      {(recovery.data?.recovered ?? 0) > 0 ? (
+        <section className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-semibold text-amber-900">Clientes em recuperação</p>
+              <p className="text-sm text-amber-800">
+                {recovery.data?.names.join(", ")}
+                {(recovery.data?.recovered ?? 0) > 3
+                  ? ` e mais ${(recovery.data?.recovered ?? 0) - 3}`
+                  : ""}{" "}
+                aguardam uma nova visita.
+              </p>
+            </div>
+            <Button size="sm" variant="outline" asChild>
+              <Link to="/app/clientes">Abrir CRM</Link>
+            </Button>
           </div>
         </section>
       ) : null}
