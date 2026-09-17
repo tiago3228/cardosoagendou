@@ -19,6 +19,8 @@ type FeedbackRow = {
   id: string;
   category: string;
   message: string;
+  master_response: string | null;
+  responded_at: string | null;
   created_at: string;
 };
 
@@ -43,7 +45,7 @@ function FeedbackPage() {
       startOfMonth.setHours(0, 0, 0, 0);
       const { data, error } = await supabase
         .from("feedback_submissions" as never)
-        .select("id, category, message, created_at")
+        .select("id, category, message, master_response, responded_at, created_at")
         .eq("business_id", business.id)
         .gte("created_at", startOfMonth.toISOString())
         .order("created_at", { ascending: false });
@@ -167,6 +169,21 @@ function FeedbackPage() {
                 <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
                   {item.message}
                 </p>
+                {item.master_response ? (
+                  <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                      Resposta do Agendou
+                    </p>
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">
+                      {item.master_response}
+                    </p>
+                    {item.responded_at ? (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Respondido em {new Date(item.responded_at).toLocaleString("pt-BR")}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
               </article>
             ))}
           </div>

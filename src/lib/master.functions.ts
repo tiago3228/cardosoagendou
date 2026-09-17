@@ -56,7 +56,7 @@ export const listMasterAdminData = createServerFn({ method: "POST" })
         supabaseAdmin
           .from("feedback_submissions" as never)
           .select(
-            "id, business_id, created_by, category, message, status, admin_note, created_at, updated_at",
+            "id, business_id, created_by, category, message, status, admin_note, master_response, responded_at, created_at, updated_at",
           )
           .order("created_at", { ascending: false })
           .limit(500),
@@ -124,6 +124,7 @@ export const updateMasterFeedback = createServerFn({ method: "POST" })
       feedbackId: value.feedbackId,
       status: String(value.status),
       adminNote: typeof value.adminNote === "string" ? value.adminNote.trim().slice(0, 2000) : null,
+      response: typeof value.response === "string" ? value.response.trim().slice(0, 2000) : null,
     };
   })
   .handler(async ({ data, context }) => {
@@ -132,7 +133,12 @@ export const updateMasterFeedback = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("feedback_submissions" as never)
-      .update({ status: data.status, admin_note: data.adminNote } as never)
+      .update({
+        status: data.status,
+        admin_note: data.adminNote,
+        master_response: data.response || null,
+        responded_at: data.response ? new Date().toISOString() : null,
+      } as never)
       .eq("id", data.feedbackId);
     if (error) throw new Error(`FEEDBACK_UPDATE_FAILED: ${error.message}`);
     return { updated: true };

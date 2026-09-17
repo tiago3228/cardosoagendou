@@ -40,6 +40,7 @@ function MasterFeedbackPage() {
   const [tab, setTab] = useState<"feedback" | "businesses">("feedback");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [responses, setResponses] = useState<Record<string, string>>({});
   const master = useQuery({ queryKey: ["master-status"], queryFn: () => fetchStatus() });
   const data = useQuery({
     queryKey: ["master-admin-data"],
@@ -53,6 +54,7 @@ function MasterFeedbackPage() {
           feedbackId: input.feedbackId,
           status: input.status,
           adminNote: notes[input.feedbackId] ?? null,
+          response: responses[input.feedbackId] ?? null,
         },
       }),
     onSuccess: () => {
@@ -103,6 +105,14 @@ function MasterFeedbackPage() {
         <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
           Acesso exclusivo do Master
         </div>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button asChild size="sm" variant="outline">
+          <Link to="/master/pagamentos">Pagamentos PIX</Link>
+        </Button>
+        <Button asChild size="sm" variant="outline">
+          <Link to="/master/planos">Testar planos</Link>
+        </Button>
       </div>
       <div className="mt-6 grid gap-3 sm:grid-cols-3">
         <Stat label="Feedbacks pendentes" value={pending} />
@@ -170,6 +180,20 @@ function MasterFeedbackPage() {
                   {isOpen ? (
                     <div className="mt-4 border-t border-border pt-4">
                       <p className="whitespace-pre-wrap text-sm">{item.message}</p>
+                      <Textarea
+                        className="mt-4 border-primary/40"
+                        value={responses[item.id] ?? item.master_response ?? ""}
+                        onChange={(event) =>
+                          setResponses((current) => ({ ...current, [item.id]: event.target.value }))
+                        }
+                        placeholder="Resposta oficial para o cliente (opcional)"
+                        maxLength={2000}
+                      />
+                      {item.responded_at ? (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Respondido em {new Date(item.responded_at).toLocaleString("pt-BR")}
+                        </p>
+                      ) : null}
                       <Textarea
                         className="mt-4"
                         value={notes[item.id] ?? item.admin_note ?? ""}
