@@ -39,6 +39,7 @@ export const publicBookingSchema = z.object({
   clientName: z.string().trim().min(2, "Informe seu nome").max(80),
   whatsapp: whatsappSchema,
   notes: z.string().trim().max(500).optional(),
+  couponCode: z.string().trim().max(40).optional(),
   idempotencyKey: z.string().trim().min(1).max(200).optional(),
   policyAccepted: z.boolean(),
 });

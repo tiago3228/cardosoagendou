@@ -34,7 +34,12 @@ export const getPublicBusiness = createServerFn({ method: "GET" })
       .from("service_compositions")
       .select("composite_service_id, component_service_id")
       .eq("business_id", found.id);
-    return { business, ...catalog, serviceCompositions: serviceCompositions ?? [], acceptsBookings: true as const };
+    return {
+      business,
+      ...catalog,
+      serviceCompositions: serviceCompositions ?? [],
+      acceptsBookings: true as const,
+    };
   });
 
 /** Time slots for a day, computed from the SUM of the selected services' durations. */
@@ -79,6 +84,39 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
       startsAt,
       now: new Date(),
     });
+    let coupon: {
+      id: string;
+      discount_percent: number;
+      usage_limit: number | null;
+      single_use_per_client: boolean;
+    } | null = null;
+    if (data.couponCode?.trim()) {
+      const code = data.couponCode.trim().toUpperCase();
+      const { data: foundCoupon, error: couponError } = await supabaseAdmin
+        .from("coupons")
+        .select(
+          "id, discount_percent, starts_at, expires_at, active, usage_limit, single_use_per_client",
+        )
+        .eq("business_id", business.id)
+        .eq("code", code)
+        .maybeSingle();
+      if (couponError || !foundCoupon) throw new Error("COUPON_INVALID: cupom não encontrado");
+      const today = new Date().toISOString().slice(0, 10);
+      if (
+        !foundCoupon.active ||
+        foundCoupon.starts_at > today ||
+        (foundCoupon.expires_at && foundCoupon.expires_at < today)
+      )
+        throw new Error("COUPON_INVALID: cupom fora da validade ou inativo");
+      const { count } = await supabaseAdmin
+        .from("coupon_usages")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", business.id)
+        .eq("coupon_id", foundCoupon.id);
+      if (foundCoupon.usage_limit !== null && (count ?? 0) >= foundCoupon.usage_limit)
+        throw new Error("COUPON_INVALID: limite de utilizações atingido");
+      coupon = foundCoupon;
+    }
     const manageToken = crypto.randomUUID() + crypto.randomUUID();
 
     const { data: created, error } = await supabaseAdmin.rpc(
@@ -131,6 +169,44 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
       duration_minutes: number;
       blocks_agenda: boolean;
     };
+    if (coupon) {
+      const { data: appointment } = await supabaseAdmin
+        .from("appointments")
+        .select("client_id")
+        .eq("id", result.id)
+        .maybeSingle();
+      const clientId = appointment?.client_id ?? null;
+      if (coupon.single_use_per_client && clientId) {
+        const { count } = await supabaseAdmin
+          .from("coupon_usages")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", business.id)
+          .eq("coupon_id", coupon.id)
+          .eq("client_id", clientId);
+        if ((count ?? 0) > 0)
+          throw new Error("COUPON_INVALID: cupom já utilizado por este cliente");
+      }
+      const original = result.total_price_cents;
+      const discount = Math.floor((original * coupon.discount_percent) / 100);
+      const finalAmount = Math.max(0, original - discount);
+      const update = await supabaseAdmin
+        .from("appointments")
+        .update({ total_price_cents: finalAmount })
+        .eq("id", result.id);
+      if (update.error) throw new Error(`COUPON_FAILED: ${update.error.message}`);
+      const usage = await supabaseAdmin.from("coupon_usages").insert({
+        business_id: business.id,
+        coupon_id: coupon.id,
+        client_id: clientId,
+        appointment_id: result.id,
+        discount_percent: coupon.discount_percent,
+        original_amount_cents: original,
+        discount_amount_cents: discount,
+        final_amount_cents: finalAmount,
+      });
+      if (usage.error) throw new Error(`COUPON_FAILED: ${usage.error.message}`);
+      result.total_price_cents = finalAmount;
+    }
     // Keep the server-side calculation explicit so future callers cannot mistake client totals for authority.
     void selection;
     return {

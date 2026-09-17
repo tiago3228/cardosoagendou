@@ -37,6 +37,7 @@ function ClientsPage() {
   const { data: panel } = useSuspenseQuery(panelQuery);
   const businessId = panel.business!.id;
   const businessName = panel.business!.name;
+  const recoveryDays = panel.business!.client_recovery_days ?? 60;
   const queryClient = useQueryClient();
   const [term, setTerm] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -99,6 +100,7 @@ function ClientsPage() {
             key={client.id}
             client={client}
             businessName={businessName}
+            recoveryDays={recoveryDays}
             expanded={expandedId === client.id}
             onToggle={() => setExpandedId(expandedId === client.id ? null : client.id)}
             onSave={(input) => saveClient.mutate(input)}
@@ -117,6 +119,7 @@ function ClientsPage() {
 function ClientCard({
   client,
   businessName,
+  recoveryDays,
   expanded,
   onToggle,
   onSave,
@@ -124,6 +127,7 @@ function ClientCard({
 }: {
   client: Client;
   businessName: string;
+  recoveryDays: number;
   expanded: boolean;
   onToggle: () => void;
   onSave: (input: {
@@ -160,6 +164,9 @@ function ClientCard({
       new Date(item.starts_at) >= new Date(),
   );
   const totalMoved = history.reduce((sum, item) => sum + item.total_price_cents, 0);
+  const lastCompletedAt = completed[0]?.starts_at ? new Date(completed[0].starts_at).getTime() : 0;
+  const isInRecovery =
+    lastCompletedAt > 0 && Date.now() - lastCompletedAt >= recoveryDays * 86400000 && !next;
   const e164 = normalizeBrWhatsapp(client.whatsapp);
   const link = e164 ? whatsappLink(e164, `Olá, ${client.name}! Aqui é da ${businessName}.`) : null;
   return (
@@ -182,6 +189,11 @@ function ClientCard({
               {formatWhatsapp(client.whatsapp)}
               {client.email ? ` · ${client.email}` : ""}
             </span>
+            {isInRecovery ? (
+              <span className="mt-1 inline-block rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700">
+                Cliente em recuperação · {recoveryDays}+ dias
+              </span>
+            ) : null}
           </span>
         </span>
         <ChevronDown
