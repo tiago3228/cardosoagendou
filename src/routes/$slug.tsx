@@ -439,43 +439,31 @@ function BookingPage() {
               ) : null}
             </a>
           ) : null}
-          {business.whatsapp ? (
-            <a
-              href={whatsappLink(
-                business.whatsapp,
-                `Olá! Vim pela página do Agendou e gostaria de tirar uma dúvida sobre ${business.name}.`,
-              )}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[var(--public-primary)] bg-[var(--public-primary)] px-3 py-2 text-sm font-semibold text-[var(--public-bg)]"
-            >
-              <MessageCircle className="size-4" aria-hidden /> Conversar pelo WhatsApp
-            </a>
-          ) : null}
-          {normalizeInstagramUrl(business.instagram_url) ? (
-            <div className="mt-4 rounded-xl border border-[var(--public-border)] bg-[var(--public-surface)] p-3">
-              <div className="flex items-start gap-3">
-                <Instagram
-                  className="mt-0.5 size-5 shrink-0 text-[var(--public-primary)]"
-                  aria-hidden
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--public-primary)]">
-                    Siga nosso trabalho
-                  </p>
-                  <p className="mt-1 text-sm text-[var(--public-muted)]">
-                    Veja nossos serviços, resultados e novidades no Instagram.
-                  </p>
-                  <a
-                    href={normalizeInstagramUrl(business.instagram_url) ?? undefined}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-[var(--public-accent)] hover:underline"
-                  >
-                    <span>Ver Instagram</span> <ArrowRight className="size-4" aria-hidden />
-                  </a>
-                </div>
-              </div>
+          {business.whatsapp || normalizeInstagramUrl(business.instagram_url) ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {business.whatsapp ? (
+                <a
+                  href={whatsappLink(
+                    business.whatsapp,
+                    `Olá! Vim pela página do Agendou e gostaria de tirar uma dúvida sobre ${business.name}.`,
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-[var(--public-primary)] px-2.5 py-1.5 text-xs font-semibold text-[var(--public-accent)] transition hover:bg-[var(--public-primary)] hover:text-[var(--public-bg)]"
+                >
+                  <MessageCircle className="size-3.5" aria-hidden /> WhatsApp
+                </a>
+              ) : null}
+              {normalizeInstagramUrl(business.instagram_url) ? (
+                <a
+                  href={normalizeInstagramUrl(business.instagram_url) ?? undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-[var(--public-border)] px-2.5 py-1.5 text-xs font-semibold text-[var(--public-accent)] transition hover:border-[var(--public-primary)]"
+                >
+                  <Instagram className="size-3.5" aria-hidden /> Instagram
+                </a>
+              ) : null}
             </div>
           ) : null}
         </div>
