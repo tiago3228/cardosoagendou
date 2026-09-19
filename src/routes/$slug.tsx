@@ -138,6 +138,8 @@ function BookingPage() {
   const [whatsapp, setWhatsapp] = useState("");
   const [notes, setNotes] = useState("");
   const [couponCode, setCouponCode] = useState("");
+  const [couponInvalid, setCouponInvalid] = useState(false);
+  const couponInputRef = useRef<HTMLInputElement>(null);
   const [policyAccepted, setPolicyAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [rescheduleToken] = useState(() => {
@@ -330,8 +332,7 @@ function BookingPage() {
     }
   }
 
-  async function confirm(event: React.FormEvent) {
-    event.preventDefault();
+  async function submitBooking(couponOverride?: string) {
     if (!chosen) return;
     setBusy(true);
     try {
@@ -354,7 +355,7 @@ function BookingPage() {
               clientName,
               whatsapp,
               notes: notes || undefined,
-              couponCode: couponCode.trim() || undefined,
+              couponCode: couponOverride ?? (couponCode.trim() || undefined),
               policyAccepted,
               idempotencyKey:
                 idempotencyKey.current ?? (idempotencyKey.current = crypto.randomUUID()),
@@ -365,13 +366,18 @@ function BookingPage() {
         totalPriceCents: Number(result.totalPriceCents),
         manageToken: result.manageToken,
       });
+      setCouponInvalid(false);
       setStep(4);
     } catch (error) {
       // Surface the exact backend message in the console so booking failures are diagnosable.
       console.error("[booking] falha ao concluir agendamento", error);
-      toast.error("Não foi possível concluir a reserva", {
-        description: userFacingError(error),
-      });
+      if (isTechnicalError(error, "COUPON_INVALID")) {
+        setCouponInvalid(true);
+      } else {
+        toast.error("Não foi possível concluir a reserva", {
+          description: userFacingError(error),
+        });
+      }
       if (isTechnicalError(error, "SLOT_UNAVAILABLE")) {
         await loadSlots(date, professionalId);
         setStep(2);
@@ -379,6 +385,11 @@ function BookingPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function confirm(event: React.FormEvent) {
+    event.preventDefault();
+    await submitBooking();
   }
 
   return (
@@ -851,12 +862,53 @@ function BookingPage() {
                   <div className="space-y-1.5">
                     <Label htmlFor="cupom">Cupom de desconto (opcional)</Label>
                     <Input
+                      ref={couponInputRef}
                       id="cupom"
                       value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      onChange={(e) => {
+                        setCouponInvalid(false);
+                        setCouponCode(e.target.value.toUpperCase());
+                      }}
                       placeholder="Ex.: DESCONTO10"
                       autoCapitalize="characters"
                     />
+                    {couponInvalid ? (
+                      <div
+                        role="alert"
+                        className="mt-3 rounded-lg border border-red-400/50 bg-red-950/30 p-3 text-sm text-[var(--public-text)]"
+                      >
+                        <p className="font-semibold text-red-300">Cupom inválido</p>
+                        <p className="mt-1 text-xs leading-5 text-[var(--public-muted)]">
+                          Deseja digitar outro cupom ou prosseguir com o agendamento sem desconto?
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="!border-red-300/60 !bg-transparent !px-3 !py-1.5 text-xs !text-red-200 hover:!bg-red-950/40"
+                            onClick={() => {
+                              setCouponCode("");
+                              setCouponInvalid(false);
+                              requestAnimationFrame(() => couponInputRef.current?.focus());
+                            }}
+                          >
+                            Digitar outro cupom
+                          </Button>
+                          <Button
+                            type="button"
+                            className="!px-3 !py-1.5 text-xs"
+                            disabled={busy}
+                            onClick={() => {
+                              setCouponCode("");
+                              setCouponInvalid(false);
+                              void submitBooking("");
+                            }}
+                          >
+                            Prosseguir sem cupom
+                          </Button>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
                 {business.booking_policy ? (
