@@ -379,7 +379,7 @@ function BookingPage() {
       className="public-theme min-h-screen text-[var(--public-text)]"
       style={{ backgroundColor: business.secondary_color ?? "#0B0A08" }}
     >
-      <style>{`.public-theme { --public-primary: ${business.primary_color ?? "#B4884F"}; --public-secondary: ${business.secondary_color ?? "#0B0A08"}; --public-accent: ${business.primary_color ?? "#D1A66C"}; --public-text: #F2EDE4; --public-muted: #9C948A; --public-surface: #1E1B17; --public-card: #262220; --public-border: #35302A; --public-bg: ${business.secondary_color ?? "#14120F"}; }`}</style>
+      <style>{`.public-theme { --public-primary: ${business.primary_color ?? "#B4884F"}; --public-secondary: ${business.secondary_color ?? "#0B0A08"}; --public-accent: ${business.primary_color ?? "#D1A66C"}; --public-text: #F2EDE4; --public-muted: #9C948A; --public-surface: #1E1B17; --public-card: #262220; --public-border: #35302A; --public-bg: ${business.secondary_color ?? "#14120F"}; } .public-theme button { min-height: 0; } .public-theme input, .public-theme textarea { min-height: 2.25rem; }`}</style>
       <div
         className="mx-auto min-h-screen max-w-[460px] overflow-hidden pb-32 shadow-2xl"
         style={{ backgroundColor: business.secondary_color ?? "#14120F" }}
@@ -439,10 +439,6 @@ function BookingPage() {
               ) : null}
             </a>
           ) : null}
-          <p className="mt-3 rounded-lg border border-[var(--public-primary)] bg-[var(--public-surface)] p-2.5 text-xs leading-5 text-[var(--public-accent)]">
-            Cancelamentos fora de {business.cancellation_deadline_hours ?? 1} hora(s) do horário
-            estão sujeitos a multa de 10% do valor total dos serviços.
-          </p>
           {business.whatsapp ? (
             <a
               href={whatsappLink(
@@ -950,7 +946,11 @@ function BookingPage() {
           ) : null}
         </div>
 
-        <footer className="border-t border-[var(--public-border)] px-5 py-6 text-center">
+        <footer className="border-t border-[var(--public-border)] px-4 py-5 text-center">
+          <p className="mx-auto mb-4 max-w-sm text-xs leading-5 text-[var(--public-muted)]">
+            Cancelamentos fora de {business.cancellation_deadline_hours ?? 1} hora(s) do horário
+            estão sujeitos a multa de 10% do valor total dos serviços.
+          </p>
           <p className="text-xs text-[var(--public-muted)]">
             Reservas online por{" "}
             <a
