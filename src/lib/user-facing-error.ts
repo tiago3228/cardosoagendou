@@ -31,6 +31,8 @@ const TECHNICAL_CODE_MESSAGES: Record<string, string> = {
     "O profissional escolhido não atende um dos serviços selecionados.",
   APPOINTMENT_FAILED:
     "O banco não conseguiu registrar o agendamento. Verifique se as migrations de agendamento foram executadas no Lovable.",
+  PRESENCE_FAILED:
+    "O banco não conseguiu salvar a resposta de presença. Execute a migration de presença do cliente no Lovable.",
   FORBIDDEN: "Você não tem permissão para realizar esta ação.",
   UNAUTHORIZED: "Sua sessão expirou. Entre novamente para continuar.",
   USER_ALREADY_EXISTS: "Este e-mail já está cadastrado.",
