@@ -56,7 +56,19 @@ const ENGLISH_MESSAGE_PATTERNS: Array<[RegExp, string]> = [
 
 function extractErrorText(error: unknown, depth = 0): string {
   if (error instanceof Error) return error.message;
-  if (typeof error === "string") return error;
+  if (typeof error === "string") {
+    const trimmed = error.trim();
+    if (depth <= 3 && (trimmed.startsWith("{") || trimmed.startsWith("["))) {
+      try {
+        const parsed = JSON.parse(trimmed) as unknown;
+        const parsedText = extractErrorText(parsed, depth + 1);
+        if (parsedText) return parsedText;
+      } catch {
+        // Keep the original string when it is not valid JSON.
+      }
+    }
+    return error;
+  }
   if (depth > 3 || !error || typeof error !== "object") return "";
   if (error && typeof error === "object") {
     const candidate = error as {
