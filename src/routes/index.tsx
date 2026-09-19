@@ -127,42 +127,42 @@ const FEATURES = [
 ] as const;
 
 const SEGMENTS: string[] = [
+  "Acupuntura",
   "Barbearia",
-  "Salão de cabelo",
-  "Salão de beleza",
-  "Clínica de estética",
-  "Studio de unhas",
-  "Design de sobrancelhas",
   "Cílios e extensões",
+  "Consultórios em geral",
+  "Consultoria Financeira",
+  "Coquetelaria",
+  "Cursos",
   "Depilação",
+  "Design de sobrancelhas",
   "Designer Gráfico e UI/UX",
-  "Maquiagem",
-  "Trança e penteados",
-  "Massagem e terapias",
-  "Studio de tatuagem",
-  "Piercing",
+  "Drone",
+  "Estética automotiva",
   "Fisioterapia",
-  "Psicoterapia",
+  "Informática",
+  "Maquiagem",
+  "Marketing Digital",
+  "Marido de Aluguel",
+  "Massagem e terapias",
   "Nutrição",
   "Odontologia",
-  "Podologia",
-  "Quiropraxia e RPG",
-  "Acupuntura",
-  "Personal trainer",
-  "Pilates e yoga",
-  "Estética automotiva",
-  "Pet shop e banho e tosa",
-  "Consultórios em geral",
-  "Videomaker",
-  "Quadra",
-  "Drone",
-  "Cursos",
-  "Informática",
-  "Marido de Aluguel",
-  "Marketing Digital",
-  "Consultoria Financeira",
-  "Programador",
   "Outro negócio por horário",
+  "Personal trainer",
+  "Pet shop e banho e tosa",
+  "Pilates e yoga",
+  "Piercing",
+  "Podologia",
+  "Programador",
+  "Psicoterapia",
+  "Quadra",
+  "Quiropraxia e RPG",
+  "Salão de cabelo",
+  "Salão de beleza",
+  "Studio de tatuagem",
+  "Studio de unhas",
+  "Trança e penteados",
+  "Videomaker",
 ];
 
 const STEPS = [
@@ -364,19 +364,25 @@ function Landing() {
       </section>
 
       {/* Segmentos */}
-      <section className="mx-auto max-w-6xl px-5 py-20">
-        <h2 className="max-w-2xl font-display text-3xl font-bold text-foreground md:text-4xl">
-          Feito para todo tipo de atendimento por horário
-        </h2>
-        <p className="mt-3 max-w-2xl text-muted-foreground">
+      <section className="mx-auto max-w-6xl px-5 py-14">
+        <div className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+            Segmentos prontos
+          </p>
+          <h2 className="mt-2 font-display text-3xl font-bold text-foreground md:text-4xl">
+            Feito para todo tipo de atendimento por horário
+          </h2>
+        </div>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Cada segmento vem com serviços, categorias e nomes prontos — e você ajusta como quiser.
         </p>
-        <div className="mt-8 flex flex-wrap gap-2">
+        <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           {SEGMENTS.map((segment) => (
             <span
               key={segment}
-              className="rounded-full border border-border bg-card px-4 py-2 text-sm text-card-foreground transition-colors hover:border-primary/50 hover:text-primary"
+              className="flex min-h-9 items-center rounded-lg border border-border/80 bg-card/70 px-3 py-2 text-xs font-medium text-card-foreground transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
             >
+              <span className="mr-2 size-1.5 shrink-0 rounded-full bg-primary/60" />
               {segment}
             </span>
           ))}
