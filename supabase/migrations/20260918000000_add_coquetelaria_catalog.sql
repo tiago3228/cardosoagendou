@@ -18,13 +18,13 @@ ON CONFLICT (slug) DO UPDATE SET
 
 WITH catalog_services(category, name, description, duration_minutes) AS (
   VALUES
-    ('Consultoria', 'Consultoria de Bar', 'Diagnóstico e orientação personalizada para conceito, carta, operação, equipe e resultados do bar.', 120),
-    ('Coquetelaria', 'Criação e Padronização de Coquetéis', 'Desenvolvimento, testes e padronização de coquetéis alinhados ao conceito e à identidade do bar.', 180),
-    ('Carta e Fichas Técnicas', 'Desenvolvimento de Carta e Fichas Técnicas', 'Construção de carta de drinks e fichas técnicas com ingredientes, preparo, apresentação e padrão de execução.', 180),
-    ('Precificação', 'Precificação Estratégica', 'Análise de custos, margens, preços de venda e posicionamento para melhorar a rentabilidade dos drinks.', 120),
-    ('Operação', 'Organização e Otimização de Operação', 'Mapeamento e melhoria de processos, mise en place, estoque, fluxo de trabalho e rotina do bar.', 180),
-    ('Treinamento', 'Treinamento de Equipe e Atendimento', 'Capacitação da equipe em técnicas, padrões de preparo, atendimento, hospitalidade e experiência do cliente.', 240),
-    ('Gestão e Lucratividade', 'Aumento de Lucratividade e Identidade do Bar', 'Consultoria para fortalecer a identidade do bar, elevar a experiência e transformar a operação em resultado.', 180)
+    ('Consultoria', 'Consultoria de Bar', 'Diagnóstico e orientação personalizada para conceito, carta, operação, equipe e resultados do bar.', 60),
+    ('Coquetelaria', 'Criação e Padronização de Coquetéis', 'Desenvolvimento, testes e padronização de coquetéis alinhados ao conceito e à identidade do bar.', 60),
+    ('Carta e Fichas Técnicas', 'Desenvolvimento de Carta e Fichas Técnicas', 'Construção de carta de drinks e fichas técnicas com ingredientes, preparo, apresentação e padrão de execução.', 60),
+    ('Precificação', 'Precificação Estratégica', 'Análise de custos, margens, preços de venda e posicionamento para melhorar a rentabilidade dos drinks.', 60),
+    ('Operação', 'Organização e Otimização de Operação', 'Mapeamento e melhoria de processos, mise en place, estoque, fluxo de trabalho e rotina do bar.', 60),
+    ('Treinamento', 'Treinamento de Equipe e Atendimento', 'Capacitação da equipe em técnicas, padrões de preparo, atendimento, hospitalidade e experiência do cliente.', 60),
+    ('Gestão e Lucratividade', 'Aumento de Lucratividade e Identidade do Bar', 'Consultoria para fortalecer a identidade do bar, elevar a experiência e transformar a operação em resultado.', 60)
 )
 INSERT INTO public.service_templates (
   business_id, service_id, segment_id, name, description, category,
