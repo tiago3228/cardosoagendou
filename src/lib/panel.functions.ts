@@ -46,9 +46,9 @@ export const getMyPanel = createServerFn({ method: "POST" })
       context.supabase.from("profiles").select("full_name").eq("id", context.userId).maybeSingle(),
     ]);
 
-    // Official public domain for the booking link (never the preview/sandbox host).
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const origin = await supabaseAdmin
+    // Read with the authenticated client. The panel must not require the
+    // server-only service-role secret just to load its public booking origin.
+    const origin = await context.supabase
       .from("platform_settings")
       .select("value")
       .eq("key", "app.public_origin")
