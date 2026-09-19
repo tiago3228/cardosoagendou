@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
-import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
   CalendarDays,
   BellRing,
@@ -96,9 +96,38 @@ function PanelLayout() {
   const master = useQuery({ queryKey: ["master-status"], queryFn: () => getMasterStatus() });
   const entitlements = useQuery(entitlementsQuery);
   const scheduled = useQuery(scheduledAppointmentsQuery(data.business!.id));
+  const queryClient = useQueryClient();
   const features = (entitlements.data?.features ?? {}) as Record<string, unknown>;
   const nav = NAV.filter((item) => !("feature" in item) || features[item.feature] === true);
   const [theme, setTheme] = useState<PanelTheme>("dark");
+
+  useEffect(() => {
+    const businessId = data.business?.id;
+    if (!businessId) return;
+
+    const channel = supabase
+      .channel(`business-appointments-${businessId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "appointments",
+          filter: `business_id=eq.${businessId}`,
+        },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: ["scheduled-alert", businessId] });
+          void queryClient.invalidateQueries({ queryKey: ["agenda"] });
+          void queryClient.invalidateQueries({ queryKey: ["agenda-revenue"] });
+          void queryClient.invalidateQueries({ queryKey: ["finance"] });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [data.business?.id, queryClient]);
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem(PANEL_THEME_KEY);
