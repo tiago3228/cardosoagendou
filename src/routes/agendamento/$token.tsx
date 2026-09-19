@@ -51,6 +51,7 @@ function ManageAppointmentPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [showDeclineReason, setShowDeclineReason] = useState(false);
+  const [declineChoice, setDeclineChoice] = useState<"choices" | "custom">("choices");
   const [declineReason, setDeclineReason] = useState("");
 
   useEffect(() => {
@@ -186,6 +187,7 @@ function ManageAppointmentPage() {
             variant="outline"
             onClick={() => {
               setShowDeclineReason(true);
+              setDeclineChoice("choices");
               setMessage("");
             }}
             className="!border-[var(--public-primary)] !bg-[var(--public-text)] !text-[var(--public-surface)] hover:!bg-[var(--public-accent)] hover:!text-[var(--public-surface)]"
@@ -196,27 +198,58 @@ function ManageAppointmentPage() {
         </div>
         {showDeclineReason && currentStatus === "CONFIRMED" ? (
           <div className="mt-4 rounded-xl border border-[var(--public-border)] bg-[var(--public-surface)] p-4">
-            <label
-              htmlFor="decline-reason"
-              className="text-sm font-semibold text-[var(--public-text)]"
-            >
-              Qual motivo?
-            </label>
-            <Textarea
-              id="decline-reason"
-              value={declineReason}
-              onChange={(event) => setDeclineReason(event.target.value)}
-              maxLength={500}
-              placeholder="Digite o motivo do cancelamento"
-              className="mt-2 min-h-24 border-[var(--public-border)] bg-[var(--public-card)] text-[var(--public-text)] placeholder:text-[var(--public-muted)]"
-            />
+            {declineChoice === "choices" ? (
+              <>
+                <p className="text-sm font-semibold text-[var(--public-text)]">Qual motivo?</p>
+                <p className="mt-1 text-xs text-[var(--public-muted)]">
+                  Você pode cancelar sem informar detalhes ou explicar o motivo ao estabelecimento.
+                </p>
+                <div className="mt-3 grid gap-2">
+                  <Button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void updatePresence("DECLINED", "Motivos pessoais")}
+                    className="bg-[var(--public-primary)] text-[var(--public-secondary)] hover:bg-[var(--public-accent)]"
+                  >
+                    Motivos pessoais
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => setDeclineChoice("custom")}
+                    className="!border-[var(--public-primary)] !bg-transparent !text-[var(--public-text)] hover:!bg-[var(--public-primary)] hover:!text-[var(--public-secondary)]"
+                  >
+                    Informar motivo
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <label
+                  htmlFor="decline-reason"
+                  className="text-sm font-semibold text-[var(--public-text)]"
+                >
+                  Qual motivo?
+                </label>
+                <Textarea
+                  id="decline-reason"
+                  value={declineReason}
+                  onChange={(event) => setDeclineReason(event.target.value)}
+                  maxLength={500}
+                  placeholder="Digite o motivo do cancelamento"
+                  className="mt-2 min-h-24 border-[var(--public-border)] bg-[var(--public-card)] text-[var(--public-text)] placeholder:text-[var(--public-muted)]"
+                />
+              </>
+            )}
             <div className="mt-3 flex gap-2">
               <Button
                 type="button"
                 variant="outline"
                 disabled={busy}
                 onClick={() => {
-                  setShowDeclineReason(false);
+                  if (declineChoice === "custom") setDeclineChoice("choices");
+                  else setShowDeclineReason(false);
                   setDeclineReason("");
                   setMessage("");
                 }}
@@ -224,14 +257,16 @@ function ManageAppointmentPage() {
               >
                 Voltar
               </Button>
-              <Button
-                type="button"
-                disabled={busy || !declineReason.trim()}
-                onClick={() => void updatePresence("DECLINED", declineReason)}
-                className="flex-1 bg-[var(--public-primary)] text-[var(--public-secondary)] hover:bg-[var(--public-accent)]"
-              >
-                Confirmar cancelamento
-              </Button>
+              {declineChoice === "custom" ? (
+                <Button
+                  type="button"
+                  disabled={busy || !declineReason.trim()}
+                  onClick={() => void updatePresence("DECLINED", declineReason)}
+                  className="flex-1 bg-[var(--public-primary)] text-[var(--public-secondary)] hover:bg-[var(--public-accent)]"
+                >
+                  Confirmar cancelamento
+                </Button>
+              ) : null}
             </div>
           </div>
         ) : null}
