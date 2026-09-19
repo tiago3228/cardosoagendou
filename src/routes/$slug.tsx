@@ -433,26 +433,6 @@ function BookingPage() {
               {business.description}
             </p>
           ) : null}
-          {business.address ? (
-            <a
-              href={mapLink ?? undefined}
-              target="_blank"
-              rel="noreferrer"
-              referrerPolicy="no-referrer"
-              className="mt-3 flex items-start gap-2 rounded-lg border border-[var(--public-border)] bg-[var(--public-surface)] p-2.5 text-sm text-[var(--public-text)] transition hover:border-[var(--public-primary)]"
-            >
-              <MapPin className="mt-0.5 size-4 shrink-0 text-[var(--public-primary)]" aria-hidden />
-              <span className="flex-1">
-                <span className="block text-xs font-semibold uppercase tracking-wide text-[var(--public-primary)]">
-                  Onde estamos
-                </span>
-                {business.address}
-              </span>
-              {mapLink ? (
-                <Navigation className="size-4 shrink-0 text-[var(--public-primary)]" aria-hidden />
-              ) : null}
-            </a>
-          ) : null}
           {business.whatsapp || normalizeInstagramUrl(business.instagram_url) ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {business.whatsapp ? (
@@ -951,11 +931,23 @@ function BookingPage() {
         </div>
 
         <footer className="border-t border-[var(--public-border)] px-4 py-5 text-center">
-          {business.address ? (
-            <p className="mb-3 text-xs text-[var(--public-muted)]">
-              <span className="font-semibold text-[var(--public-primary)]">Onde estamos:</span>{" "}
-              {business.address}
-            </p>
+          {business.address && mapLink ? (
+            <a
+              href={mapLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              referrerPolicy="no-referrer"
+              className="mx-auto mb-3 flex max-w-sm items-center justify-center gap-2 rounded-lg border border-[var(--public-border)] bg-[var(--public-surface)] px-3 py-2 text-xs text-[var(--public-text)] transition hover:border-[var(--public-primary)]"
+            >
+              <MapPin className="size-3.5 shrink-0 text-[var(--public-primary)]" aria-hidden />
+              <span>
+                <span className="font-semibold uppercase tracking-wide text-[var(--public-primary)]">
+                  Onde estamos
+                </span>{" "}
+                {business.address}
+              </span>
+              <Navigation className="size-3.5 shrink-0 text-[var(--public-primary)]" aria-hidden />
+            </a>
           ) : null}
           <p className="mx-auto mb-4 max-w-sm text-xs leading-5 text-[var(--public-muted)]">
             Cancelamentos fora de {business.cancellation_deadline_hours ?? 1} hora(s) do horário
