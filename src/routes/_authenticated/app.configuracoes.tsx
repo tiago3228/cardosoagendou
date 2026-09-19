@@ -23,8 +23,14 @@ export const Route = createFileRoute("/_authenticated/app/configuracoes")({
 function normalizeInstagram(value: string) {
   const normalized = value.trim();
   if (!normalized) return null;
-  if (normalized.startsWith("@")) return `https://www.instagram.com/${normalized.slice(1)}`;
-  if (/^[A-Za-z0-9._]{1,30}$/.test(normalized)) return `https://www.instagram.com/${normalized}`;
+  const handle = normalized
+    .replace(/^@/, "")
+    .replace(/^https?:\/\/(?:www\.)?instagram\.com\//i, "")
+    .replace(/^instagram\.com\//i, "")
+    .split(/[/?#]/)[0];
+  if (/^[A-Za-z0-9._]{1,30}$/.test(handle)) {
+    return `https://www.instagram.com/${handle}`;
+  }
   return normalized.replace(/^http:\/\//, "https://");
 }
 
