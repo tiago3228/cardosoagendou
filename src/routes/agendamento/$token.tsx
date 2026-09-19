@@ -56,6 +56,14 @@ function ManageAppointmentPage() {
 
   useEffect(() => {
     if (!appointment?.id) return;
+    const refreshAppointment = async () => {
+      const fresh = await getAppointmentByManageToken({ data: { token } });
+      if (!fresh) return;
+      setCurrentStatus(fresh.status);
+      setPresence(fresh.presence_status);
+      setAllowCancel(fresh.allow_cancel);
+      setAllowReschedule(fresh.allow_reschedule);
+    };
     const channel = supabase
       .channel(`appointment-status-${appointment.id}`)
       .on(
@@ -70,18 +78,19 @@ function ManageAppointmentPage() {
           const next = payload.new as { status?: string; presence_status?: string | null };
           if (next.status) setCurrentStatus(next.status);
           if (next.presence_status !== undefined) setPresence(next.presence_status);
-          void getAppointmentByManageToken({ data: { token } }).then((fresh) => {
-            if (!fresh) return;
-            setAllowCancel(fresh.allow_cancel);
-            setAllowReschedule(fresh.allow_reschedule);
-          });
+          void refreshAppointment();
         },
       )
       .subscribe();
+    void refreshAppointment();
+    const refreshTimer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refreshAppointment();
+    }, 2000);
     return () => {
+      window.clearInterval(refreshTimer);
       void supabase.removeChannel(channel);
     };
-  }, [appointment?.id]);
+  }, [appointment?.id, token]);
 
   if (!appointment) {
     return (
