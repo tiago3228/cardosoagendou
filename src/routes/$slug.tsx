@@ -425,6 +425,7 @@ function BookingPage() {
               href={mapLink ?? undefined}
               target="_blank"
               rel="noreferrer"
+              referrerPolicy="no-referrer"
               className="mt-3 flex items-start gap-2 rounded-lg border border-[var(--public-border)] bg-[var(--public-surface)] p-2.5 text-sm text-[var(--public-text)] transition hover:border-[var(--public-primary)]"
             >
               <MapPin className="mt-0.5 size-4 shrink-0 text-[var(--public-primary)]" aria-hidden />
@@ -449,6 +450,7 @@ function BookingPage() {
                   )}
                   target="_blank"
                   rel="noreferrer"
+                  referrerPolicy="no-referrer"
                   className="inline-flex items-center gap-1.5 rounded-md border border-[var(--public-primary)] px-2.5 py-1.5 text-xs font-semibold text-[var(--public-accent)] transition hover:bg-[var(--public-primary)] hover:text-[var(--public-bg)]"
                 >
                   <MessageCircle className="size-3.5" aria-hidden /> WhatsApp
@@ -459,6 +461,7 @@ function BookingPage() {
                   href={normalizeInstagramUrl(business.instagram_url) ?? undefined}
                   target="_blank"
                   rel="noopener noreferrer"
+                  referrerPolicy="no-referrer"
                   className="inline-flex items-center gap-1.5 rounded-md border border-[#E1306C]/70 bg-gradient-to-r from-[#833AB4]/20 via-[#E1306C]/20 to-[#FCAF45]/20 px-2.5 py-1.5 text-xs font-semibold text-[#F77737] transition hover:border-[#FCAF45] hover:from-[#833AB4]/35 hover:via-[#E1306C]/35 hover:to-[#FCAF45]/35"
                 >
                   <Instagram className="size-3.5" aria-hidden /> Instagram
