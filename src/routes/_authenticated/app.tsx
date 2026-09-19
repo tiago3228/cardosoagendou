@@ -23,6 +23,7 @@ import { getMyPanel } from "@/lib/panel.functions";
 import { getMasterStatus } from "@/lib/manual-pix.functions";
 import { getMyEntitlements } from "@/lib/billing.functions";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { useEffect, useState } from "react";
 
 export const panelQuery = queryOptions({ queryKey: ["panel"], queryFn: () => getMyPanel() });
@@ -115,11 +116,26 @@ function PanelLayout() {
           table: "appointments",
           filter: `business_id=eq.${businessId}`,
         },
-        () => {
+        (payload) => {
           void queryClient.invalidateQueries({ queryKey: ["scheduled-alert", businessId] });
           void queryClient.invalidateQueries({ queryKey: ["agenda"] });
           void queryClient.invalidateQueries({ queryKey: ["agenda-revenue"] });
           void queryClient.invalidateQueries({ queryKey: ["finance"] });
+          const appointment = payload.new as { client_name?: string; status?: string };
+          const clientName = appointment.client_name ?? "Um cliente";
+          if (payload.eventType === "INSERT") {
+            toast.success("Novo agendamento recebido", {
+              description: `${clientName} acabou de enviar um agendamento.`,
+            });
+          } else if (payload.eventType === "UPDATE" && appointment.status === "CANCELED") {
+            toast.warning("Agendamento cancelado pelo cliente", {
+              description: `${clientName} cancelou um agendamento.`,
+            });
+          } else if (payload.eventType === "UPDATE") {
+            toast.info("Agendamento atualizado", {
+              description: `A resposta de ${clientName} já está refletida na agenda.`,
+            });
+          }
         },
       )
       .subscribe();
