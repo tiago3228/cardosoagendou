@@ -134,7 +134,7 @@ function PanelLayout() {
     >
       <aside className="hidden w-60 shrink-0 border-r border-sidebar-border bg-sidebar p-5 md:flex md:flex-col">
         <Link
-          to="/app"
+          to="/"
           className="font-display text-xl font-bold text-sidebar-foreground transition-opacity hover:opacity-75"
           aria-label="Ir para a tela principal do Agendou"
         >
