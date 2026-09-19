@@ -20,6 +20,20 @@ export const Route = createFileRoute("/_authenticated/app/configuracoes")({
   component: SettingsPage,
 });
 
+function normalizeInstagram(value: string) {
+  const normalized = value.trim();
+  if (!normalized) return null;
+  if (normalized.startsWith("@")) return `https://www.instagram.com/${normalized.slice(1)}`;
+  if (/^[A-Za-z0-9._]{1,30}$/.test(normalized)) return `https://www.instagram.com/${normalized}`;
+  return normalized.replace(/^http:\/\//, "https://");
+}
+
+function normalizeUrl(value: string) {
+  const normalized = value.trim();
+  if (!normalized) return null;
+  return /^https?:\/\//i.test(normalized) ? normalized : `https://${normalized}`;
+}
+
 function SettingsPage() {
   const { data: panel } = useSuspenseQuery(panelQuery);
   const business = panel.business!;
@@ -76,8 +90,8 @@ function SettingsPage() {
           name: form.name.trim(),
           description: form.description.trim() || null,
           whatsapp: form.whatsapp.trim() || null,
-          instagram_url: form.instagram_url.trim() || null,
-          google_review_url: form.google_review_url.trim() || null,
+          instagram_url: normalizeInstagram(form.instagram_url),
+          google_review_url: normalizeUrl(form.google_review_url),
           email: form.email.trim() || null,
           address: form.address.trim() || null,
           booking_policy: form.booking_policy.trim() || null,
