@@ -322,63 +322,118 @@ function Card({
 function Calculators() {
   const [open, setOpen] = useState<"basic" | "margin" | null>(null);
   return (
-    <section className="mt-6 rounded-xl border border-border bg-card p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="mr-2 font-semibold text-foreground">Ferramentas</p>
-        <Button
-          type="button"
-          variant={open === "basic" ? "default" : "outline"}
-          onClick={() => setOpen(open === "basic" ? null : "basic")}
-        >
-          <Calculator className="size-4" aria-hidden /> Calculadora comum
-        </Button>
-        <Button
-          type="button"
-          variant={open === "margin" ? "default" : "outline"}
-          onClick={() => setOpen(open === "margin" ? null : "margin")}
-        >
-          <Wallet className="size-4" aria-hidden /> Preço e margem
-        </Button>
+    <section className="mt-6 rounded-xl border border-border bg-card">
+      <div className="border-b border-border px-5 py-4">
+        <p className="font-display text-lg font-bold text-foreground">Calculadoras</p>
+        <p className="text-sm text-muted-foreground">
+          Faça simulações rápidas para a operação do seu negócio.
+        </p>
       </div>
+      <button
+        type="button"
+        className="flex w-full items-center gap-3 px-5 py-4 text-left hover:bg-secondary/30"
+        onClick={() => setOpen(open === "basic" ? null : "basic")}
+        aria-expanded={open === "basic"}
+      >
+        <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <Calculator className="size-5" aria-hidden />
+        </span>
+        <span className="flex-1">
+          <strong className="block text-sm text-foreground">Calculadora comum</strong>
+          <span className="text-xs text-muted-foreground">Operações básicas para o dia a dia.</span>
+        </span>
+        <span className="text-muted-foreground">{open === "basic" ? "⌃" : "⌄"}</span>
+      </button>
       {open === "basic" ? <BasicCalculator /> : null}
+      <button
+        type="button"
+        className="flex w-full items-center gap-3 border-t border-border px-5 py-4 text-left hover:bg-secondary/30"
+        onClick={() => setOpen(open === "margin" ? null : "margin")}
+        aria-expanded={open === "margin"}
+      >
+        <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <Wallet className="size-5" aria-hidden />
+        </span>
+        <span className="flex-1">
+          <strong className="block text-sm text-foreground">Calculadora de preço e margem</strong>
+          <span className="text-xs text-muted-foreground">
+            Simule preços, lucro, markup e descontos.
+          </span>
+        </span>
+        <span className="text-muted-foreground">{open === "margin" ? "⌃" : "⌄"}</span>
+      </button>
       {open === "margin" ? <MarginCalculator /> : null}
     </section>
   );
 }
 
 function BasicCalculator() {
-  const [expression, setExpression] = useState("");
-  const [result, setResult] = useState("");
+  const [expression, setExpression] = useState("0");
+  const [result, setResult] = useState("0");
   function calculate() {
-    if (!/^[0-9+\-*/().,\s]+$/.test(expression)) return setResult("Expressão inválida");
+    if (!/^[0-9+\-*/().,\s]+$/.test(expression)) return setResult("Erro");
     try {
       const value = Function(`"use strict"; return (${expression.replaceAll(",", ".")})`)();
-      setResult(Number.isFinite(value) ? String(value) : "Expressão inválida");
+      setResult(Number.isFinite(value) ? String(value).replace(".", ",") : "Erro");
+      setExpression(Number.isFinite(value) ? String(value) : "0");
     } catch {
-      setResult("Expressão inválida");
+      setResult("Erro");
     }
   }
   return (
-    <div className="mt-4 max-w-md rounded-lg border border-border bg-background/50 p-4">
-      <h3 className="font-semibold">Calculadora comum</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Use +, −, × e ÷ para fazer uma conta rápida.
-      </p>
-      <div className="mt-3 flex gap-2">
-        <Input
-          inputMode="decimal"
-          placeholder="Ex.: 100 / 2 + 15"
-          value={expression}
-          onChange={(e) => setExpression(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") calculate();
-          }}
-        />
-        <Button onClick={calculate} type="button">
-          Calcular
-        </Button>
+    <div className="border-t border-border bg-background/30 px-5 py-5">
+      <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <div className="rounded-xl bg-slate-900 px-5 py-5 text-right font-mono text-3xl font-semibold text-white">
+          {result}
+        </div>
+        <div className="mt-4 grid grid-cols-4 gap-2">
+          {[
+            ["7", "8", "9", "÷"],
+            ["4", "5", "6", "×"],
+            ["1", "2", "3", "−"],
+            ["0", ",", "C", "+"],
+          ]
+            .flat()
+            .map((key) => (
+              <button
+                key={key}
+                type="button"
+                className={`h-12 rounded-lg border border-border text-lg font-semibold transition hover:bg-secondary ${["÷", "×", "−", "+"].includes(key) ? "bg-primary/10 text-primary" : key === "C" ? "bg-destructive/10 text-destructive" : "bg-background"}`}
+                onClick={() => {
+                  if (key === "C") {
+                    setExpression("0");
+                    setResult("0");
+                    return;
+                  }
+                  if (key === ",") {
+                    setExpression(expression === "0" ? "0," : `${expression},`);
+                    return;
+                  }
+                  const operator = key === "÷" ? "/" : key === "×" ? "*" : key === "−" ? "-" : key;
+                  setExpression(
+                    expression === "0" && !["+", "-", "*", "/"].includes(operator)
+                      ? key
+                      : `${expression}${operator}`,
+                  );
+                  setResult(
+                    expression === "0" && !["+", "-", "*", "/"].includes(operator)
+                      ? key
+                      : `${expression}${operator}`,
+                  );
+                }}
+              >
+                {key}
+              </button>
+            ))}
+        </div>
+        <button
+          type="button"
+          className="mt-2 h-12 w-full rounded-lg bg-primary text-lg font-semibold text-primary-foreground hover:bg-primary/90"
+          onClick={calculate}
+        >
+          =
+        </button>
       </div>
-      {result ? <p className="mt-3 text-lg font-bold text-primary">Resultado: {result}</p> : null}
     </div>
   );
 }
