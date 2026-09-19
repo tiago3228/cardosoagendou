@@ -392,6 +392,7 @@ export type Database = {
           description: string | null;
           email: string | null;
           id: string;
+          google_review_url: string | null;
           instagram_url: string | null;
           logo_url: string | null;
           max_advance_days: number;
@@ -442,6 +443,7 @@ export type Database = {
           show_whatsapp?: boolean;
           slot_interval_minutes?: number;
           slug: string;
+          google_review_url?: string | null;
           timezone?: string;
           updated_at?: string;
           whatsapp?: string | null;
@@ -478,6 +480,7 @@ export type Database = {
           show_whatsapp?: boolean;
           slot_interval_minutes?: number;
           slug?: string;
+          google_review_url?: string | null;
           timezone?: string;
           updated_at?: string;
           whatsapp?: string | null;

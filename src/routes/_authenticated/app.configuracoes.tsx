@@ -53,6 +53,7 @@ function SettingsPage() {
     description: business.description ?? "",
     whatsapp: business.whatsapp ?? "",
     instagram_url: business.instagram_url ?? "",
+    google_review_url: business.google_review_url ?? "",
     email: business.email ?? "",
     address: business.address ?? "",
     booking_policy: business.booking_policy ?? "",
@@ -76,6 +77,7 @@ function SettingsPage() {
           description: form.description.trim() || null,
           whatsapp: form.whatsapp.trim() || null,
           instagram_url: form.instagram_url.trim() || null,
+          google_review_url: form.google_review_url.trim() || null,
           email: form.email.trim() || null,
           address: form.address.trim() || null,
           booking_policy: form.booking_policy.trim() || null,
@@ -325,6 +327,19 @@ function SettingsPage() {
               onChange={(e) => setForm({ ...form, email: e.target.value })}
             />
             <p className="text-xs text-muted-foreground">Nunca aparece na página pública.</p>
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Avaliações no Google</Label>
+            <p className="text-xs text-muted-foreground">
+              Cole o link da sua página de avaliações. Ele será usado na mensagem de satisfação
+              pós-atendimento.
+            </p>
+            <Input
+              type="url"
+              value={form.google_review_url}
+              placeholder="https://..."
+              onChange={(e) => setForm({ ...form, google_review_url: e.target.value })}
+            />
           </div>
           <div className="space-y-2 rounded-lg border border-border bg-muted/40 p-3 sm:col-span-2">
             <p className="text-sm font-medium text-foreground">Visibilidade na página pública</p>
