@@ -385,23 +385,23 @@ function BookingPage() {
         style={{ backgroundColor: business.secondary_color ?? "#14120F" }}
       >
         <div className="h-1 bg-[linear-gradient(90deg,var(--public-primary)_0%,var(--public-primary)_60%,transparent_60%,transparent_70%,var(--public-primary)_70%,var(--public-primary)_100%)]" />
-        <div className="border-b border-[var(--public-border)] px-5 py-6">
+        <div className="border-b border-[var(--public-border)] px-4 py-4">
           {business.cover_url ? (
             <img
               src={business.cover_url}
               alt=""
-              className="mb-5 h-32 w-full rounded-2xl object-cover opacity-80"
+              className="mb-4 h-24 w-full rounded-xl object-cover opacity-80"
             />
           ) : null}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {business.logo_url ? (
               <img
                 src={business.logo_url}
                 alt={`Logo de ${business.name}`}
-                className="size-16 rounded-full border border-[var(--public-primary)] object-cover"
+                className="size-12 rounded-full border border-[var(--public-primary)] object-cover"
               />
             ) : (
-              <div className="flex size-16 shrink-0 items-center justify-center rounded-full border border-[var(--public-primary)] font-display text-2xl font-bold text-[var(--public-accent)]">
+              <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-[var(--public-primary)] font-display text-xl font-bold text-[var(--public-accent)]">
                 {business.name.slice(0, 1).toUpperCase()}
               </div>
             )}
@@ -409,14 +409,14 @@ function BookingPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--public-primary)]">
                 {data.segments?.[0]?.name ?? config.label}
               </p>
-              <h1 className="mt-1 font-display text-3xl font-bold uppercase tracking-wide text-[var(--public-text)]">
+              <h1 className="mt-1 font-display text-2xl font-bold uppercase tracking-wide text-[var(--public-text)]">
                 {business.name}
               </h1>
             </div>
           </div>
 
           {business.description ? (
-            <p className="mt-4 text-sm leading-6 text-[var(--public-muted)]">
+            <p className="mt-3 text-sm leading-5 text-[var(--public-muted)]">
               {business.description}
             </p>
           ) : null}
@@ -425,7 +425,7 @@ function BookingPage() {
               href={mapLink ?? undefined}
               target="_blank"
               rel="noreferrer"
-              className="mt-4 flex items-start gap-2 rounded-xl border border-[var(--public-border)] bg-[var(--public-surface)] p-3 text-sm text-[var(--public-text)] transition hover:border-[var(--public-primary)]"
+              className="mt-3 flex items-start gap-2 rounded-lg border border-[var(--public-border)] bg-[var(--public-surface)] p-2.5 text-sm text-[var(--public-text)] transition hover:border-[var(--public-primary)]"
             >
               <MapPin className="mt-0.5 size-4 shrink-0 text-[var(--public-primary)]" aria-hidden />
               <span className="flex-1">
@@ -439,7 +439,7 @@ function BookingPage() {
               ) : null}
             </a>
           ) : null}
-          <p className="mt-4 rounded-xl border border-[var(--public-primary)] bg-[var(--public-surface)] p-3 text-sm text-[var(--public-accent)]">
+          <p className="mt-3 rounded-lg border border-[var(--public-primary)] bg-[var(--public-surface)] p-2.5 text-xs leading-5 text-[var(--public-accent)]">
             Cancelamentos fora de {business.cancellation_deadline_hours ?? 1} hora(s) do horário
             estão sujeitos a multa de 10% do valor total dos serviços.
           </p>
@@ -451,13 +451,13 @@ function BookingPage() {
               )}
               target="_blank"
               rel="noreferrer"
-              className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[var(--public-primary)] bg-[var(--public-primary)] px-4 py-3 text-sm font-semibold text-[var(--public-bg)]"
+              className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[var(--public-primary)] bg-[var(--public-primary)] px-3 py-2 text-sm font-semibold text-[var(--public-bg)]"
             >
               <MessageCircle className="size-4" aria-hidden /> Conversar pelo WhatsApp
             </a>
           ) : null}
           {normalizeInstagramUrl(business.instagram_url) ? (
-            <div className="mt-5 rounded-2xl border border-[var(--public-border)] bg-[var(--public-surface)] p-4">
+            <div className="mt-4 rounded-xl border border-[var(--public-border)] bg-[var(--public-surface)] p-3">
               <div className="flex items-start gap-3">
                 <Instagram
                   className="mt-0.5 size-5 shrink-0 text-[var(--public-primary)]"
@@ -474,7 +474,7 @@ function BookingPage() {
                     href={normalizeInstagramUrl(business.instagram_url) ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--public-accent)] hover:underline"
+                    className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-[var(--public-accent)] hover:underline"
                   >
                     <span>Ver Instagram</span> <ArrowRight className="size-4" aria-hidden />
                   </a>
@@ -484,7 +484,7 @@ function BookingPage() {
           ) : null}
         </div>
 
-        <div className="px-5 py-6">
+        <div className="px-4 py-5">
           {step > 0 && step < 4 ? (
             <button
               onClick={() => setStep((s) => s - 1)}
@@ -496,14 +496,14 @@ function BookingPage() {
 
           {step === 0 ? (
             <section>
-              <div className="mb-7 rounded-2xl border border-[var(--public-border)] bg-[var(--public-surface)] p-5">
+              <div className="mb-5 rounded-xl border border-[var(--public-border)] bg-[var(--public-surface)] p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--public-primary)]">
                   Agendamento online
                 </p>
-                <h2 className="mt-2 font-display text-3xl font-bold uppercase text-[var(--public-text)]">
+                <h2 className="mt-1 font-display text-2xl font-bold uppercase text-[var(--public-text)]">
                   Agendar horário
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-[var(--public-muted)]">
+                <p className="mt-1 text-sm leading-5 text-[var(--public-muted)]">
                   Primeiro escolha quem vai realizar seu atendimento.
                 </p>
               </div>
@@ -521,7 +521,7 @@ function BookingPage() {
                       setSelected([]);
                       setStep(1);
                     }}
-                    className="flex w-full items-center justify-between rounded-xl border border-[var(--public-border)] bg-[var(--public-surface)] p-4 text-left font-medium text-[var(--public-text)] transition hover:border-[var(--public-primary)]"
+                    className="flex w-full items-center justify-between rounded-lg border border-[var(--public-border)] bg-[var(--public-surface)] p-3 text-left text-sm font-medium text-[var(--public-text)] transition hover:border-[var(--public-primary)]"
                   >
                     Qualquer profissional disponível
                     <ArrowRight className="size-4 text-[var(--public-primary)]" aria-hidden />
@@ -535,16 +535,16 @@ function BookingPage() {
                         setSelected([]);
                         setStep(1);
                       }}
-                      className="flex w-full items-center gap-3 rounded-xl border border-[var(--public-border)] bg-[var(--public-surface)] p-4 text-left transition hover:border-[var(--public-primary)]"
+                      className="flex w-full items-center gap-3 rounded-lg border border-[var(--public-border)] bg-[var(--public-surface)] p-3 text-left transition hover:border-[var(--public-primary)]"
                     >
                       {professional.photo_url ? (
                         <img
                           src={professional.photo_url}
                           alt={professional.name}
-                          className="size-12 rounded-full object-cover"
+                          className="size-10 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="flex size-12 items-center justify-center rounded-full border border-[var(--public-primary)] text-lg font-semibold text-[var(--public-accent)]">
+                        <div className="flex size-10 items-center justify-center rounded-full border border-[var(--public-primary)] text-base font-semibold text-[var(--public-accent)]">
                           {professional.name.slice(0, 1).toUpperCase()}
                         </div>
                       )}
@@ -595,7 +595,7 @@ function BookingPage() {
                               if (isServiceDisabled(service.id)) return;
                               toggleService(service.id);
                             }}
-                            className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition ${active ? "border-[var(--public-primary)] bg-[var(--public-card)]" : "border-[var(--public-border)] bg-[var(--public-surface)]"} ${isServiceDisabled(service.id) ? "pointer-events-none cursor-not-allowed opacity-50" : "hover:border-[var(--public-primary)]"}`}
+                            className={`flex w-full items-center justify-between rounded-lg border p-3 text-left text-sm transition ${active ? "border-[var(--public-primary)] bg-[var(--public-card)]" : "border-[var(--public-border)] bg-[var(--public-surface)]"} ${isServiceDisabled(service.id) ? "pointer-events-none cursor-not-allowed opacity-50" : "hover:border-[var(--public-primary)]"}`}
                           >
                             <span>
                               <span className="block font-medium text-[var(--public-text)]">
@@ -663,7 +663,7 @@ function BookingPage() {
                     {(data!.products ?? []).map((product) => (
                       <li
                         key={product.id}
-                        className={`rounded-xl border bg-[var(--public-surface)] p-3 transition ${selectedProducts.includes(product.id) ? "border-[var(--public-primary)]" : "border-[var(--public-border)]"}`}
+                        className={`rounded-lg border bg-[var(--public-surface)] p-2.5 text-sm transition ${selectedProducts.includes(product.id) ? "border-[var(--public-primary)]" : "border-[var(--public-border)]"}`}
                       >
                         <div className="flex w-full items-center gap-3 text-left">
                           {product.image_url ? (
@@ -774,7 +774,7 @@ function BookingPage() {
                       setDate(day);
                       void loadSlots(day, professionalId);
                     }}
-                    className={`shrink-0 rounded-xl border px-4 py-2 text-sm font-semibold ${day === date ? "border-[var(--public-primary)] bg-[var(--public-primary)] text-[var(--public-bg)]" : "border-[var(--public-border)] bg-[var(--public-surface)] text-[var(--public-text)]"}`}
+                    className={`shrink-0 rounded-lg border px-3 py-1.5 text-sm font-semibold ${day === date ? "border-[var(--public-primary)] bg-[var(--public-primary)] text-[var(--public-bg)]" : "border-[var(--public-border)] bg-[var(--public-surface)] text-[var(--public-text)]"}`}
                   >
                     {new Date(`${day}T12:00:00`).toLocaleDateString("pt-BR", {
                       weekday: "short",
@@ -809,7 +809,7 @@ function BookingPage() {
                               });
                               setStep(3);
                             }}
-                            className="rounded-xl border border-[var(--public-border)] bg-[var(--public-card)] py-3 text-sm font-semibold text-[var(--public-text)] shadow-sm transition hover:border-[var(--public-primary)] hover:bg-[var(--public-primary)] hover:text-[var(--public-bg)]"
+                            className="rounded-lg border border-[var(--public-border)] bg-[var(--public-card)] py-2.5 text-sm font-semibold text-[var(--public-text)] shadow-sm transition hover:border-[var(--public-primary)] hover:bg-[var(--public-primary)] hover:text-[var(--public-bg)]"
                           >
                             {slot.label}
                           </button>
@@ -880,7 +880,7 @@ function BookingPage() {
                   </div>
                 ) : null}
                 {business.booking_policy ? (
-                  <label className="flex items-start gap-3 rounded-xl border border-[var(--public-border)] bg-[var(--public-surface)] p-4 text-sm text-[var(--public-text)]">
+                  <label className="flex items-start gap-3 rounded-lg border border-[var(--public-border)] bg-[var(--public-surface)] p-3 text-sm text-[var(--public-text)]">
                     <input
                       type="checkbox"
                       required={!rescheduleToken}
