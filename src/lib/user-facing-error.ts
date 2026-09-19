@@ -66,6 +66,10 @@ export function userFacingError(
   if (!raw) return fallback;
 
   const code = raw.match(/^([A-Z][A-Z0-9_]+)(?::|$)/)?.[1];
+  if (code === "APPOINTMENT_FAILED") {
+    const detail = raw.replace(/^APPOINTMENT_FAILED:\s*/i, "").trim();
+    return detail ? `O banco rejeitou o agendamento: ${detail}` : fallback;
+  }
   if (code && TECHNICAL_CODE_MESSAGES[code]) return TECHNICAL_CODE_MESSAGES[code];
 
   for (const [pattern, message] of ENGLISH_MESSAGE_PATTERNS) {
