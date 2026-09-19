@@ -60,13 +60,26 @@ function extractErrorText(error: unknown): string {
   if (error && typeof error === "object") {
     const candidate = error as {
       message?: unknown;
-      error?: { message?: unknown };
+      error?: { message?: unknown } | string;
       cause?: unknown;
+      data?: unknown;
+      detail?: unknown;
+      statusText?: unknown;
     };
     if (typeof candidate.message === "string") return candidate.message;
+    if (typeof candidate.error === "string") return candidate.error;
     if (typeof candidate.error?.message === "string") return candidate.error.message;
     if (typeof candidate.cause === "string") return candidate.cause;
     if (candidate.cause instanceof Error) return candidate.cause.message;
+    if (typeof candidate.detail === "string") return candidate.detail;
+    if (typeof candidate.statusText === "string") return candidate.statusText;
+    if (typeof candidate.data === "string") return candidate.data;
+    try {
+      const serialized = JSON.stringify(error);
+      if (serialized && serialized !== "{}") return serialized;
+    } catch {
+      // Ignore circular error objects and use the generic fallback below.
+    }
   }
   return "";
 }
