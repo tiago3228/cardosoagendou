@@ -3,6 +3,28 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { availabilitySchema, publicBookingSchema } from "./schemas";
 
+function rpcErrorMessage(error: unknown): string {
+  if (!error) return "";
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  const value = error as {
+    message?: unknown;
+    details?: unknown;
+    hint?: unknown;
+    code?: unknown;
+  };
+  const parts = [value.message, value.details, value.hint, value.code].filter(
+    (part): part is string => typeof part === "string" && part.length > 0,
+  );
+  try {
+    const serialized = JSON.stringify(error);
+    if (serialized && serialized !== "{}") parts.push(serialized);
+  } catch {
+    // Keep the structured fields above when the error object is circular.
+  }
+  return [...new Set(parts)].join(" | ");
+}
+
 /** Public booking page data: business branding, services, professionals, hours. */
 export const getPublicBusiness = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ slug: z.string().min(1).max(60) }).parse(input))
@@ -169,7 +191,7 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
     }
     const { data: created, error } = bookingRpc;
     if (error || !created) {
-      const message = error?.message ?? "";
+      const message = rpcErrorMessage(error);
       if (message.includes("DOUBLE_BOOKING")) {
         throw new Error("SLOT_UNAVAILABLE: esse horário acabou de ser reservado");
       }
@@ -186,7 +208,14 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
           "BOOKING_MIGRATION_REQUIRED: o banco ainda não recebeu a migration de integridade de agendamentos",
         );
       }
-      throw new Error(`APPOINTMENT_FAILED: ${message}`);
+      if (message.includes('column reference "appointment_id" is ambiguous')) {
+        throw new Error(
+          "BOOKING_MIGRATION_REQUIRED: execute a migration corrigida das RPCs de agendamento",
+        );
+      }
+      throw new Error(
+        `APPOINTMENT_FAILED: ${message || "a RPC recusou a operação sem informar o motivo"}`,
+      );
     }
 
     const result = created as {
