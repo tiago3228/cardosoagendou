@@ -78,6 +78,7 @@ function extractErrorText(error: unknown, depth = 0): string {
       data?: unknown;
       detail?: unknown;
       statusText?: unknown;
+      issues?: Array<{ message?: unknown }>;
     };
     if (typeof candidate.message === "string") return candidate.message;
     if (typeof candidate.error === "string") return candidate.error;
@@ -87,6 +88,13 @@ function extractErrorText(error: unknown, depth = 0): string {
     if (typeof candidate.detail === "string") return candidate.detail;
     if (typeof candidate.statusText === "string") return candidate.statusText;
     if (typeof candidate.data === "string") return candidate.data;
+    if (Array.isArray(candidate.issues)) {
+      const issueText = candidate.issues
+        .map((issue) => (typeof issue?.message === "string" ? issue.message : ""))
+        .filter(Boolean)
+        .join("; ");
+      if (issueText) return issueText;
+    }
     const nested = [candidate.error, candidate.cause, candidate.data, candidate.detail]
       .map((value) => extractErrorText(value, depth + 1))
       .find(Boolean);
