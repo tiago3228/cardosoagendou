@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import {
   getAppointmentByManageToken,
@@ -49,6 +50,8 @@ function ManageAppointmentPage() {
   const [presence, setPresence] = useState(appointment?.presence_status ?? null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [showDeclineReason, setShowDeclineReason] = useState(false);
+  const [declineReason, setDeclineReason] = useState("");
 
   useEffect(() => {
     if (!appointment?.id) return;
@@ -91,11 +94,17 @@ function ManageAppointmentPage() {
     );
   }
 
-  async function updatePresence(value: "CONFIRMED" | "DECLINED") {
+  async function updatePresence(value: "CONFIRMED" | "DECLINED", reason?: string) {
+    if (value === "DECLINED" && !reason?.trim()) {
+      setMessage("Informe o motivo para confirmar o cancelamento.");
+      return;
+    }
     setBusy(true);
     setMessage("");
     try {
-      await confirmAppointmentPresence({ data: { token, presence: value } });
+      await confirmAppointmentPresence({
+        data: { token, presence: value, reason: reason?.trim() },
+      });
       setPresence(value);
       if (value === "DECLINED") {
         setCurrentStatus("CANCELED");
@@ -175,13 +184,57 @@ function ManageAppointmentPage() {
           <Button
             disabled={busy || currentStatus !== "CONFIRMED"}
             variant="outline"
-            onClick={() => void updatePresence("DECLINED")}
+            onClick={() => {
+              setShowDeclineReason(true);
+              setMessage("");
+            }}
             className="!border-[var(--public-primary)] !bg-[var(--public-text)] !text-[var(--public-surface)] hover:!bg-[var(--public-accent)] hover:!text-[var(--public-surface)]"
           >
             <XCircle className="mr-2 size-4" />
             Não poderei comparecer
           </Button>
         </div>
+        {showDeclineReason && currentStatus === "CONFIRMED" ? (
+          <div className="mt-4 rounded-xl border border-[var(--public-border)] bg-[var(--public-surface)] p-4">
+            <label
+              htmlFor="decline-reason"
+              className="text-sm font-semibold text-[var(--public-text)]"
+            >
+              Qual motivo?
+            </label>
+            <Textarea
+              id="decline-reason"
+              value={declineReason}
+              onChange={(event) => setDeclineReason(event.target.value)}
+              maxLength={500}
+              placeholder="Digite o motivo do cancelamento"
+              className="mt-2 min-h-24 border-[var(--public-border)] bg-[var(--public-card)] text-[var(--public-text)] placeholder:text-[var(--public-muted)]"
+            />
+            <div className="mt-3 flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy}
+                onClick={() => {
+                  setShowDeclineReason(false);
+                  setDeclineReason("");
+                  setMessage("");
+                }}
+                className="flex-1 !border-[var(--public-border)] !bg-transparent !text-[var(--public-text)]"
+              >
+                Voltar
+              </Button>
+              <Button
+                type="button"
+                disabled={busy || !declineReason.trim()}
+                onClick={() => void updatePresence("DECLINED", declineReason)}
+                className="flex-1 bg-[var(--public-primary)] text-[var(--public-secondary)] hover:bg-[var(--public-accent)]"
+              >
+                Confirmar cancelamento
+              </Button>
+            </div>
+          </div>
+        ) : null}
         {presence ? (
           <p className="mt-4 text-sm text-[var(--public-accent)]">
             Presença: {presence === "CONFIRMED" ? "confirmada" : "não confirmada"}.

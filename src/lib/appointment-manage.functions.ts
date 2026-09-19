@@ -3,7 +3,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 const tokenSchema = z.object({ token: z.string().trim().min(32).max(100) });
-const presenceSchema = tokenSchema.extend({ presence: z.enum(["CONFIRMED", "DECLINED"]) });
+const presenceSchema = tokenSchema.extend({
+  presence: z.enum(["CONFIRMED", "DECLINED"]),
+  reason: z.string().trim().max(500).optional(),
+});
 const rescheduleByTokenSchema = tokenSchema.extend({
   professionalId: z.string().uuid(),
   startsAt: z.string().datetime({ offset: true }),
@@ -57,6 +60,7 @@ export const confirmAppointmentPresence = createServerFn({ method: "POST" })
     const { data: result, error } = await supabaseAdmin.rpc("appointment_presence_by_token", {
       _token_hash: hashToken(data.token),
       _presence: data.presence,
+      _reason: data.reason ?? null,
     });
     if (error) throw new Error(`PRESENCE_FAILED: ${error.message}`);
     return result;

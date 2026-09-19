@@ -58,6 +58,7 @@ type AppointmentItem = {
   total_price_cents: number;
   duration_minutes: number;
   notes: string | null;
+  cancel_reason: string | null;
   blocks_agenda: boolean;
   professional_id: string;
   professionals: unknown;
@@ -592,6 +593,11 @@ function AppointmentRow({
 
       {appointment.blocks_agenda === false ? (
         <p className="mt-3 text-xs font-medium text-accent">Simultâneo · não ocupa a agenda</p>
+      ) : null}
+      {appointment.status === "CANCELED" && appointment.cancel_reason ? (
+        <p className="mt-3 rounded-md bg-status-canceled/10 px-3 py-2 text-xs text-status-canceled">
+          <strong>Motivo do cancelamento:</strong> {appointment.cancel_reason}
+        </p>
       ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-3">
