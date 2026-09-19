@@ -1,6 +1,8 @@
 -- Reparo seguro para bases que receberam apenas parte das migrations de booking.
 -- Não apaga nem altera agendamentos existentes.
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 ALTER TABLE public.appointments
   ADD COLUMN IF NOT EXISTS blocks_agenda boolean NOT NULL DEFAULT true,
   ADD COLUMN IF NOT EXISTS idempotency_key text,
