@@ -7,6 +7,8 @@ const TECHNICAL_CODE_MESSAGES: Record<string, string> = {
   SLOT_UNAVAILABLE: "Esse horário não está mais disponível. Escolha outro horário.",
   APPOINTMENT_NOT_RESCHEDULABLE:
     "Este agendamento não pode mais ser reagendado. Solicite um novo link ao estabelecimento ou faça um novo agendamento.",
+  RESCHEDULE_NOTICE_REQUIRED:
+    "O reagendamento precisa ser solicitado com pelo menos 2 horas de antecedência.",
   DOUBLE_BOOKING: "Esse horário já foi reservado. Escolha outro horário.",
   SERVICE_NOT_AVAILABLE: "Um dos serviços selecionados não está mais disponível.",
   SERVICE_CONFLICT: "Os serviços selecionados não podem ser combinados no mesmo atendimento.",
