@@ -78,6 +78,7 @@ function SettingsPage() {
   const [form, setForm] = useState({
     name: business.name,
     slug: business.slug,
+    segment_id: "",
     description: business.description ?? "",
     whatsapp: business.whatsapp ?? "",
     instagram_url: business.instagram_url ?? "",
@@ -94,6 +95,30 @@ function SettingsPage() {
     cancellation_deadline_hours: String(business.cancellation_deadline_hours ?? 1),
     primary_color: business.primary_color ?? "#B4884F",
     secondary_color: business.secondary_color ?? "#14120F",
+  });
+  const businessSegments = useQuery({
+    queryKey: ["business-segments", business.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("business_segments")
+        .select("id, segment_id, name, slug, description, sort_order, active")
+        .eq("business_id", business.id)
+        .order("name");
+      if (error) throw new Error(error.message);
+      return data ?? [];
+    },
+  });
+  const catalogSegments = useQuery({
+    queryKey: ["catalog-segments"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("segments")
+        .select("id, name, slug, description, sort_order")
+        .eq("active", true)
+        .order("name");
+      if (error) throw new Error(error.message);
+      return data ?? [];
+    },
   });
 
   const save = useMutation({
@@ -125,10 +150,44 @@ function SettingsPage() {
         .eq("id", business.id);
       if (error) throw new Error(error.message);
 
-      if (form.google_review_url.trim()) {
+      const selectedSegmentId =
+        form.segment_id || businessSegments.data?.find((item) => item.active)?.segment_id;
+      const selectedSegment = catalogSegments.data?.find((item) => item.id === selectedSegmentId);
+      if (selectedSegment && selectedSegmentId) {
+        const currentSegmentId = businessSegments.data?.find((item) => item.active)?.segment_id;
+        if (selectedSegmentId !== currentSegmentId) {
+          const deactivateResult = await supabase
+            .from("business_segments")
+            .update({ active: false })
+            .eq("business_id", business.id)
+            .eq("active", true);
+          if (deactivateResult.error) throw new Error(deactivateResult.error.message);
+          const existing = businessSegments.data?.find(
+            (item) => item.segment_id === selectedSegmentId,
+          );
+          const segmentResult = existing
+            ? await supabase
+                .from("business_segments")
+                .update({ active: true })
+                .eq("id", existing.id)
+            : await supabase.from("business_segments").insert({
+                business_id: business.id,
+                segment_id: selectedSegment.id,
+                name: selectedSegment.name,
+                slug: selectedSegment.slug,
+                description: selectedSegment.description,
+                sort_order: selectedSegment.sort_order,
+                active: true,
+              });
+          if (segmentResult.error) throw new Error(segmentResult.error.message);
+        }
+      }
+
+      const googleUrl = normalizeUrl(form.google_review_url);
+      if (googleUrl) {
         const googleResult = await supabase
           .from("businesses")
-          .update({ google_review_url: normalizeUrl(form.google_review_url) })
+          .update({ google_review_url: googleUrl })
           .eq("id", business.id);
         if (googleResult.error && googleResult.error.code !== "42703") {
           throw new Error(googleResult.error.message);
@@ -354,6 +413,28 @@ function SettingsPage() {
             <p className="text-xs text-muted-foreground">
               O endereço final será /{normalizeSlug(form.slug) || "meu-negocio"}. Use letras,
               números e hífens.
+            </p>
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Nicho do negócio</Label>
+            <select
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              value={
+                form.segment_id ||
+                businessSegments.data?.find((segment) => segment.active)?.segment_id ||
+                ""
+              }
+              onChange={(e) => setForm({ ...form, segment_id: e.target.value })}
+            >
+              <option value="">Selecione o nicho</option>
+              {(catalogSegments.data ?? []).map((segment) => (
+                <option key={segment.id} value={segment.id}>
+                  {segment.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Esse nicho define a identificação exibida na página pública e o catálogo de serviços.
             </p>
           </div>
           <div className="space-y-1.5 sm:col-span-2">

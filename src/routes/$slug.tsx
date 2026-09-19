@@ -407,7 +407,7 @@ function BookingPage() {
             )}
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--public-primary)]">
-                {config.label}
+                {data.segments?.[0]?.name ?? config.label}
               </p>
               <h1 className="mt-1 font-display text-3xl font-bold uppercase tracking-wide text-[var(--public-text)]">
                 {business.name}
