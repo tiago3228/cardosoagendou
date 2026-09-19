@@ -34,6 +34,19 @@ function normalizeUrl(value: string) {
   return /^https?:\/\//i.test(normalized) ? normalized : `https://${normalized}`;
 }
 
+const MAX_SLUG_LENGTH = 60;
+
+function normalizeSlug(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, MAX_SLUG_LENGTH);
+}
+
 function SettingsPage() {
   const { data: panel } = useSuspenseQuery(panelQuery);
   const business = panel.business!;
@@ -64,6 +77,7 @@ function SettingsPage() {
   });
   const [form, setForm] = useState({
     name: business.name,
+    slug: business.slug,
     description: business.description ?? "",
     whatsapp: business.whatsapp ?? "",
     instagram_url: business.instagram_url ?? "",
@@ -88,6 +102,7 @@ function SettingsPage() {
         .from("businesses")
         .update({
           name: form.name.trim(),
+          slug: normalizeSlug(form.slug),
           description: form.description.trim() || null,
           whatsapp: form.whatsapp.trim() || null,
           instagram_url: normalizeInstagram(form.instagram_url),
@@ -325,6 +340,21 @@ function SettingsPage() {
           <div className="space-y-1.5 sm:col-span-2">
             <Label>Nome</Label>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Link público de agendamento</Label>
+            <div className="flex items-center gap-2">
+              <span className="shrink-0 text-sm text-muted-foreground">/</span>
+              <Input
+                value={form.slug}
+                placeholder="meu-negocio"
+                onChange={(e) => setForm({ ...form, slug: e.target.value })}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              O endereço final será /{normalizeSlug(form.slug) || "meu-negocio"}. Use letras,
+              números e hífens.
+            </p>
           </div>
           <div className="space-y-1.5 sm:col-span-2">
             <Label>Descrição</Label>
