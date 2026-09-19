@@ -91,7 +91,6 @@ function SettingsPage() {
           description: form.description.trim() || null,
           whatsapp: form.whatsapp.trim() || null,
           instagram_url: normalizeInstagram(form.instagram_url),
-          google_review_url: normalizeUrl(form.google_review_url),
           email: form.email.trim() || null,
           address: form.address.trim() || null,
           booking_policy: form.booking_policy.trim() || null,
@@ -110,9 +109,29 @@ function SettingsPage() {
         })
         .eq("id", business.id);
       if (error) throw new Error(error.message);
+
+      if (form.google_review_url.trim()) {
+        const googleResult = await supabase
+          .from("businesses")
+          .update({ google_review_url: normalizeUrl(form.google_review_url) })
+          .eq("id", business.id);
+        if (googleResult.error && googleResult.error.code !== "42703") {
+          throw new Error(googleResult.error.message);
+        }
+        return googleResult.error?.code === "42703";
+      }
+      return false;
     },
-    onSuccess: () => {
-      toast.success("Configurações salvas");
+    onSuccess: (googleColumnMissing) => {
+      toast.success(
+        "Configurações salvas",
+        googleColumnMissing
+          ? {
+              description:
+                "O restante foi salvo. Execute a migração google_review_url para salvar o link do Google.",
+            }
+          : undefined,
+      );
       queryClient.invalidateQueries({ queryKey: ["panel"] });
     },
     onError: (error: Error) =>
