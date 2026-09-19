@@ -54,9 +54,10 @@ const ENGLISH_MESSAGE_PATTERNS: Array<[RegExp, string]> = [
   ],
 ];
 
-function extractErrorText(error: unknown): string {
+function extractErrorText(error: unknown, depth = 0): string {
   if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
+  if (depth > 3 || !error || typeof error !== "object") return "";
   if (error && typeof error === "object") {
     const candidate = error as {
       message?: unknown;
@@ -74,11 +75,19 @@ function extractErrorText(error: unknown): string {
     if (typeof candidate.detail === "string") return candidate.detail;
     if (typeof candidate.statusText === "string") return candidate.statusText;
     if (typeof candidate.data === "string") return candidate.data;
+    const nested = [candidate.error, candidate.cause, candidate.data, candidate.detail]
+      .map((value) => extractErrorText(value, depth + 1))
+      .find(Boolean);
+    if (nested) return nested;
     try {
       const serialized = JSON.stringify(error);
       if (serialized && serialized !== "{}") return serialized;
     } catch {
       // Ignore circular error objects and use the generic fallback below.
+    }
+    for (const key of Object.getOwnPropertyNames(error)) {
+      const value = extractErrorText((error as Record<string, unknown>)[key], depth + 1);
+      if (value) return value;
     }
   }
   return "";
