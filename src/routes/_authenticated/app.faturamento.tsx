@@ -524,7 +524,12 @@ function CalcField({
   return (
     <label className="space-y-1.5 text-sm">
       <span className="text-muted-foreground">{label}</span>
-      <Input inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value)} />
+      <Input
+        inputMode="decimal"
+        value={value}
+        onFocus={(event) => event.currentTarget.select()}
+        onChange={(e) => onChange(e.target.value)}
+      />
     </label>
   );
 }
