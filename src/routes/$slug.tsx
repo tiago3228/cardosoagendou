@@ -87,6 +87,13 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function descriptionFontFamily(font: string | undefined) {
+  if (font === "serif") return "Georgia, serif";
+  if (font === "mono") return "ui-monospace, SFMono-Regular, monospace";
+  if (font === "display") return "'Trebuchet MS', sans-serif";
+  return "ui-sans-serif, system-ui, sans-serif";
+}
+
 function BookingPage() {
   const { slug } = Route.useParams();
   const { data } = useSuspenseQuery(businessQuery(slug));
@@ -416,7 +423,13 @@ function BookingPage() {
           </div>
 
           {business.description ? (
-            <p className="mt-3 text-sm leading-5 text-[var(--public-muted)]">
+            <p
+              className="mt-3 text-sm leading-5"
+              style={{
+                color: business.description_color ?? "#9C948A",
+                fontFamily: descriptionFontFamily(business.description_font),
+              }}
+            >
               {business.description}
             </p>
           ) : null}
@@ -938,6 +951,12 @@ function BookingPage() {
         </div>
 
         <footer className="border-t border-[var(--public-border)] px-4 py-5 text-center">
+          {business.address ? (
+            <p className="mb-3 text-xs text-[var(--public-muted)]">
+              <span className="font-semibold text-[var(--public-primary)]">Onde estamos:</span>{" "}
+              {business.address}
+            </p>
+          ) : null}
           <p className="mx-auto mb-4 max-w-sm text-xs leading-5 text-[var(--public-muted)]">
             Cancelamentos fora de {business.cancellation_deadline_hours ?? 1} hora(s) do horário
             estão sujeitos a multa de 10% do valor total dos serviços.

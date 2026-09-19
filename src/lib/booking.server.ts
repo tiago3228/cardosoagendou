@@ -19,6 +19,8 @@ export interface BookingBusiness {
   name: string;
   business_type: string;
   description: string | null;
+  description_color: string;
+  description_font: string;
   logo_url: string | null;
   cover_url: string | null;
   whatsapp: string | null;
@@ -35,7 +37,7 @@ export interface BookingBusiness {
 }
 
 const BUSINESS_COLUMNS =
-  "id, slug, name, business_type, description, logo_url, cover_url, whatsapp, address, booking_policy, timezone, slot_interval_minutes, min_notice_minutes, max_advance_days, cancellation_deadline_hours, primary_color, secondary_color";
+  "id, slug, name, business_type, description, description_color, description_font, logo_url, cover_url, whatsapp, address, booking_policy, timezone, slot_interval_minutes, min_notice_minutes, max_advance_days, cancellation_deadline_hours, primary_color, secondary_color";
 
 export async function loadBusinessBySlug(db: Db, slug: string): Promise<BookingBusiness | null> {
   const { data } = await db

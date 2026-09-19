@@ -56,6 +56,10 @@ function normalizeSlug(value: string) {
 function SettingsPage() {
   const { data: panel } = useSuspenseQuery(panelQuery);
   const business = panel.business!;
+  const styledBusiness = business as typeof business & {
+    description_font?: string;
+    description_color?: string;
+  };
   const queryClient = useQueryClient();
   const [businessSettingsOpen, setBusinessSettingsOpen] = useState(false);
   const [hoursOpen, setHoursOpen] = useState(false);
@@ -86,6 +90,8 @@ function SettingsPage() {
     slug: business.slug,
     segment_id: "",
     description: business.description ?? "",
+    description_font: styledBusiness.description_font ?? "sans",
+    description_color: styledBusiness.description_color ?? "#9C948A",
     whatsapp: business.whatsapp ?? "",
     instagram_url: business.instagram_url ?? "",
     google_review_url: business.google_review_url ?? "",
@@ -152,7 +158,9 @@ function SettingsPage() {
           ),
           primary_color: form.primary_color,
           secondary_color: form.secondary_color,
-        })
+          description_font: form.description_font,
+          description_color: form.description_color,
+        } as never)
         .eq("id", business.id);
       if (error) throw new Error(error.message);
 
@@ -454,6 +462,28 @@ function SettingsPage() {
               onChange={(e) => setForm({ ...form, description: e.target.value })}
             />
           </div>
+          <div className="space-y-1.5">
+            <Label>Fonte da descrição</Label>
+            <select
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              value={form.description_font}
+              onChange={(e) => setForm({ ...form, description_font: e.target.value })}
+            >
+              <option value="sans">Moderna</option>
+              <option value="serif">Elegante</option>
+              <option value="mono">Técnica</option>
+              <option value="display">Impacto</option>
+            </select>
+          </div>
+          <label className="grid gap-1 text-sm">
+            <Label>Cor da descrição</Label>
+            <input
+              type="color"
+              className="h-10 w-16 cursor-pointer rounded border border-input bg-background p-1"
+              value={form.description_color}
+              onChange={(e) => setForm({ ...form, description_color: e.target.value })}
+            />
+          </label>
           <div className="space-y-1.5">
             <Label>WhatsApp</Label>
             <WhatsappInput

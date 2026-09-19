@@ -390,6 +390,8 @@ export type Database = {
           cover_url: string | null;
           created_at: string;
           description: string | null;
+          description_color: string;
+          description_font: string;
           email: string | null;
           id: string;
           google_review_url: string | null;
