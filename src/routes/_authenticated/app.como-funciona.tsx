@@ -9,6 +9,7 @@ import {
   ChevronRight,
   CircleHelp,
   CreditCard,
+  KanbanSquare,
   ExternalLink,
   MessageCircle,
   MessageSquare,
@@ -313,8 +314,42 @@ const GUIDE_SECTIONS: GuideSection[] = [
     ],
   },
   {
+    icon: KanbanSquare,
+    title: "11. Use o módulo CRM",
+    intro: "Organize relacionamento, oportunidades e próximas ações no Plano Ilimitado.",
+    steps: [
+      {
+        title: "Abra o CRM",
+        description: "No menu lateral, acesse CRM para centralizar clientes e oportunidades.",
+        details: [
+          "Consulte clientes e aplique tags de relacionamento.",
+          "Registre interações e mantenha o histórico de contatos.",
+        ],
+        to: "/app/crm",
+        action: "Abrir CRM",
+      },
+      {
+        title: "Acompanhe o funil",
+        description:
+          "Cadastre leads e mova cada oportunidade entre as etapas do processo comercial.",
+        details: [
+          "Use Novo, Contato, Proposta, Negociação, Ganho e Perdido.",
+          "Registre origem, valor potencial e motivo da perda.",
+        ],
+      },
+      {
+        title: "Crie follow-ups",
+        description:
+          "Transforme cada próximo contato em uma tarefa com prazo e cliente relacionado.",
+        details: [
+          "Conclua tarefas quando o contato for realizado e mantenha o pipeline atualizado.",
+        ],
+      },
+    ],
+  },
+  {
     icon: CreditCard,
-    title: "11. Crie e gerencie cupons",
+    title: "12. Crie e gerencie cupons",
     intro: "Ofereça descontos controlados para campanhas de retorno e divulgação.",
     steps: [
       {
@@ -358,7 +393,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
   },
   {
     icon: CreditCard,
-    title: "12. Consulte seu plano",
+    title: "13. Consulte seu plano",
     intro: "Veja os recursos, limites e status da sua assinatura.",
     steps: [
       {
@@ -374,7 +409,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
   },
   {
     icon: MessageSquare,
-    title: "13. Envie feedback e acompanhe respostas",
+    title: "14. Envie feedback e acompanhe respostas",
     intro:
       "Ajude a melhorar o Agendou enviando sugestões, problemas ou dúvidas diretamente pelo painel.",
     steps: [

@@ -22,6 +22,7 @@ import { Route as AuthenticatedAppAssinaturaRouteImport } from './routes/_authen
 import { Route as AuthenticatedAppClientesRouteImport } from './routes/_authenticated/app.clientes'
 import { Route as AuthenticatedAppComoFuncionaRouteImport } from './routes/_authenticated/app.como-funciona'
 import { Route as AuthenticatedAppConfiguracoesRouteImport } from './routes/_authenticated/app.configuracoes'
+import { Route as AuthenticatedAppCrmRouteImport } from './routes/_authenticated/app.crm'
 import { Route as AuthenticatedAppFaturamentoRouteImport } from './routes/_authenticated/app.faturamento'
 import { Route as AuthenticatedAppFeedbackRouteImport } from './routes/_authenticated/app.feedback'
 import { Route as AuthenticatedAppOrcamentosRouteImport } from './routes/_authenticated/app.orcamentos'
@@ -102,6 +103,11 @@ const AuthenticatedAppConfiguracoesRoute =
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppCrmRoute = AuthenticatedAppCrmRouteImport.update({
+  id: '/crm',
+  path: '/crm',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppFaturamentoRoute =
   AuthenticatedAppFaturamentoRouteImport.update({
     id: '/faturamento',
@@ -180,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/app/clientes': typeof AuthenticatedAppClientesRoute
   '/app/como-funciona': typeof AuthenticatedAppComoFuncionaRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
+  '/app/crm': typeof AuthenticatedAppCrmRoute
   '/app/faturamento': typeof AuthenticatedAppFaturamentoRoute
   '/app/feedback': typeof AuthenticatedAppFeedbackRoute
   '/app/orcamentos': typeof AuthenticatedAppOrcamentosRoute
@@ -204,6 +211,7 @@ export interface FileRoutesByTo {
   '/app/clientes': typeof AuthenticatedAppClientesRoute
   '/app/como-funciona': typeof AuthenticatedAppComoFuncionaRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
+  '/app/crm': typeof AuthenticatedAppCrmRoute
   '/app/faturamento': typeof AuthenticatedAppFaturamentoRoute
   '/app/feedback': typeof AuthenticatedAppFeedbackRoute
   '/app/orcamentos': typeof AuthenticatedAppOrcamentosRoute
@@ -231,6 +239,7 @@ export interface FileRoutesById {
   '/_authenticated/app/clientes': typeof AuthenticatedAppClientesRoute
   '/_authenticated/app/como-funciona': typeof AuthenticatedAppComoFuncionaRoute
   '/_authenticated/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
+  '/_authenticated/app/crm': typeof AuthenticatedAppCrmRoute
   '/_authenticated/app/faturamento': typeof AuthenticatedAppFaturamentoRoute
   '/_authenticated/app/feedback': typeof AuthenticatedAppFeedbackRoute
   '/_authenticated/app/orcamentos': typeof AuthenticatedAppOrcamentosRoute
@@ -258,6 +267,7 @@ export interface FileRouteTypes {
     | '/app/clientes'
     | '/app/como-funciona'
     | '/app/configuracoes'
+    | '/app/crm'
     | '/app/faturamento'
     | '/app/feedback'
     | '/app/orcamentos'
@@ -282,6 +292,7 @@ export interface FileRouteTypes {
     | '/app/clientes'
     | '/app/como-funciona'
     | '/app/configuracoes'
+    | '/app/crm'
     | '/app/faturamento'
     | '/app/feedback'
     | '/app/orcamentos'
@@ -308,6 +319,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/clientes'
     | '/_authenticated/app/como-funciona'
     | '/_authenticated/app/configuracoes'
+    | '/_authenticated/app/crm'
     | '/_authenticated/app/faturamento'
     | '/_authenticated/app/feedback'
     | '/_authenticated/app/orcamentos'
@@ -427,6 +439,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/crm': {
+      id: '/_authenticated/app/crm'
+      path: '/crm'
+      fullPath: '/app/crm'
+      preLoaderRoute: typeof AuthenticatedAppCrmRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/faturamento': {
       id: '/_authenticated/app/faturamento'
       path: '/faturamento'
@@ -512,6 +531,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppClientesRoute: typeof AuthenticatedAppClientesRoute
   AuthenticatedAppComoFuncionaRoute: typeof AuthenticatedAppComoFuncionaRoute
   AuthenticatedAppConfiguracoesRoute: typeof AuthenticatedAppConfiguracoesRoute
+  AuthenticatedAppCrmRoute: typeof AuthenticatedAppCrmRoute
   AuthenticatedAppFaturamentoRoute: typeof AuthenticatedAppFaturamentoRoute
   AuthenticatedAppFeedbackRoute: typeof AuthenticatedAppFeedbackRoute
   AuthenticatedAppOrcamentosRoute: typeof AuthenticatedAppOrcamentosRoute
@@ -526,6 +546,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppClientesRoute: AuthenticatedAppClientesRoute,
   AuthenticatedAppComoFuncionaRoute: AuthenticatedAppComoFuncionaRoute,
   AuthenticatedAppConfiguracoesRoute: AuthenticatedAppConfiguracoesRoute,
+  AuthenticatedAppCrmRoute: AuthenticatedAppCrmRoute,
   AuthenticatedAppFaturamentoRoute: AuthenticatedAppFaturamentoRoute,
   AuthenticatedAppFeedbackRoute: AuthenticatedAppFeedbackRoute,
   AuthenticatedAppOrcamentosRoute: AuthenticatedAppOrcamentosRoute,

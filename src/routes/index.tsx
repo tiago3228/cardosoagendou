@@ -22,6 +22,7 @@ import {
   Sparkles,
   Users,
   Wallet,
+  KanbanSquare,
 } from "lucide-react";
 import { listPlans } from "@/lib/public.functions";
 import {
@@ -114,6 +115,11 @@ const FEATURES = [
     text: "Histórico de atendimentos, observações e contato rápido por WhatsApp.",
   },
   {
+    icon: KanbanSquare,
+    title: "CRM completo no Ilimitado",
+    text: "Tags, funil de vendas, interações e tarefas de follow-up para transformar contatos em clientes.",
+  },
+  {
     icon: Smartphone,
     title: "Funciona como aplicativo",
     text: "Instale na tela inicial do celular e trabalhe direto do balcão.",
@@ -192,6 +198,7 @@ const PLAN_BENEFITS: Record<string, string[]> = {
     "Produtos, estoque e vendas",
     "Financeiro e comissões",
     "Todos os recursos liberados",
+    "CRM completo com funil e follow-up",
   ],
 };
 
