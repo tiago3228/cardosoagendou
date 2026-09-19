@@ -28,6 +28,14 @@ function SettingsPage() {
   const [hoursOpen, setHoursOpen] = useState(false);
   const [recoveryOpen, setRecoveryOpen] = useState(false);
   const [couponsOpen, setCouponsOpen] = useState(false);
+  const [defaultHours, setDefaultHours] = useState({
+    opens_at: "09:00",
+    closes_at: "19:00",
+    closed: false,
+    lunch_enabled: true,
+    lunch_starts_at: "12:00",
+    lunch_ends_at: "13:00",
+  });
   const [recoveryDays, setRecoveryDays] = useState(String(business.client_recovery_days ?? 60));
   const [couponForm, setCouponForm] = useState({
     id: "",
@@ -126,6 +134,40 @@ function SettingsPage() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["business-hours", business.id] }),
+  });
+
+  const applyDefaultHours = useMutation({
+    mutationFn: async () => {
+      const rows = hours.data ?? [];
+      if (rows.length === 0) throw new Error("Nenhum horário de funcionamento foi encontrado");
+
+      const { error } = await supabase.from("business_hours").upsert(
+        rows.map((hour) => ({
+          id: hour.id,
+          business_id: business.id,
+          weekday: hour.weekday,
+          opens_at: defaultHours.opens_at,
+          closes_at: defaultHours.closes_at,
+          closed: defaultHours.closed,
+          ...(defaultHours.lunch_enabled
+            ? {
+                lunch_starts_at: defaultHours.lunch_starts_at,
+                lunch_ends_at: defaultHours.lunch_ends_at,
+              }
+            : {}),
+        })),
+        { onConflict: "id" },
+      );
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Horário padrão aplicado a todos os dias");
+      queryClient.invalidateQueries({ queryKey: ["business-hours", business.id] });
+    },
+    onError: (error: Error) =>
+      toast.error("Não foi possível aplicar o horário padrão", {
+        description: userFacingError(error),
+      }),
   });
 
   const coupons = useQuery({
@@ -427,6 +469,77 @@ function SettingsPage() {
       </div>
       {hoursOpen ? (
         <div className="mt-3 space-y-2 rounded-xl border border-border bg-card p-4">
+          <div className="mb-4 rounded-lg border border-primary/30 bg-primary/5 p-4">
+            <p className="font-medium text-foreground">Horário padrão</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Configure uma vez e aplique o mesmo horário de funcionamento e almoço a todos os dias.
+              Depois, você ainda pode ajustar qualquer dia individualmente.
+            </p>
+            <div className="mt-3 flex flex-wrap items-end gap-3">
+              <label className="grid gap-1 text-sm">
+                <span className="text-muted-foreground">Abertura</span>
+                <input
+                  type="time"
+                  value={defaultHours.opens_at}
+                  onChange={(e) => setDefaultHours({ ...defaultHours, opens_at: e.target.value })}
+                  className="h-9 rounded-md border border-input bg-background px-2"
+                />
+              </label>
+              <label className="grid gap-1 text-sm">
+                <span className="text-muted-foreground">Fechamento</span>
+                <input
+                  type="time"
+                  value={defaultHours.closes_at}
+                  onChange={(e) => setDefaultHours({ ...defaultHours, closes_at: e.target.value })}
+                  className="h-9 rounded-md border border-input bg-background px-2"
+                />
+              </label>
+              <label className="flex h-9 items-center gap-2 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-primary"
+                  checked={defaultHours.lunch_enabled}
+                  onChange={(e) =>
+                    setDefaultHours({ ...defaultHours, lunch_enabled: e.target.checked })
+                  }
+                />
+                Configurar almoço
+              </label>
+              {defaultHours.lunch_enabled ? (
+                <>
+                  <label className="grid gap-1 text-sm">
+                    <span className="text-muted-foreground">Início do almoço</span>
+                    <input
+                      type="time"
+                      value={defaultHours.lunch_starts_at}
+                      onChange={(e) =>
+                        setDefaultHours({ ...defaultHours, lunch_starts_at: e.target.value })
+                      }
+                      className="h-9 rounded-md border border-input bg-background px-2"
+                    />
+                  </label>
+                  <label className="grid gap-1 text-sm">
+                    <span className="text-muted-foreground">Fim do almoço</span>
+                    <input
+                      type="time"
+                      value={defaultHours.lunch_ends_at}
+                      onChange={(e) =>
+                        setDefaultHours({ ...defaultHours, lunch_ends_at: e.target.value })
+                      }
+                      className="h-9 rounded-md border border-input bg-background px-2"
+                    />
+                  </label>
+                </>
+              ) : null}
+              <Button
+                type="button"
+                onClick={() => applyDefaultHours.mutate()}
+                disabled={applyDefaultHours.isPending || !hours.data?.length}
+              >
+                Aplicar a todos os dias
+              </Button>
+            </div>
+          </div>
           {(hours.data ?? []).map((hour) => (
             <div key={hour.id} className="flex flex-wrap items-center gap-2 text-sm">
               <span className="w-24 text-muted-foreground">{WEEKDAY_LABELS[hour.weekday]}</span>
