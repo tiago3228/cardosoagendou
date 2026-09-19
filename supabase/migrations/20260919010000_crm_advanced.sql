@@ -140,7 +140,7 @@ BEGIN
   IF l.id IS NULL THEN RAISE EXCEPTION 'Lead não encontrado'; END IF;
   phone_digits := NULLIF(regexp_replace(COALESCE(l.whatsapp, ''), '\D', '', 'g'), '');
   SELECT * INTO c FROM public.clients
-   WHERE business_id = l.business_id AND deleted_at IS NULL
+   WHERE business_id = l.business_id
      AND ((phone_digits IS NOT NULL AND regexp_replace(COALESCE(whatsapp, ''), '\D', '', 'g') = phone_digits)
        OR (l.email IS NOT NULL AND lower(email) = lower(l.email)))
    ORDER BY created_at LIMIT 1;
@@ -175,7 +175,7 @@ RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $
       AND h.last_attended < now() - make_interval(days => COALESCE((SELECT inactivity_days FROM settings), 60)) THEN 'inactive'
       WHEN h.visit_count > 1 THEN 'recurring' ELSE 'new' END)), '[]'::jsonb)
   FROM public.clients c JOIN history h ON h.client_id = c.id
-  WHERE c.business_id = _business_id AND c.deleted_at IS NULL;
+  WHERE c.business_id = _business_id;
 $$;
 GRANT EXECUTE ON FUNCTION public.crm_retention_snapshot(uuid) TO authenticated;
 
