@@ -25,6 +25,12 @@ const TECHNICAL_CODE_MESSAGES: Record<string, string> = {
   PRODUCT_SELECTION_NOT_AVAILABLE: "A seleção de produtos não está disponível no plano atual.",
   PRODUCT_NOT_AVAILABLE: "Um dos produtos selecionados não está disponível ou ficou sem estoque.",
   WHATSAPP_INVALID: "Informe um número de WhatsApp válido.",
+  BUSINESS_NOT_FOUND: "Este link público não está disponível no momento.",
+  PROFESSIONAL_NOT_AVAILABLE: "O profissional escolhido não está mais disponível.",
+  PROFESSIONAL_SERVICE_MISMATCH:
+    "O profissional escolhido não atende um dos serviços selecionados.",
+  APPOINTMENT_FAILED:
+    "O banco não conseguiu registrar o agendamento. Verifique se as migrations de agendamento foram executadas no Lovable.",
   FORBIDDEN: "Você não tem permissão para realizar esta ação.",
   UNAUTHORIZED: "Sua sessão expirou. Entre novamente para continuar.",
   USER_ALREADY_EXISTS: "Este e-mail já está cadastrado.",
