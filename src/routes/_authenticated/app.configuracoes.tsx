@@ -30,7 +30,7 @@ function normalizeInstagram(value: string) {
 
 function normalizeUrl(value: string) {
   const normalized = value.trim();
-  if (!normalized) return null;
+  if (!normalized || normalized === "..." || normalized === "https://...") return null;
   return /^https?:\/\//i.test(normalized) ? normalized : `https://${normalized}`;
 }
 
@@ -368,7 +368,7 @@ function SettingsPage() {
               pós-atendimento.
             </p>
             <Input
-              type="url"
+              type="text"
               value={form.google_review_url}
               placeholder="https://..."
               onChange={(e) => setForm({ ...form, google_review_url: e.target.value })}
