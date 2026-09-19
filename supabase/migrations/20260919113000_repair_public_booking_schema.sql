@@ -3,6 +3,18 @@
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+-- No Supabase, o pgcrypto pode ser instalado em public ou extensions.
+-- O search_path original da RPC só continha public, por isso digest não era encontrado.
+ALTER FUNCTION public.create_appointment_atomic(
+  uuid, uuid, uuid[], timestamptz, text, text, public.appointment_status,
+  text, text, text, boolean, text, text
+) SET search_path = public, extensions;
+
+ALTER FUNCTION public.create_appointment_atomic_with_products(
+  uuid, uuid, uuid[], uuid[], timestamptz, text, text, public.appointment_status,
+  text, text, text, boolean, text, text
+) SET search_path = public, extensions;
+
 ALTER TABLE public.appointments
   ADD COLUMN IF NOT EXISTS blocks_agenda boolean NOT NULL DEFAULT true,
   ADD COLUMN IF NOT EXISTS idempotency_key text,
