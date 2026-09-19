@@ -20,6 +20,11 @@ const TECHNICAL_CODE_MESSAGES: Record<string, string> = {
   INSUFFICIENT_STOCK: "Não há estoque suficiente para concluir esta operação.",
   POLICY_NOT_ACCEPTED: "Aceite a política do estabelecimento para continuar.",
   INVALID_BOOKING: "Confira os dados do agendamento e tente novamente.",
+  BOOKING_MIGRATION_REQUIRED:
+    "O banco do estabelecimento ainda não está preparado para receber agendamentos. O proprietário precisa executar a migration de agendamentos no editor SQL do Lovable.",
+  PRODUCT_SELECTION_NOT_AVAILABLE: "A seleção de produtos não está disponível no plano atual.",
+  PRODUCT_NOT_AVAILABLE: "Um dos produtos selecionados não está disponível ou ficou sem estoque.",
+  WHATSAPP_INVALID: "Informe um número de WhatsApp válido.",
   FORBIDDEN: "Você não tem permissão para realizar esta ação.",
   UNAUTHORIZED: "Sua sessão expirou. Entre novamente para continuar.",
   USER_ALREADY_EXISTS: "Este e-mail já está cadastrado.",
@@ -31,8 +36,14 @@ const ENGLISH_MESSAGE_PATTERNS: Array<[RegExp, string]> = [
   [/invalid.*(email|e-mail)|email.*invalid/i, "Informe um e-mail válido."],
   [/duplicate key|unique constraint/i, "Este registro já existe."],
   [/not found|does not exist|could not find/i, "O registro solicitado não foi encontrado."],
-  [/permission denied|not authorized|unauthorized/i, "Você não tem permissão para realizar esta ação."],
-  [/network|fetch failed|failed to fetch|timeout/i, "Não foi possível conectar ao servidor. Tente novamente."],
+  [
+    /permission denied|not authorized|unauthorized/i,
+    "Você não tem permissão para realizar esta ação.",
+  ],
+  [
+    /network|fetch failed|failed to fetch|timeout/i,
+    "Não foi possível conectar ao servidor. Tente novamente.",
+  ],
 ];
 
 function extractErrorText(error: unknown): string {
@@ -41,7 +52,10 @@ function extractErrorText(error: unknown): string {
   return "";
 }
 
-export function userFacingError(error: unknown, fallback = "Não foi possível concluir a operação."): string {
+export function userFacingError(
+  error: unknown,
+  fallback = "Não foi possível concluir a operação.",
+): string {
   const raw = extractErrorText(error).trim();
   if (!raw) return fallback;
 

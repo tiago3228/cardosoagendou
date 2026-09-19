@@ -119,15 +119,42 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
     }
     const manageToken = crypto.randomUUID() + crypto.randomUUID();
 
-    const { data: created, error } = await supabaseAdmin.rpc(
-      "create_appointment_atomic_with_products",
-      {
+    let bookingRpc = await supabaseAdmin.rpc("create_appointment_atomic_with_products", {
+      _business_id: business.id,
+      _professional_id: data.professionalId,
+      _service_ids: data.serviceIds,
+      _product_ids: data.productIds.flatMap((id) =>
+        Array.from({ length: data.productQuantities[id] ?? 1 }, () => id),
+      ),
+      _starts_at: startsAt.toISOString(),
+      _client_name: data.clientName,
+      _client_whatsapp: whatsapp,
+      _status: "PENDING",
+      ...(data.notes ? { _notes: data.notes } : {}),
+      _source: "public_booking",
+      ...(data.idempotencyKey ? { _idempotency_key: data.idempotencyKey } : {}),
+      _policy_accepted: data.policyAccepted,
+      ...(business.booking_policy ? { _policy_text: business.booking_policy } : {}),
+      _manage_token: manageToken,
+    });
+    const missingProductsRpc =
+      bookingRpc.error &&
+      (bookingRpc.error.message.includes(
+        "Could not find the function public.create_appointment_atomic_with_products",
+      ) ||
+        bookingRpc.error.message.includes(
+          "function public.create_appointment_atomic_with_products",
+        ));
+    if (missingProductsRpc) {
+      if (data.productIds.length > 0) {
+        throw new Error(
+          "BOOKING_MIGRATION_REQUIRED: o banco ainda não recebeu a migration de produtos e agendamentos",
+        );
+      }
+      bookingRpc = await supabaseAdmin.rpc("create_appointment_atomic", {
         _business_id: business.id,
         _professional_id: data.professionalId,
         _service_ids: data.serviceIds,
-        _product_ids: data.productIds.flatMap((id) =>
-          Array.from({ length: data.productQuantities[id] ?? 1 }, () => id),
-        ),
         _starts_at: startsAt.toISOString(),
         _client_name: data.clientName,
         _client_whatsapp: whatsapp,
@@ -138,8 +165,9 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
         _policy_accepted: data.policyAccepted,
         ...(business.booking_policy ? { _policy_text: business.booking_policy } : {}),
         _manage_token: manageToken,
-      },
-    );
+      });
+    }
+    const { data: created, error } = bookingRpc;
     if (error || !created) {
       const message = error?.message ?? "";
       if (message.includes("DOUBLE_BOOKING")) {
