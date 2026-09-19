@@ -52,11 +52,13 @@ function SettingsPage() {
     name: business.name,
     description: business.description ?? "",
     whatsapp: business.whatsapp ?? "",
+    instagram_url: business.instagram_url ?? "",
     email: business.email ?? "",
     address: business.address ?? "",
     booking_policy: business.booking_policy ?? "",
     show_address: business.show_address,
     show_whatsapp: business.show_whatsapp,
+    show_instagram: business.show_instagram,
     slot_interval_minutes: String(business.slot_interval_minutes),
     min_notice_minutes: String(business.min_notice_minutes),
     max_advance_days: String(business.max_advance_days),
@@ -73,11 +75,13 @@ function SettingsPage() {
           name: form.name.trim(),
           description: form.description.trim() || null,
           whatsapp: form.whatsapp.trim() || null,
+          instagram_url: form.instagram_url.trim() || null,
           email: form.email.trim() || null,
           address: form.address.trim() || null,
           booking_policy: form.booking_policy.trim() || null,
           show_address: form.show_address,
           show_whatsapp: form.show_whatsapp,
+          show_instagram: form.show_instagram,
           slot_interval_minutes: Number(form.slot_interval_minutes) || 15,
           min_notice_minutes: Number(form.min_notice_minutes) || 0,
           max_advance_days: Number(form.max_advance_days) || 30,
@@ -303,6 +307,18 @@ function SettingsPage() {
           </div>
 
           <div className="space-y-1.5">
+            <Label>Instagram</Label>
+            <Input
+              value={form.instagram_url}
+              placeholder="@seuperfil ou instagram.com/seuperfil"
+              onChange={(e) => setForm({ ...form, instagram_url: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">
+              Informe o @usuário ou o endereço completo do perfil.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
             <Label>E-mail</Label>
             <Input
               value={form.email}
@@ -320,6 +336,15 @@ function SettingsPage() {
                 onChange={(e) => setForm({ ...form, show_whatsapp: e.target.checked })}
               />
               Mostrar WhatsApp para clientes
+            </label>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <input
+                type="checkbox"
+                className="size-4 accent-primary"
+                checked={form.show_instagram}
+                onChange={(e) => setForm({ ...form, show_instagram: e.target.checked })}
+              />
+              Mostrar Instagram para clientes
             </label>
             <label className="flex items-center gap-2 text-sm text-muted-foreground">
               <input

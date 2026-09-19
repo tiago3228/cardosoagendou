@@ -402,6 +402,7 @@ export type Database = {
           reminder_minutes: number;
           secondary_color: string;
           show_address: boolean;
+          show_instagram: boolean;
           show_whatsapp: boolean;
           slot_interval_minutes: number;
           slug: string;
@@ -437,6 +438,7 @@ export type Database = {
           reminder_minutes?: number;
           secondary_color?: string;
           show_address?: boolean;
+          show_instagram?: boolean;
           show_whatsapp?: boolean;
           slot_interval_minutes?: number;
           slug: string;
@@ -472,6 +474,7 @@ export type Database = {
           reminder_minutes?: number;
           secondary_color?: string;
           show_address?: boolean;
+          show_instagram?: boolean;
           show_whatsapp?: boolean;
           slot_interval_minutes?: number;
           slug?: string;
