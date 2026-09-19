@@ -459,7 +459,7 @@ function BookingPage() {
                   href={normalizeInstagramUrl(business.instagram_url) ?? undefined}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-md border border-[var(--public-border)] px-2.5 py-1.5 text-xs font-semibold text-[var(--public-accent)] transition hover:border-[var(--public-primary)]"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-[#E1306C]/70 bg-gradient-to-r from-[#833AB4]/20 via-[#E1306C]/20 to-[#FCAF45]/20 px-2.5 py-1.5 text-xs font-semibold text-[#F77737] transition hover:border-[#FCAF45] hover:from-[#833AB4]/35 hover:via-[#E1306C]/35 hover:to-[#FCAF45]/35"
                 >
                   <Instagram className="size-3.5" aria-hidden /> Instagram
                 </a>
