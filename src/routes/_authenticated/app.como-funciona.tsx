@@ -243,106 +243,144 @@ const GUIDE_SECTIONS: GuideSection[] = [
   },
   {
     icon: Users,
-    title: "9. Use o CRM de clientes",
-    intro: "Centralize os dados, o histórico e o relacionamento com cada cliente.",
+    title: "9. Organize clientes e use o CRM avançado",
+    intro: "Acompanhe a jornada completa dos leads e clientes no Plano Ilimitado.",
     steps: [
       {
-        title: "Acesse Clientes",
+        title: "Consulte a base de clientes",
         description:
-          "Abra Clientes no menu para consultar todos os clientes cadastrados automaticamente pelos agendamentos.",
+          "Abra Clientes para pesquisar a base criada pelos agendamentos e acessar os dados de relacionamento.",
         details: [
           "Pesquise por nome, WhatsApp ou e-mail.",
-          "Use o filtro Todos os clientes para visualizar a base completa.",
-        ],
-        to: "/app/clientes",
-        action: "Abrir CRM",
-      },
-      {
-        title: "Abra a ficha do cliente",
-        description: "Clique no nome do cliente para expandir a ficha sem sair da lista.",
-        details: [
-          "Consulte primeiro atendimento, último atendimento, próximo agendamento e total movimentado.",
-          "Veja o histórico com data, profissional, serviços, status, observações e valor.",
-        ],
-      },
-      {
-        title: "Atualize os dados da ficha",
-        description: "Mantenha informações importantes para o atendimento e relacionamento.",
-        details: [
-          "Edite data de nascimento, endereço e observações.",
-          "Clique em Salvar ficha para guardar as alterações.",
-          "O WhatsApp e o e-mail ficam disponíveis para contato direto quando cadastrados.",
-        ],
-      },
-    ],
-  },
-  {
-    icon: CreditCard,
-    title: "10. Recupere clientes que não retornaram",
-    intro: "Identifique clientes sem novo agendamento e entre em contato no momento certo.",
-    steps: [
-      {
-        title: "Configure o período de recuperação",
-        description:
-          "Em Ajustes, abra Clientes em recuperação e informe depois de quantos dias o cliente deve ser considerado inativo.",
-        details: [
-          "O padrão é 60 dias.",
-          "O sistema considera o último atendimento concluído.",
-          "Clientes com agendamento futuro não entram na lista de recuperação.",
-        ],
-        to: "/app/configuracoes",
-        action: "Abrir Ajustes",
-      },
-      {
-        title: "Filtre os clientes em recuperação",
-        description: "Na tela Clientes, selecione o filtro Clientes em recuperação.",
-        details: [
-          "Use a busca por nome, WhatsApp ou e-mail para localizar uma pessoa.",
-          "Abra a ficha para consultar histórico, último atendimento e total movimentado.",
+          "Na ficha, consulte primeiro atendimento, último atendimento, próximo agendamento e total movimentado.",
+          "Edite data de nascimento, endereço e observações quando necessário.",
         ],
         to: "/app/clientes",
         action: "Abrir Clientes",
       },
       {
-        title: "Entre em contato diretamente",
-        description: "Use os botões do card para abrir o WhatsApp ou o e-mail do cliente.",
+        title: "Abra o dashboard do CRM",
+        description:
+          "No menu lateral, acesse CRM para acompanhar os principais indicadores comerciais e de relacionamento.",
         details: [
-          "O WhatsApp abre uma mensagem pronta para você revisar antes de enviar.",
-          "Você pode informar uma condição especial e convidar o cliente a retornar.",
+          "Veja leads cadastrados, leads convertidos, leads perdidos e follow-ups pendentes.",
+          "Acompanhe a jornada do cliente desde o primeiro contato até a fidelização.",
+          "Consulte atividades recentes e a quantidade de clientes novos, recorrentes, VIP e inativos.",
+        ],
+        to: "/app/crm",
+        action: "Abrir CRM",
+      },
+      {
+        title: "Cadastre e pesquise leads",
+        description:
+          "Crie oportunidades comerciais com as informações necessárias para o próximo contato.",
+        details: [
+          "Informe nome, WhatsApp, e-mail, origem, valor potencial e observações.",
+          "Use a busca para localizar leads por nome, contato ou origem.",
+          "Registre uma interação rápida para manter o histórico do relacionamento.",
         ],
       },
     ],
   },
   {
     icon: KanbanSquare,
-    title: "11. Use o módulo CRM",
-    intro: "Organize relacionamento, oportunidades e próximas ações no Plano Ilimitado.",
+    title: "10. Gerencie o funil comercial",
+    intro: "Visualize cada oportunidade na etapa correta e acompanhe a evolução até a fidelização.",
     steps: [
       {
-        title: "Abra o CRM",
-        description: "No menu lateral, acesse CRM para centralizar clientes e oportunidades.",
+        title: "Use as dez etapas do funil",
+        description: "Na aba Funil, mova os leads conforme a conversa comercial avança.",
         details: [
-          "Consulte clientes e aplique tags de relacionamento.",
-          "Registre interações e mantenha o histórico de contatos.",
+          "Novo lead, Primeiro contato, Interessado e Orçamento enviado.",
+          "Aguardando resposta, Agendou, Compareceu e Converteu.",
+          "Fidelizado e Perdido para concluir ou arquivar a oportunidade.",
         ],
         to: "/app/crm",
-        action: "Abrir CRM",
+        action: "Abrir Funil",
       },
       {
-        title: "Acompanhe o funil",
-        description:
-          "Cadastre leads e mova cada oportunidade entre as etapas do processo comercial.",
+        title: "Converta o lead em cliente",
+        description: "Quando a oportunidade fechar, use Converter em cliente.",
         details: [
-          "Use Novo, Contato, Proposta, Negociação, Ganho e Perdido.",
-          "Registre origem, valor potencial e motivo da perda.",
+          "O sistema procura um cliente existente pelo WhatsApp ou e-mail antes de criar outro cadastro.",
+          "Depois da conversão, o lead passa para Converteu e o cliente fica marcado como ativo.",
+          "Essa proteção evita duplicidade na base de clientes.",
         ],
       },
       {
-        title: "Crie follow-ups",
-        description:
-          "Transforme cada próximo contato em uma tarefa com prazo e cliente relacionado.",
+        title: "Acompanhe o histórico do funil",
+        description: "Cada mudança de etapa é registrada automaticamente no banco do CRM.",
         details: [
-          "Conclua tarefas quando o contato for realizado e mantenha o pipeline atualizado.",
+          "O histórico guarda etapa anterior, nova etapa, usuário e data da movimentação.",
+          "Use esse histórico para entender gargalos e melhorar o processo comercial.",
+        ],
+      },
+    ],
+  },
+  {
+    icon: CheckCircle2,
+    title: "11. Crie follow-ups e registre contatos",
+    intro: "Nunca perca a próxima ação de um lead ou cliente.",
+    steps: [
+      {
+        title: "Crie um follow-up",
+        description: "Na aba Follow-ups, registre a próxima ação com data e hora.",
+        details: [
+          "Vincule o follow-up a um lead ou cliente.",
+          "Adicione título e descrição para deixar o contexto claro.",
+          "Follow-ups atrasados recebem destaque visual até serem concluídos.",
+        ],
+        to: "/app/crm",
+        action: "Abrir Follow-ups",
+      },
+      {
+        title: "Conclua a tarefa",
+        description:
+          "Após realizar o contato, clique em Concluir para atualizar sua lista de pendências.",
+        details: ["O sistema grava o status e o horário de conclusão do follow-up."],
+      },
+      {
+        title: "Registre uma interação",
+        description: "Use o formulário de contato rápido para salvar o que foi conversado.",
+        details: [
+          "Associe a interação ao lead correspondente.",
+          "Descreva o contato, o resultado e a próxima ação para preservar o histórico.",
+        ],
+      },
+    ],
+  },
+  {
+    icon: CreditCard,
+    title: "12. Trabalhe retenção e reativação",
+    intro: "Identifique oportunidades de retorno e reative clientes no momento certo.",
+    steps: [
+      {
+        title: "Consulte a segmentação",
+        description: "Na aba Retenção, filtre os clientes por comportamento de atendimento.",
+        details: [
+          "Clientes novos: primeiro relacionamento ou poucos atendimentos.",
+          "Clientes recorrentes: pessoas com mais de um atendimento concluído.",
+          "Clientes VIP: clientes classificados como VIP no cadastro.",
+          "Clientes inativos: clientes sem retorno dentro do período configurado.",
+        ],
+        to: "/app/crm",
+        action: "Abrir Retenção",
+      },
+      {
+        title: "Analise o histórico de atendimento",
+        description: "Use os indicadores calculados automaticamente para priorizar contatos.",
+        details: [
+          "Veja última visita, próxima visita, quantidade de atendimentos e total gasto.",
+          "Clientes com agendamento futuro não são tratados como inativos.",
+        ],
+      },
+      {
+        title: "Reative pelo WhatsApp",
+        description: "Clique em Reativar para abrir uma mensagem pronta no WhatsApp do cliente.",
+        details: [
+          "Revise a mensagem antes de enviar.",
+          "Se o telefone estiver ausente ou inválido, atualize o cadastro do cliente primeiro.",
+          "Depois do contato, crie um follow-up para acompanhar o retorno.",
         ],
       },
     ],
