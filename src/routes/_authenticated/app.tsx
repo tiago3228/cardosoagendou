@@ -186,7 +186,7 @@ function PanelLayout() {
               asChild
               size="sm"
               variant="outline"
-              className={`h-9 gap-2 px-2.5 text-xs sm:px-3 ${scheduled.data?.length ? "animate-pulse border-primary bg-primary/10 text-primary" : "border-emerald-500 bg-emerald-500/10 text-emerald-600"}`}
+              className={`h-9 gap-2 px-2.5 text-xs sm:px-3 ${scheduled.data?.length ? "animate-pulse border-red-500 bg-red-500/10 text-red-600 dark:text-red-400" : "border-emerald-500 bg-emerald-500/10 text-emerald-600"}`}
               title={
                 scheduled.data?.length
                   ? `${scheduled.data.length} cliente(s) agendado(s)`
