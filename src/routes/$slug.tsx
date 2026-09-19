@@ -207,7 +207,7 @@ function BookingPage() {
       ].join("\n")
     : "";
   const mapLink = business.address
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(business.address)}`
+    ? `https://maps.google.com/?q=${encodeURIComponent(business.address)}`
     : null;
 
   /** Warns when two services of the same category are picked (usually a mistake). */
