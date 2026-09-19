@@ -164,7 +164,7 @@ function AgendaPage() {
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
   const [view, setView] = useState<ViewMode>("day");
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>("ALL");
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>("ACTIVE");
   const fetchAgenda = useServerFn(getAgenda);
   const fetchRevenue = useServerFn(getAppointmentRevenue);
   const changeStatus = useServerFn(setAppointmentStatus);
