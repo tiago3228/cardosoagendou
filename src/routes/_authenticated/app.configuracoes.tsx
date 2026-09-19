@@ -189,10 +189,14 @@ function SettingsPage() {
           .from("businesses")
           .update({ google_review_url: googleUrl })
           .eq("id", business.id);
-        if (googleResult.error && googleResult.error.code !== "42703") {
+        if (
+          googleResult.error &&
+          googleResult.error.code !== "42703" &&
+          googleResult.error.code !== "PGRST204"
+        ) {
           throw new Error(googleResult.error.message);
         }
-        return googleResult.error?.code === "42703";
+        return ["42703", "PGRST204"].includes(googleResult.error?.code ?? "");
       }
       return false;
     },
