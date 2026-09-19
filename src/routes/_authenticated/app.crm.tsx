@@ -195,7 +195,7 @@ function AdvancedCrm({ businessId }: { businessId: string }) {
     client_id: "",
     lead_id: "",
   });
-  const [interaction, setInteraction] = useState({ text: "", leadId: "" });
+  const [interaction, setInteraction] = useState({ text: "", leadId: "", clientId: "" });
   const invalidate = () => {
     for (const key of ["crm-leads", "crm-followups", "crm-interactions", "crm-retention"])
       void qc.invalidateQueries({ queryKey: [key, businessId] });
@@ -295,12 +295,17 @@ function AdvancedCrm({ businessId }: { businessId: string }) {
   };
   const addInteraction = async () => {
     if (!interaction.text.trim()) return;
+    if (!interaction.leadId && !interaction.clientId) {
+      toast.error("Selecione um cliente ou lead para registrar o contato");
+      return;
+    }
     const {
       data: { user },
     } = await supabase.auth.getUser();
     const { error } = await db.from("crm_interactions").insert({
       business_id: businessId,
       lead_id: interaction.leadId || null,
+      client_id: interaction.clientId || null,
       type: "NOTE",
       subject: "Contato registrado",
       content: interaction.text.trim(),
@@ -309,7 +314,7 @@ function AdvancedCrm({ businessId }: { businessId: string }) {
     });
     if (error) toast.error(error.message);
     else {
-      setInteraction({ text: "", leadId: "" });
+      setInteraction({ text: "", leadId: "", clientId: "" });
       invalidate();
       toast.success("Interação registrada");
     }
@@ -368,6 +373,7 @@ function AdvancedCrm({ businessId }: { businessId: string }) {
       {tab === "dashboard" ? (
         <Dashboard
           metrics={metrics}
+          clients={clients.data ?? []}
           interactions={interactions.data ?? []}
           retention={retention.data ?? []}
           setTab={setTab}
@@ -380,7 +386,7 @@ function AdvancedCrm({ businessId }: { businessId: string }) {
           setTerm={setTerm}
           onConvert={convertLead}
           onMove={moveLead}
-          onInteraction={(id) => setInteraction({ ...interaction, leadId: id })}
+          onInteraction={(id) => setInteraction({ ...interaction, leadId: id, clientId: "" })}
         />
       ) : null}
       {tab === "pipeline" ? (
@@ -403,16 +409,32 @@ function AdvancedCrm({ businessId }: { businessId: string }) {
       ) : null}
       <section className="mt-6 rounded-xl border border-border bg-card p-4">
         <h2 className="font-semibold">Registrar contato rápido</h2>
-        <div className="mt-3 grid gap-2 md:grid-cols-[220px_1fr_auto]">
+        <div className="mt-3 grid gap-2 md:grid-cols-[220px_220px_1fr_auto]">
           <select
             className="rounded-md border bg-background px-3"
             value={interaction.leadId}
-            onChange={(e) => setInteraction({ ...interaction, leadId: e.target.value })}
+            onChange={(e) =>
+              setInteraction({ ...interaction, leadId: e.target.value, clientId: "" })
+            }
           >
             <option value="">Selecione um lead</option>
             {(leads.data ?? []).map((lead) => (
               <option key={lead.id} value={lead.id}>
                 {lead.name}
+              </option>
+            ))}
+          </select>
+          <select
+            className="rounded-md border bg-background px-3"
+            value={interaction.clientId}
+            onChange={(e) =>
+              setInteraction({ ...interaction, clientId: e.target.value, leadId: "" })
+            }
+          >
+            <option value="">Ou selecione um cliente</option>
+            {(clients.data ?? []).map((client) => (
+              <option key={client.id} value={client.id}>
+                {client.name}
               </option>
             ))}
           </select>
@@ -481,11 +503,13 @@ function AdvancedCrm({ businessId }: { businessId: string }) {
 
 function Dashboard({
   metrics,
+  clients,
   interactions,
   retention,
   setTab,
 }: {
   metrics: { total: number; converted: number; lost: number; pending: number };
+  clients: Client[];
   interactions: Interaction[];
   retention: RetentionClient[];
   setTab: (tab: Tab) => void;
@@ -532,6 +556,28 @@ function Dashboard({
               {index < 8 ? <ArrowRight className="size-3 text-muted-foreground" /> : null}
             </div>
           ))}
+        </div>
+      </div>
+      <div className="rounded-xl border border-border bg-card p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="font-semibold">Clientes cadastrados</h2>
+            <p className="text-sm text-muted-foreground">
+              Inclui clientes criados automaticamente pelos agendamentos.
+            </p>
+          </div>
+          <span className="text-2xl font-semibold">{clients.length}</span>
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {clients.slice(0, 6).map((client) => (
+            <div className="rounded-lg border border-border p-3" key={client.id}>
+              <p className="font-medium">{client.name}</p>
+              <p className="text-xs text-muted-foreground">{client.whatsapp}</p>
+            </div>
+          ))}
+          {clients.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum cliente cadastrado.</p>
+          ) : null}
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
