@@ -133,7 +133,13 @@ function PanelLayout() {
       className={`agenda-theme ${theme === "clean" ? "agenda-theme-clean" : ""} min-h-screen bg-background pb-20 text-foreground md:flex md:pb-0`}
     >
       <aside className="hidden w-60 shrink-0 border-r border-sidebar-border bg-sidebar p-5 md:flex md:flex-col">
-        <span className="font-display text-xl font-bold text-sidebar-foreground">Agendou</span>
+        <Link
+          to="/app"
+          className="font-display text-xl font-bold text-sidebar-foreground transition-opacity hover:opacity-75"
+          aria-label="Ir para a tela principal do Agendou"
+        >
+          Agendou
+        </Link>
         <p className="mt-1 truncate text-sm text-muted-foreground">{data.business.name}</p>
         <nav className="mt-7 space-y-1.5">
           {nav.map((item) => (
