@@ -11,6 +11,14 @@ import {
 } from "@/lib/appointment-manage.functions";
 import { userFacingError } from "@/lib/user-facing-error";
 
+function statusLabel(status: string | null) {
+  if (status === "CONFIRMED") return "Confirmado";
+  if (status === "CANCELED") return "Cancelado";
+  if (status === "COMPLETED") return "Concluído";
+  if (status === "IN_PROGRESS") return "Em atendimento";
+  return status ?? "—";
+}
+
 export const Route = createFileRoute("/agendamento/$token")({
   loader: async ({ params }) => getAppointmentByManageToken({ data: { token: params.token } }),
   head: () => ({
@@ -48,7 +56,12 @@ function ManageAppointmentPage() {
       .channel(`appointment-status-${appointment.id}`)
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "appointments", filter: `id=eq.${appointment.id}` },
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "appointments",
+          filter: `id=eq.${appointment.id}`,
+        },
         (payload) => {
           const next = payload.new as { status?: string; presence_status?: string | null };
           if (next.status) setCurrentStatus(next.status);
@@ -84,13 +97,18 @@ function ManageAppointmentPage() {
     try {
       await confirmAppointmentPresence({ data: { token, presence: value } });
       setPresence(value);
+      if (value === "DECLINED") {
+        setCurrentStatus("CANCELED");
+        setAllowCancel(false);
+        setAllowReschedule(false);
+      }
       setMessage(
-        value === "CONFIRMED" ? "Presença confirmada." : "Presença marcada como não confirmada.",
+        value === "CONFIRMED"
+          ? "Presença confirmada."
+          : "Agendamento cancelado. O estabelecimento foi avisado de que você não poderá comparecer.",
       );
     } catch (error) {
-      setMessage(
-        userFacingError(error, "Não foi possível atualizar."),
-      );
+      setMessage(userFacingError(error, "Não foi possível atualizar."));
     } finally {
       setBusy(false);
     }
@@ -103,9 +121,7 @@ function ManageAppointmentPage() {
       await cancelAppointmentByManageToken({ data: { token } });
       setMessage("Agendamento cancelado.");
     } catch (error) {
-      setMessage(
-        userFacingError(error, "Não foi possível cancelar."),
-      );
+      setMessage(userFacingError(error, "Não foi possível cancelar."));
     } finally {
       setBusy(false);
     }
@@ -114,17 +130,19 @@ function ManageAppointmentPage() {
   return (
     <main
       className="manage-theme min-h-screen px-5 py-10 text-[var(--public-text)]"
-      style={{
-        "--public-primary": appointment.primary_color ?? "#B4884F",
-        "--public-secondary": appointment.secondary_color ?? "#0B0A08",
-        "--public-accent": appointment.primary_color ?? "#D1A66C",
-        "--public-text": "#F2EDE4",
-        "--public-muted": "#9C948A",
-        "--public-surface": "#1E1B17",
-        "--public-card": "#262220",
-        "--public-border": "#35302A",
-        backgroundColor: appointment.secondary_color ?? "#0B0A08",
-      } as CSSProperties}
+      style={
+        {
+          "--public-primary": appointment.primary_color ?? "#B4884F",
+          "--public-secondary": appointment.secondary_color ?? "#0B0A08",
+          "--public-accent": appointment.primary_color ?? "#D1A66C",
+          "--public-text": "#F2EDE4",
+          "--public-muted": "#9C948A",
+          "--public-surface": "#1E1B17",
+          "--public-card": "#262220",
+          "--public-border": "#35302A",
+          backgroundColor: appointment.secondary_color ?? "#0B0A08",
+        } as CSSProperties
+      }
     >
       <section className="mx-auto max-w-md rounded-2xl border border-[var(--public-border)] bg-[var(--public-card)] p-6 shadow-2xl">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--public-primary)]">
@@ -141,7 +159,7 @@ function ManageAppointmentPage() {
             })}
           </div>
           <p className="mt-3 text-sm text-[var(--public-text)]">
-            Status: <strong>{currentStatus}</strong>
+            Status: <strong>{statusLabel(currentStatus)}</strong>
           </p>
         </div>
         <h2 className="mt-6 font-display text-lg font-bold">Você vai comparecer?</h2>
