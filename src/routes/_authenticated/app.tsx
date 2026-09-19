@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-rout
 import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import {
   CalendarDays,
+  BellRing,
   CircleHelp,
   CreditCard,
   FileText,
@@ -30,6 +31,33 @@ export const panelQuery = queryOptions({ queryKey: ["panel"], queryFn: () => get
 export const entitlementsQuery = queryOptions({
   queryKey: ["entitlements"],
   queryFn: () => getMyEntitlements(),
+});
+
+export type ScheduledAppointmentAlert = {
+  id: string;
+  starts_at: string;
+  status: string;
+  client_name: string;
+  client_whatsapp: string;
+  appointment_services: { service_name: string }[];
+};
+
+export const scheduledAppointmentsQuery = (businessId: string) => ({
+  queryKey: ["scheduled-alert", businessId],
+  refetchInterval: 15_000,
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("appointments")
+      .select(
+        "id, starts_at, status, client_name, client_whatsapp, appointment_services(service_name)",
+      )
+      .eq("business_id", businessId)
+      .in("status", ["PENDING", "CONFIRMED", "IN_PROGRESS"])
+      .gte("starts_at", new Date().toISOString())
+      .order("starts_at");
+    if (error) throw new Error(error.message);
+    return (data ?? []) as ScheduledAppointmentAlert[];
+  },
 });
 
 export const Route = createFileRoute("/_authenticated/app")({
@@ -67,6 +95,7 @@ function PanelLayout() {
   const navigate = useNavigate();
   const master = useQuery({ queryKey: ["master-status"], queryFn: () => getMasterStatus() });
   const entitlements = useQuery(entitlementsQuery);
+  const scheduled = useQuery(scheduledAppointmentsQuery(data.business!.id));
   const features = (entitlements.data?.features ?? {}) as Record<string, unknown>;
   const nav = NAV.filter((item) => !("feature" in item) || features[item.feature] === true);
   const [theme, setTheme] = useState<PanelTheme>("dark");
@@ -152,7 +181,26 @@ function PanelLayout() {
       <div className="min-w-0 flex-1">
         <header className="flex items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur md:px-8 md:py-4">
           <span className="min-w-0 truncate font-display font-bold">{data.business.name}</span>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex items-center gap-2">
+            <Button
+              asChild
+              size="sm"
+              variant="outline"
+              className={`h-9 gap-2 px-2.5 text-xs sm:px-3 ${scheduled.data?.length ? "animate-pulse border-primary bg-primary/10 text-primary" : "border-emerald-500 bg-emerald-500/10 text-emerald-600"}`}
+              title={
+                scheduled.data?.length
+                  ? `${scheduled.data.length} cliente(s) agendado(s)`
+                  : "Nenhum cliente agendado"
+              }
+            >
+              <Link to="/app/agendados">
+                <BellRing className="size-4" aria-hidden />
+                <span className="hidden sm:inline">Clientes agendados</span>
+                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-current/15 px-1.5 py-0.5 font-bold">
+                  {scheduled.data?.length ?? 0}
+                </span>
+              </Link>
+            </Button>
             <div
               className="flex items-center rounded-md border border-border bg-secondary/65 p-1"
               aria-label="Aparência do painel"

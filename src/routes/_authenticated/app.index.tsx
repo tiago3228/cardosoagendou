@@ -227,6 +227,7 @@ function AgendaPage() {
       queryClient.invalidateQueries({ queryKey: ["agenda"] });
       queryClient.invalidateQueries({ queryKey: ["agenda-revenue"] });
       queryClient.invalidateQueries({ queryKey: ["finance"] });
+      queryClient.invalidateQueries({ queryKey: ["scheduled-alert", panel.business!.id] });
     },
     onError: (error: Error) =>
       toast.error("Não foi possível atualizar", { description: userFacingError(error) }),

@@ -18,6 +18,7 @@ import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/ap
 import { Route as AgendamentoTokenRouteImport } from './routes/agendamento/$token'
 import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
+import { Route as AuthenticatedAppAgendadosRouteImport } from './routes/_authenticated/app.agendados'
 import { Route as AuthenticatedAppAssinaturaRouteImport } from './routes/_authenticated/app.assinatura'
 import { Route as AuthenticatedAppClientesRouteImport } from './routes/_authenticated/app.clientes'
 import { Route as AuthenticatedAppComoFuncionaRouteImport } from './routes/_authenticated/app.como-funciona'
@@ -79,6 +80,12 @@ const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppAgendadosRoute =
+  AuthenticatedAppAgendadosRouteImport.update({
+    id: '/agendados',
+    path: '/agendados',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppAssinaturaRoute =
   AuthenticatedAppAssinaturaRouteImport.update({
     id: '/assinatura',
@@ -182,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/agendamento/$token': typeof AgendamentoTokenRoute
   '/convite/$token': typeof ConviteTokenRoute
+  '/app/agendados': typeof AuthenticatedAppAgendadosRoute
   '/app/assinatura': typeof AuthenticatedAppAssinaturaRoute
   '/app/clientes': typeof AuthenticatedAppClientesRoute
   '/app/como-funciona': typeof AuthenticatedAppComoFuncionaRoute
@@ -207,6 +215,7 @@ export interface FileRoutesByTo {
   '/cadastro': typeof CadastroRoute
   '/agendamento/$token': typeof AgendamentoTokenRoute
   '/convite/$token': typeof ConviteTokenRoute
+  '/app/agendados': typeof AuthenticatedAppAgendadosRoute
   '/app/assinatura': typeof AuthenticatedAppAssinaturaRoute
   '/app/clientes': typeof AuthenticatedAppClientesRoute
   '/app/como-funciona': typeof AuthenticatedAppComoFuncionaRoute
@@ -235,6 +244,7 @@ export interface FileRoutesById {
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/agendamento/$token': typeof AgendamentoTokenRoute
   '/convite/$token': typeof ConviteTokenRoute
+  '/_authenticated/app/agendados': typeof AuthenticatedAppAgendadosRoute
   '/_authenticated/app/assinatura': typeof AuthenticatedAppAssinaturaRoute
   '/_authenticated/app/clientes': typeof AuthenticatedAppClientesRoute
   '/_authenticated/app/como-funciona': typeof AuthenticatedAppComoFuncionaRoute
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/agendamento/$token'
     | '/convite/$token'
+    | '/app/agendados'
     | '/app/assinatura'
     | '/app/clientes'
     | '/app/como-funciona'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/agendamento/$token'
     | '/convite/$token'
+    | '/app/agendados'
     | '/app/assinatura'
     | '/app/clientes'
     | '/app/como-funciona'
@@ -315,6 +327,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app'
     | '/agendamento/$token'
     | '/convite/$token'
+    | '/_authenticated/app/agendados'
     | '/_authenticated/app/assinatura'
     | '/_authenticated/app/clientes'
     | '/_authenticated/app/como-funciona'
@@ -409,6 +422,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/app/'
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/agendados': {
+      id: '/_authenticated/app/agendados'
+      path: '/agendados'
+      fullPath: '/app/agendados'
+      preLoaderRoute: typeof AuthenticatedAppAgendadosRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/assinatura': {
@@ -527,6 +547,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAppRouteChildren {
+  AuthenticatedAppAgendadosRoute: typeof AuthenticatedAppAgendadosRoute
   AuthenticatedAppAssinaturaRoute: typeof AuthenticatedAppAssinaturaRoute
   AuthenticatedAppClientesRoute: typeof AuthenticatedAppClientesRoute
   AuthenticatedAppComoFuncionaRoute: typeof AuthenticatedAppComoFuncionaRoute
@@ -542,6 +563,7 @@ interface AuthenticatedAppRouteChildren {
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+  AuthenticatedAppAgendadosRoute: AuthenticatedAppAgendadosRoute,
   AuthenticatedAppAssinaturaRoute: AuthenticatedAppAssinaturaRoute,
   AuthenticatedAppClientesRoute: AuthenticatedAppClientesRoute,
   AuthenticatedAppComoFuncionaRoute: AuthenticatedAppComoFuncionaRoute,
