@@ -5,6 +5,8 @@ const TECHNICAL_CODE_MESSAGES: Record<string, string> = {
   FEATURE_LOCKED_TEAM: "Esse recurso não está disponível no seu plano atual.",
   FEATURE_LOCKED: "Esse recurso não está disponível no seu plano atual.",
   SLOT_UNAVAILABLE: "Esse horário não está mais disponível. Escolha outro horário.",
+  APPOINTMENT_NOT_RESCHEDULABLE:
+    "Este agendamento não pode mais ser reagendado. Solicite um novo link ao estabelecimento ou faça um novo agendamento.",
   DOUBLE_BOOKING: "Esse horário já foi reservado. Escolha outro horário.",
   SERVICE_NOT_AVAILABLE: "Um dos serviços selecionados não está mais disponível.",
   SERVICE_CONFLICT: "Os serviços selecionados não podem ser combinados no mesmo atendimento.",
