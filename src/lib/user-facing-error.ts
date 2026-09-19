@@ -57,6 +57,17 @@ const ENGLISH_MESSAGE_PATTERNS: Array<[RegExp, string]> = [
 function extractErrorText(error: unknown): string {
   if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
+  if (error && typeof error === "object") {
+    const candidate = error as {
+      message?: unknown;
+      error?: { message?: unknown };
+      cause?: unknown;
+    };
+    if (typeof candidate.message === "string") return candidate.message;
+    if (typeof candidate.error?.message === "string") return candidate.error.message;
+    if (typeof candidate.cause === "string") return candidate.cause;
+    if (candidate.cause instanceof Error) return candidate.cause.message;
+  }
   return "";
 }
 
