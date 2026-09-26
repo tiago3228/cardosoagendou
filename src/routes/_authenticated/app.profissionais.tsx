@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ChevronDown, Mail, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Link2, Mail, MessageCircle, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { panelQuery, entitlementsQuery } from "./app";
 import { WEEKDAY_SHORT } from "@/lib/format";
@@ -165,7 +165,9 @@ function ProfessionalsPage() {
       toast.error("Não foi possível adicionar", {
         description: userFacingError(
           error,
-          `Seu plano ${plan?.name ?? ""} permite ${plan?.professional_limit} profissionais ativos. Faça upgrade para adicionar mais.`,
+          plan?.professional_limit == null
+            ? "Não foi possível cadastrar o profissional. Confira se o usuário ainda não está cadastrado e tente novamente."
+            : `Seu plano ${plan.name ?? "atual"} permite ${plan.professional_limit} profissionais ativos. Faça upgrade para adicionar mais.`,
         ),
       }),
   });
@@ -270,6 +272,28 @@ function ProfessionalsPage() {
       }),
   });
 
+  function accessLink(username: string | null) {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    return `${origin}/auth${username ? `?username=${encodeURIComponent(username)}` : ""}`;
+  }
+
+  async function shareAccess(professional: NonNullable<typeof professionals.data>[number]) {
+    const link = accessLink(professional.login_username);
+    const text = `Olá, ${professional.name}! Acesse o Agendou por este link: ${link}${professional.login_username ? `\nUsuário: ${professional.login_username}` : ""}`;
+    if (navigator.share) {
+      await navigator.share({ title: "Acesso ao Agendou", text, url: link });
+    } else {
+      await navigator.clipboard.writeText(text);
+      toast.success("Dados de acesso copiados");
+    }
+  }
+
+  function sendWhatsApp(professional: NonNullable<typeof professionals.data>[number]) {
+    const link = accessLink(professional.login_username);
+    const text = `Olá, ${professional.name}! Acesse o Agendou por este link: ${link}${professional.login_username ? `\nUsuário: ${professional.login_username}` : ""}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+  }
+
   return (
     <div>
       <BackButton />
@@ -335,9 +359,12 @@ function ProfessionalsPage() {
         </div>
       </form>
 
-      <div className="mt-6 space-y-3">
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
         {(professionals.data ?? []).map((professional) => (
-          <article key={professional.id} className="rounded-xl border border-border bg-card p-4">
+          <article
+            key={professional.id}
+            className="rounded-xl border border-border bg-card p-4 shadow-sm"
+          >
             <button
               type="button"
               className="flex w-full items-center justify-between gap-3 text-left"
@@ -348,12 +375,51 @@ function ProfessionalsPage() {
               }
               aria-expanded={expandedProfessionalId === professional.id}
             >
-              <span className="font-medium text-card-foreground">{professional.name}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-semibold text-card-foreground">
+                  {professional.name}
+                </span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">
+                  Profissional · agenda individual
+                </span>
+              </span>
+              <span
+                className={`rounded-full px-2 py-1 text-[10px] font-semibold ${professional.active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}
+              >
+                {professional.active ? "ativo" : "inativo"}
+              </span>
               <ChevronDown
                 className={`size-5 text-muted-foreground transition-transform ${expandedProfessionalId === professional.id ? "rotate-180" : ""}`}
                 aria-hidden
               />
             </button>
+
+            <p className="mt-3 text-xs text-muted-foreground">
+              Comissão {Number(professional.commission_percent)}% ·{" "}
+              {professional.login_username
+                ? `usuário ${professional.login_username}`
+                : "acesso não configurado"}
+            </p>
+            <div className="mt-3 grid gap-2">
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void shareAccess(professional)}
+                  disabled={!professional.login_username}
+                >
+                  <Link2 className="size-4" /> Copiar link
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => sendWhatsApp(professional)}
+                  disabled={!professional.login_username}
+                >
+                  <MessageCircle className="size-4" /> WhatsApp
+                </Button>
+              </div>
+            </div>
 
             {expandedProfessionalId === professional.id ? (
               <div className="mt-4 border-t border-border pt-4">

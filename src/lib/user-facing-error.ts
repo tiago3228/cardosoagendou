@@ -40,6 +40,10 @@ const TECHNICAL_CODE_MESSAGES: Record<string, string> = {
   FORBIDDEN: "Você não tem permissão para realizar esta ação.",
   UNAUTHORIZED: "Sua sessão expirou. Entre novamente para continuar.",
   USER_ALREADY_EXISTS: "Este e-mail já está cadastrado.",
+  USERNAME_ALREADY_EXISTS:
+    "Este usuário já está cadastrado. Escolha outro usuário ou edite o profissional existente.",
+  CREDENTIALS_CREATE_FAILED: "Não foi possível criar o acesso do profissional. Tente novamente.",
+  PROFESSIONAL_NOT_FOUND: "O profissional não foi encontrado. Atualize a página e tente novamente.",
   INVITE_INVALID: "Este convite é inválido ou já expirou.",
 };
 

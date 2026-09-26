@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useServerFn } from "@tanstack/react-start";
 import { resolveProfessionalLogin } from "@/lib/professional-credentials.functions";
 
-const searchSchema = z.object({ next: z.string().optional() });
+const searchSchema = z.object({ next: z.string().optional(), username: z.string().optional() });
 
 export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
@@ -34,9 +34,9 @@ function safePath(value: string | undefined): string {
 }
 
 function AuthPage() {
-  const { next } = Route.useSearch();
+  const { next, username } = Route.useSearch();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(username ?? "");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const resolveLogin = useServerFn(resolveProfessionalLogin);
