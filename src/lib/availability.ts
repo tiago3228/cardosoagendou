@@ -26,6 +26,11 @@ export interface SlotInput {
   businessWindow?: DayWindow | null;
   /** Professional working window for that weekday; null/undefined = closed. */
   professionalWindow?: DayWindow | null;
+  /** Optional recurring windows outside the standard window. */
+  businessWindows?: DayWindow[];
+  professionalWindows?: DayWindow[];
+  /** Extra windows marked blocked become busy intervals. */
+  blockedWindows?: DayWindow[];
   /** Lunch break window for that weekday; null/undefined = no break. */
   breakWindow?: DayWindow | null;
   /** Sum of selected service durations, in minutes. */
@@ -134,50 +139,62 @@ export function computeSlots(input: SlotInput): Slot[] {
     busy,
     now,
   } = input;
-
-  if (!businessWindow || !professionalWindow) return [];
+  if (
+    (!businessWindow || !professionalWindow) &&
+    !(input.businessWindows?.length && input.professionalWindows?.length)
+  )
+    return [];
   if (durationMinutes <= 0) return [];
   const step = slotIntervalMinutes > 0 ? slotIntervalMinutes : 15;
-
-  const windowStart = Math.max(
-    minutesFromTime(businessWindow.startsAt),
-    minutesFromTime(professionalWindow.startsAt),
-  );
-  const windowEnd = Math.min(
-    minutesFromTime(businessWindow.endsAt),
-    minutesFromTime(professionalWindow.endsAt),
-  );
-  if (windowEnd - windowStart < durationMinutes) return [];
-
+  const businessWindows = [businessWindow, ...(input.businessWindows ?? [])].filter(
+    Boolean,
+  ) as DayWindow[];
+  const professionalWindows = [professionalWindow, ...(input.professionalWindows ?? [])].filter(
+    Boolean,
+  ) as DayWindow[];
+  const windows: DayWindow[] = [];
+  for (const business of businessWindows)
+    for (const professional of professionalWindows) {
+      const startsAt = timeFromMinutes(
+        Math.max(minutesFromTime(business.startsAt), minutesFromTime(professional.startsAt)),
+      );
+      const endsAt = timeFromMinutes(
+        Math.min(minutesFromTime(business.endsAt), minutesFromTime(professional.endsAt)),
+      );
+      if (minutesFromTime(endsAt) - minutesFromTime(startsAt) >= durationMinutes)
+        windows.push({ startsAt, endsAt });
+    }
+  if (!windows.length) return [];
   const earliest = new Date(new Date(now).getTime() + minNoticeMinutes * 60000).getTime();
   const busyRanges = busy.map((b) => ({
     start: new Date(b.start).getTime(),
     end: new Date(b.end).getTime(),
   }));
-
-  // Lunch break behaves as a busy interval: no appointment may overlap it.
-  if (breakWindow) {
-    const breakStart = minutesFromTime(breakWindow.startsAt);
-    const breakEnd = minutesFromTime(breakWindow.endsAt);
-    if (breakEnd > breakStart) {
-      const start = zonedToUtc(date, breakStart, timeZone);
-      const end = zonedToUtc(date, breakEnd, timeZone);
-      busyRanges.push({ start: start.getTime(), end: end.getTime() });
+  const addBusy = (window: DayWindow | null | undefined) => {
+    if (!window) return;
+    const start = zonedToUtc(date, minutesFromTime(window.startsAt), timeZone);
+    const end = zonedToUtc(date, minutesFromTime(window.endsAt), timeZone);
+    if (end > start) busyRanges.push({ start: start.getTime(), end: end.getTime() });
+  };
+  addBusy(breakWindow);
+  for (const blocked of input.blockedWindows ?? []) addBusy(blocked);
+  const slots: Slot[] = [];
+  for (const window of windows) {
+    const startMinutes = minutesFromTime(window.startsAt);
+    const endMinutes = minutesFromTime(window.endsAt);
+    for (let m = startMinutes; m + durationMinutes <= endMinutes; m += step) {
+      const start = zonedToUtc(date, m, timeZone);
+      const end = new Date(start.getTime() + durationMinutes * 60000);
+      if (start.getTime() < earliest) continue;
+      if (busyRanges.some((r) => start.getTime() < r.end && end.getTime() > r.start)) continue;
+      slots.push({
+        label: timeFromMinutes(m),
+        startsAt: start.toISOString(),
+        endsAt: end.toISOString(),
+      });
     }
   }
-
-  const slots: Slot[] = [];
-  for (let m = windowStart; m + durationMinutes <= windowEnd; m += step) {
-    const start = zonedToUtc(date, m, timeZone);
-    const end = new Date(start.getTime() + durationMinutes * 60000);
-    if (start.getTime() < earliest) continue;
-    const overlaps = busyRanges.some((r) => start.getTime() < r.end && end.getTime() > r.start);
-    if (overlaps) continue;
-    slots.push({
-      label: timeFromMinutes(m),
-      startsAt: start.toISOString(),
-      endsAt: end.toISOString(),
-    });
-  }
-  return slots;
+  return slots.filter(
+    (slot, index, all) => all.findIndex((item) => item.startsAt === slot.startsAt) === index,
+  );
 }

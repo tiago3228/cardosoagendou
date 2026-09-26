@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PasswordInput } from "@/components/ui/password-input";
 import { PhotoField } from "@/components/ui/photo-field";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -19,6 +20,7 @@ import {
   listProfessionalInvites,
   revokeProfessionalInvite,
 } from "@/lib/team.functions";
+import { saveProfessionalCredentials } from "@/lib/professional-credentials.functions";
 
 export const Route = createFileRoute("/_authenticated/app/profissionais")({
   component: ProfessionalsPage,
@@ -37,12 +39,13 @@ function ProfessionalsPage() {
     name?: string;
   } | null;
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ name: "", commission: "0" });
+  const [form, setForm] = useState({ name: "", username: "", password: "", commission: "0" });
   const [expandedProfessionalId, setExpandedProfessionalId] = useState<string | null>(null);
 
   const sendInvite = useServerFn(inviteProfessional);
   const fetchInvites = useServerFn(listProfessionalInvites);
   const revokeInvite = useServerFn(revokeProfessionalInvite);
+  const saveCredentials = useServerFn(saveProfessionalCredentials);
   const [inviteEmail, setInviteEmail] = useState<Record<string, string>>({});
 
   const invites = useQuery({
@@ -84,7 +87,7 @@ function ProfessionalsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("professionals")
-        .select("id, name, commission_percent, active, user_id, photo_url, bio")
+        .select("id, name, commission_percent, active, user_id, login_username, photo_url, bio")
         .eq("business_id", businessId)
         .is("deleted_at", null)
         .order("name");
@@ -122,6 +125,7 @@ function ProfessionalsPage() {
   const create = useMutation({
     mutationFn: async () => {
       if (!form.name.trim()) throw new Error("Informe o nome");
+      if (!form.username.trim() || !form.password) throw new Error("Informe usuário e senha");
       const professional = await supabase
         .from("professionals")
         .insert({
@@ -132,6 +136,13 @@ function ProfessionalsPage() {
         .select("id")
         .single();
       if (professional.error) throw new Error(professional.error.message);
+      await saveCredentials({
+        data: {
+          professionalId: professional.data.id,
+          username: form.username,
+          password: form.password,
+        },
+      });
       const { error } = await supabase.from("professional_hours").insert(
         [1, 2, 3, 4, 5].map((weekday) => ({
           professional_id: professional.data.id,
@@ -145,7 +156,7 @@ function ProfessionalsPage() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      setForm({ name: "", commission: "0" });
+      setForm({ name: "", username: "", password: "", commission: "0" });
       toast.success("Profissional adicionado");
       queryClient.invalidateQueries({ queryKey: ["professionals", businessId] });
       queryClient.invalidateQueries({ queryKey: ["panel"] });
@@ -277,7 +288,7 @@ function ProfessionalsPage() {
       ) : null}
 
       <form
-        className="mt-6 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-3"
+        className="mt-6 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-4"
         onSubmit={(e) => {
           e.preventDefault();
           create.mutate();
@@ -286,6 +297,22 @@ function ProfessionalsPage() {
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Nome</Label>
           <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Usuário de acesso</Label>
+          <Input
+            value={form.username}
+            placeholder="ex.: atena"
+            onChange={(e) => setForm({ ...form, username: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Senha de acesso</Label>
+          <PasswordInput
+            value={form.password}
+            placeholder="Definida pelo proprietário"
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+          />
         </div>
         <div className="space-y-1.5">
           <Label>Comissão (%)</Label>
@@ -301,7 +328,7 @@ function ProfessionalsPage() {
             </p>
           ) : null}
         </div>
-        <div className="sm:col-span-3">
+        <div className="sm:col-span-4">
           <Button type="submit" disabled={create.isPending}>
             <Plus className="size-4" aria-hidden /> Adicionar profissional
           </Button>
@@ -333,7 +360,10 @@ function ProfessionalsPage() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      Comissão de {Number(professional.commission_percent)}%
+                      Comissão de {Number(professional.commission_percent)}% ·{" "}
+                      {professional.login_username
+                        ? `usuário ${professional.login_username}`
+                        : "sem acesso"}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -503,13 +533,17 @@ function ProfessionalHours({
   professionalId: string;
   businessId: string;
 }) {
+  type ExtraWindow = { starts_at: string; ends_at: string; mode: "free" | "blocked" };
   const queryClient = useQueryClient();
+  const [expandedWeekday, setExpandedWeekday] = useState<number | null>(null);
   const hours = useQuery({
     queryKey: ["professional-hours", professionalId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("professional_hours")
-        .select("id, weekday, starts_at, ends_at, enabled, lunch_starts_at, lunch_ends_at")
+        .select(
+          "id, weekday, starts_at, ends_at, enabled, lunch_starts_at, lunch_ends_at, extra_windows",
+        )
         .eq("professional_id", professionalId)
         .order("weekday");
       if (error) throw new Error(error.message);
@@ -525,6 +559,7 @@ function ProfessionalHours({
       ends_at: string;
       lunch_starts_at: string | null;
       lunch_ends_at: string | null;
+      extra_windows: ExtraWindow[];
     }) => {
       const payload = {
         enabled: input.enabled,
@@ -532,6 +567,7 @@ function ProfessionalHours({
         ends_at: input.ends_at,
         lunch_starts_at: input.lunch_starts_at || null,
         lunch_ends_at: input.lunch_ends_at || null,
+        extra_windows: input.extra_windows,
       };
       const existing = (hours.data ?? []).find((h) => h.weekday === input.weekday);
       if (existing) {
@@ -565,6 +601,7 @@ function ProfessionalHours({
           const lunchStarts = row?.lunch_starts_at ? row.lunch_starts_at.slice(0, 5) : "";
           const lunchEnds = row?.lunch_ends_at ? row.lunch_ends_at.slice(0, 5) : "";
           const enabled = row?.enabled ?? false;
+          const extraWindows = (row?.extra_windows ?? []) as unknown as ExtraWindow[];
           const base = {
             weekday,
             enabled,
@@ -572,6 +609,7 @@ function ProfessionalHours({
             ends_at: ends,
             lunch_starts_at: lunchStarts || null,
             lunch_ends_at: lunchEnds || null,
+            extra_windows: extraWindows,
           };
           return (
             <div key={weekday} className="flex flex-wrap items-center gap-2 text-sm">
@@ -580,6 +618,15 @@ function ProfessionalHours({
                 className={`w-14 rounded-md border px-2 py-1 ${enabled ? "border-primary bg-primary/10" : "border-border text-muted-foreground"}`}
               >
                 {WEEKDAY_SHORT[weekday]}
+              </button>
+              <button
+                type="button"
+                className="text-xs text-primary"
+                onClick={() => setExpandedWeekday(expandedWeekday === weekday ? null : weekday)}
+              >
+                {expandedWeekday === weekday
+                  ? "Fechar"
+                  : `Janelas extras${extraWindows.length ? ` (${extraWindows.length})` : ""}`}
               </button>
               <input
                 type="time"
@@ -612,10 +659,90 @@ function ProfessionalHours({
                 onChange={(e) => upsert.mutate({ ...base, lunch_ends_at: e.target.value || null })}
                 className="h-8 rounded-md border border-input bg-background px-2"
               />
+              {expandedWeekday === weekday ? (
+                <ExtraWindowsEditor
+                  value={extraWindows}
+                  onChange={(value) => upsert.mutate({ ...base, extra_windows: value })}
+                />
+              ) : null}
             </div>
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function ExtraWindowsEditor({
+  value,
+  onChange,
+}: {
+  value: { starts_at: string; ends_at: string; mode: "free" | "blocked" }[];
+  onChange: (value: { starts_at: string; ends_at: string; mode: "free" | "blocked" }[]) => void;
+}) {
+  const update = (index: number, patch: Partial<(typeof value)[number]>) =>
+    onChange(value.map((item, current) => (current === index ? { ...item, ...patch } : item)));
+  return (
+    <div className="mt-2 w-full rounded-lg border border-primary/20 bg-primary/5 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <p className="text-sm font-medium">Janelas extras</p>
+          <p className="text-xs text-muted-foreground">
+            Períodos livres ou bloqueados fora da jornada padrão.
+          </p>
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() =>
+            onChange([...value, { starts_at: "20:00", ends_at: "22:00", mode: "free" }])
+          }
+        >
+          <Plus className="size-3" aria-hidden /> Adicionar
+        </Button>
+      </div>
+      <div className="mt-3 space-y-2">
+        {value.map((window, index) => (
+          <div
+            key={`${window.starts_at}-${index}`}
+            className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-card p-2"
+          >
+            <Input
+              type="time"
+              className="h-8 w-28"
+              value={window.starts_at}
+              onChange={(e) => update(index, { starts_at: e.target.value })}
+            />
+            <span className="text-xs text-muted-foreground">até</span>
+            <Input
+              type="time"
+              className="h-8 w-28"
+              value={window.ends_at}
+              onChange={(e) => update(index, { ends_at: e.target.value })}
+            />
+            <select
+              className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+              value={window.mode}
+              onChange={(e) => update(index, { mode: e.target.value as "free" | "blocked" })}
+            >
+              <option value="free">Livre para agendamento</option>
+              <option value="blocked">Bloqueado sem agendamento</option>
+            </select>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => onChange(value.filter((_, current) => current !== index))}
+            >
+              Remover
+            </Button>
+          </div>
+        ))}
+      </div>
+      <Button type="button" className="mt-3" size="sm" onClick={() => onChange(value)}>
+        Salvar janelas
+      </Button>
     </div>
   );
 }

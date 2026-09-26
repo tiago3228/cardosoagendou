@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
+import { useServerFn } from "@tanstack/react-start";
+import { resolveProfessionalLogin } from "@/lib/professional-credentials.functions";
 
 const searchSchema = z.object({ next: z.string().optional() });
 
@@ -37,6 +39,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const resolveLogin = useServerFn(resolveProfessionalLogin);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -47,7 +50,13 @@ function AuthPage() {
   async function signIn(event: React.FormEvent) {
     event.preventDefault();
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const identifier = email.trim();
+    let authEmail = identifier;
+    if (!identifier.includes("@")) {
+      const resolved = await resolveLogin({ data: { username: identifier } });
+      authEmail = resolved.email ?? identifier;
+    }
+    const { error } = await supabase.auth.signInWithPassword({ email: authEmail, password });
     setBusy(false);
     if (error) {
       toast.error("Não foi possível entrar", { description: userFacingError(error) });
@@ -61,7 +70,9 @@ function AuthPage() {
       redirect_uri: window.location.origin,
     });
     if (result.error) {
-      toast.error("Falha no login com Google", { description: userFacingError(String(result.error)) });
+      toast.error("Falha no login com Google", {
+        description: userFacingError(String(result.error)),
+      });
       return;
     }
     if (result.redirected) return;
@@ -77,18 +88,21 @@ function AuthPage() {
         <h1 className="mt-6 font-display text-2xl font-bold text-foreground">Entrar no painel</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Ainda não tem conta?{" "}
-          <Link to="/cadastro" className="font-medium text-primary underline-offset-4 hover:underline">
+          <Link
+            to="/cadastro"
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
             Cadastre seu negócio
           </Link>
         </p>
 
         <form onSubmit={signIn} className="mt-8 space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="email">E-mail</Label>
+            <Label htmlFor="email">E-mail ou usuário</Label>
             <Input
               id="email"
-              type="email"
-              autoComplete="email"
+              type="text"
+              autoComplete="username"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}

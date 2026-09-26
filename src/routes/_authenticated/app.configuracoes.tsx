@@ -63,6 +63,7 @@ function SettingsPage() {
   const queryClient = useQueryClient();
   const [businessSettingsOpen, setBusinessSettingsOpen] = useState(false);
   const [hoursOpen, setHoursOpen] = useState(false);
+  const [expandedHourWeekday, setExpandedHourWeekday] = useState<number | null>(null);
   const [recoveryOpen, setRecoveryOpen] = useState(false);
   const [couponsOpen, setCouponsOpen] = useState(false);
   const [defaultHours, setDefaultHours] = useState({
@@ -235,7 +236,9 @@ function SettingsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("business_hours")
-        .select("id, weekday, opens_at, closes_at, closed, lunch_starts_at, lunch_ends_at")
+        .select(
+          "id, weekday, opens_at, closes_at, closed, lunch_starts_at, lunch_ends_at, extra_windows",
+        )
         .eq("business_id", business.id)
         .order("weekday");
       if (error) throw new Error(error.message);
@@ -251,6 +254,7 @@ function SettingsPage() {
       closed: boolean;
       lunch_starts_at: string;
       lunch_ends_at: string;
+      extra_windows: { starts_at: string; ends_at: string; mode: "free" | "blocked" }[];
     }) => {
       const { error } = await supabase
         .from("business_hours")
@@ -260,6 +264,7 @@ function SettingsPage() {
           closed: input.closed,
           lunch_starts_at: input.lunch_starts_at,
           lunch_ends_at: input.lunch_ends_at,
+          extra_windows: input.extra_windows,
         })
         .eq("id", input.id);
       if (error) throw new Error(error.message);
@@ -766,7 +771,15 @@ function SettingsPage() {
           </div>
           {(hours.data ?? []).map((hour) => (
             <div key={hour.id} className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="w-24 text-muted-foreground">{WEEKDAY_LABELS[hour.weekday]}</span>
+              <button
+                type="button"
+                className="w-24 text-left font-medium text-foreground"
+                onClick={() =>
+                  setExpandedHourWeekday(expandedHourWeekday === hour.weekday ? null : hour.weekday)
+                }
+              >
+                {WEEKDAY_LABELS[hour.weekday]}
+              </button>
               <Button
                 size="sm"
                 variant={hour.closed ? "ghost" : "outline"}
@@ -778,6 +791,11 @@ function SettingsPage() {
                     closed: !hour.closed,
                     lunch_starts_at: hour.lunch_starts_at?.slice(0, 5) ?? "12:00",
                     lunch_ends_at: hour.lunch_ends_at?.slice(0, 5) ?? "13:00",
+                    extra_windows: (hour.extra_windows ?? []) as unknown as {
+                      starts_at: string;
+                      ends_at: string;
+                      mode: "free" | "blocked";
+                    }[],
                   })
                 }
               >
@@ -794,6 +812,11 @@ function SettingsPage() {
                     closed: hour.closed,
                     lunch_starts_at: hour.lunch_starts_at?.slice(0, 5) ?? "12:00",
                     lunch_ends_at: hour.lunch_ends_at?.slice(0, 5) ?? "13:00",
+                    extra_windows: (hour.extra_windows ?? []) as unknown as {
+                      starts_at: string;
+                      ends_at: string;
+                      mode: "free" | "blocked";
+                    }[],
                   })
                 }
                 className="h-8 rounded-md border border-input bg-background px-2"
@@ -810,6 +833,11 @@ function SettingsPage() {
                     closed: hour.closed,
                     lunch_starts_at: hour.lunch_starts_at?.slice(0, 5) ?? "12:00",
                     lunch_ends_at: hour.lunch_ends_at?.slice(0, 5) ?? "13:00",
+                    extra_windows: (hour.extra_windows ?? []) as unknown as {
+                      starts_at: string;
+                      ends_at: string;
+                      mode: "free" | "blocked";
+                    }[],
                   })
                 }
                 className="h-8 rounded-md border border-input bg-background px-2"
@@ -827,6 +855,11 @@ function SettingsPage() {
                     closed: hour.closed,
                     lunch_starts_at: e.target.value || "12:00",
                     lunch_ends_at: hour.lunch_ends_at?.slice(0, 5) ?? "13:00",
+                    extra_windows: (hour.extra_windows ?? []) as unknown as {
+                      starts_at: string;
+                      ends_at: string;
+                      mode: "free" | "blocked";
+                    }[],
                   })
                 }
                 className="h-8 rounded-md border border-input bg-background px-2"
@@ -848,6 +881,28 @@ function SettingsPage() {
                 }
                 className="h-8 rounded-md border border-input bg-background px-2"
               />
+              {expandedHourWeekday === hour.weekday ? (
+                <SettingsExtraWindowsEditor
+                  value={
+                    (hour.extra_windows ?? []) as unknown as {
+                      starts_at: string;
+                      ends_at: string;
+                      mode: "free" | "blocked";
+                    }[]
+                  }
+                  onSave={(extra_windows) =>
+                    saveHour.mutate({
+                      id: hour.id,
+                      opens_at: hour.opens_at.slice(0, 5),
+                      closes_at: hour.closes_at.slice(0, 5),
+                      closed: hour.closed,
+                      lunch_starts_at: hour.lunch_starts_at?.slice(0, 5) ?? "12:00",
+                      lunch_ends_at: hour.lunch_ends_at?.slice(0, 5) ?? "13:00",
+                      extra_windows,
+                    })
+                  }
+                />
+              ) : null}
             </div>
           ))}
         </div>
@@ -1082,6 +1137,86 @@ function SettingsPage() {
         ) : null}
       </div>
       <InstallAppSection />
+    </div>
+  );
+}
+
+function SettingsExtraWindowsEditor({
+  value,
+  onSave,
+}: {
+  value: { starts_at: string; ends_at: string; mode: "free" | "blocked" }[];
+  onSave: (value: { starts_at: string; ends_at: string; mode: "free" | "blocked" }[]) => void;
+}) {
+  const [draft, setDraft] = useState(value);
+  return (
+    <div className="mt-2 w-full rounded-lg border border-primary/20 bg-primary/5 p-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium">Janelas extras</p>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() =>
+            setDraft([...draft, { starts_at: "20:00", ends_at: "22:00", mode: "free" }])
+          }
+        >
+          <Plus className="size-3" aria-hidden /> Adicionar
+        </Button>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Defina períodos livres para agendamento ou bloqueados sem agendamento.
+      </p>
+      <div className="mt-2 space-y-2">
+        {draft.map((item, index) => (
+          <div key={`${index}-${item.starts_at}`} className="flex flex-wrap items-center gap-2">
+            <Input
+              type="time"
+              className="h-8 w-28"
+              value={item.starts_at}
+              onChange={(e) =>
+                setDraft(
+                  draft.map((x, i) => (i === index ? { ...x, starts_at: e.target.value } : x)),
+                )
+              }
+            />
+            <span className="text-xs">até</span>
+            <Input
+              type="time"
+              className="h-8 w-28"
+              value={item.ends_at}
+              onChange={(e) =>
+                setDraft(draft.map((x, i) => (i === index ? { ...x, ends_at: e.target.value } : x)))
+              }
+            />
+            <select
+              className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+              value={item.mode}
+              onChange={(e) =>
+                setDraft(
+                  draft.map((x, i) =>
+                    i === index ? { ...x, mode: e.target.value as "free" | "blocked" } : x,
+                  ),
+                )
+              }
+            >
+              <option value="free">Livre para agendamento</option>
+              <option value="blocked">Bloqueado sem agendamento</option>
+            </select>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => setDraft(draft.filter((_, i) => i !== index))}
+            >
+              Remover
+            </Button>
+          </div>
+        ))}
+      </div>
+      <Button type="button" size="sm" className="mt-3" onClick={() => onSave(draft)}>
+        Salvar janelas
+      </Button>
     </div>
   );
 }

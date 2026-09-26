@@ -285,6 +285,7 @@ export type Database = {
           closed: boolean;
           closes_at: string;
           id: string;
+          extra_windows: Json;
           lunch_ends_at: string;
           lunch_starts_at: string;
           opens_at: string;
@@ -295,6 +296,7 @@ export type Database = {
           closed?: boolean;
           closes_at?: string;
           id?: string;
+          extra_windows?: Json;
           lunch_ends_at?: string;
           lunch_starts_at?: string;
           opens_at?: string;
@@ -305,6 +307,7 @@ export type Database = {
           closed?: boolean;
           closes_at?: string;
           id?: string;
+          extra_windows?: Json;
           lunch_ends_at?: string;
           lunch_starts_at?: string;
           opens_at?: string;
@@ -1117,6 +1120,7 @@ export type Database = {
           business_id: string;
           enabled: boolean;
           ends_at: string;
+          extra_windows: Json;
           id: string;
           lunch_ends_at: string | null;
           lunch_starts_at: string | null;
@@ -1128,6 +1132,7 @@ export type Database = {
           business_id: string;
           enabled?: boolean;
           ends_at?: string;
+          extra_windows?: Json;
           id?: string;
           lunch_ends_at?: string | null;
           lunch_starts_at?: string | null;
@@ -1139,6 +1144,7 @@ export type Database = {
           business_id?: string;
           enabled?: boolean;
           ends_at?: string;
+          extra_windows?: Json;
           id?: string;
           lunch_ends_at?: string | null;
           lunch_starts_at?: string | null;
@@ -1272,6 +1278,7 @@ export type Database = {
           created_at: string;
           deleted_at: string | null;
           id: string;
+          login_username: string | null;
           name: string;
           photo_url: string | null;
           updated_at: string;
@@ -1285,6 +1292,7 @@ export type Database = {
           created_at?: string;
           deleted_at?: string | null;
           id?: string;
+          login_username?: string | null;
           name: string;
           photo_url?: string | null;
           updated_at?: string;
@@ -1298,6 +1306,7 @@ export type Database = {
           created_at?: string;
           deleted_at?: string | null;
           id?: string;
+          login_username?: string | null;
           name?: string;
           photo_url?: string | null;
           updated_at?: string;

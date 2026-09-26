@@ -130,8 +130,11 @@ export interface PublicCatalog {
     enabled: boolean;
     lunch_starts_at: string | null;
     lunch_ends_at: string | null;
+    extra_windows: { starts_at: string; ends_at: string; mode: "free" | "blocked" }[];
   }[];
 }
+
+type ExtraWindow = { starts_at: string; ends_at: string; mode: "free" | "blocked" };
 
 export async function loadPublicCatalogBySlug(db: Db, slug: string): Promise<PublicCatalog> {
   const { data } = await db.rpc("public_catalog", { _slug: slug });
@@ -185,12 +188,14 @@ export async function loadPublicCatalog(db: Db, businessId: string) {
         .eq("business_id", businessId),
       db
         .from("business_hours")
-        .select("weekday, opens_at, closes_at, closed, lunch_starts_at, lunch_ends_at")
+        .select(
+          "weekday, opens_at, closes_at, closed, lunch_starts_at, lunch_ends_at, extra_windows",
+        )
         .eq("business_id", businessId),
       db
         .from("professional_hours")
         .select(
-          "professional_id, weekday, starts_at, ends_at, enabled, lunch_starts_at, lunch_ends_at",
+          "professional_id, weekday, starts_at, ends_at, enabled, lunch_starts_at, lunch_ends_at, extra_windows",
         )
         .eq("business_id", businessId),
     ]);
@@ -200,8 +205,14 @@ export async function loadPublicCatalog(db: Db, businessId: string) {
     services: services.data ?? [],
     professionals: professionals.data ?? [],
     links: links.data ?? [],
-    businessHours: businessHours.data ?? [],
-    professionalHours: professionalHours.data ?? [],
+    businessHours: (businessHours.data ?? []).map((hour) => ({
+      ...hour,
+      extra_windows: (hour.extra_windows ?? []) as unknown as ExtraWindow[],
+    })),
+    professionalHours: (professionalHours.data ?? []).map((hour) => ({
+      ...hour,
+      extra_windows: (hour.extra_windows ?? []) as unknown as ExtraWindow[],
+    })),
   };
 }
 
@@ -342,6 +353,18 @@ export async function availabilityForDay(
 
   const bh = catalog.businessHours.find((h) => h.weekday === weekday);
   const businessWindow = bh && !bh.closed ? { startsAt: bh.opens_at, endsAt: bh.closes_at } : null;
+  const businessWindows =
+    bh && !bh.closed
+      ? bh.extra_windows
+          .filter((window) => window.mode === "free")
+          .map((window) => ({ startsAt: window.starts_at, endsAt: window.ends_at }))
+      : [];
+  const businessBlockedWindows =
+    bh && !bh.closed
+      ? bh.extra_windows
+          .filter((window) => window.mode === "blocked")
+          .map((window) => ({ startsAt: window.starts_at, endsAt: window.ends_at }))
+      : [];
   const businessBreakWindow =
     bh && !bh.closed && bh.lunch_starts_at && bh.lunch_ends_at
       ? { startsAt: bh.lunch_starts_at, endsAt: bh.lunch_ends_at }
@@ -362,6 +385,18 @@ export async function availabilityForDay(
     );
     const professionalWindow =
       ph && ph.enabled ? { startsAt: ph.starts_at, endsAt: ph.ends_at } : null;
+    const professionalWindows =
+      ph && ph.enabled
+        ? ph.extra_windows
+            .filter((window) => window.mode === "free")
+            .map((window) => ({ startsAt: window.starts_at, endsAt: window.ends_at }))
+        : [];
+    const professionalBlockedWindows =
+      ph && ph.enabled
+        ? ph.extra_windows
+            .filter((window) => window.mode === "blocked")
+            .map((window) => ({ startsAt: window.starts_at, endsAt: window.ends_at }))
+        : [];
     const breakWindow =
       ph && ph.enabled && ph.lunch_starts_at && ph.lunch_ends_at
         ? { startsAt: ph.lunch_starts_at, endsAt: ph.lunch_ends_at }
@@ -377,7 +412,13 @@ export async function availabilityForDay(
       date,
       timeZone: business.timezone,
       businessWindow,
-      breakWindow: businessBreakWindow,
+      businessWindows,
+      professionalWindows,
+      blockedWindows: [
+        businessBreakWindow,
+        ...businessBlockedWindows,
+        ...professionalBlockedWindows,
+      ].filter(Boolean),
       professionalWindow,
       breakWindow,
       durationMinutes: selection.durationMinutes,
