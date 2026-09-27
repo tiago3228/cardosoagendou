@@ -1235,15 +1235,15 @@ function InstallAppSection() {
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
       >
-        <span>Instalar Agendou Pro</span>
+        <span>{installed ? "Aplicativo já instalado" : "Instalar aplicativo"}</span>
         <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />
       </Button>
       {open ? (
         <div className="mt-4">
           <p className="text-sm text-muted-foreground">
             {installed
-              ? "O Agendou Pro já está instalado neste dispositivo."
-              : "Crie um atalho para abrir o Agendou Pro direto da tela inicial ou da área de trabalho."}
+              ? "O Agendou já está instalado neste dispositivo."
+              : "Crie um atalho para abrir o Agendou direto da tela inicial ou da área de trabalho."}
           </p>
           {installed ? null : (
             <>
@@ -1265,7 +1265,7 @@ function InstallAppSection() {
                   );
                 }}
               >
-                Instalar Agendou Pro
+                Instalar aplicativo
               </Button>
               {hint || !canInstall ? (
                 <p className="mt-3 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">

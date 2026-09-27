@@ -14,7 +14,7 @@ import { dismissInstallPrompt, installPromptDismissed, useInstallApp } from "@/l
 
 /**
  * Shown once per user/device after the first successful login, inviting the
- * customer to create a shortcut (PWA install) for Agendou Pro.
+ * customer to create a shortcut (PWA install) for Agendou.
  */
 export function InstallAppDialog() {
   const { canInstall, installed, install, manualHint } = useInstallApp();
@@ -38,7 +38,7 @@ export function InstallAppDialog() {
     if (outcome === "accepted") {
       dismissInstallPrompt();
       setOpen(false);
-      toast.success("Atalho criado! Abra o Agendou Pro pelo ícone do app.");
+      toast.success("Atalho criado! Abra o Agendou pelo ícone do app.");
       return;
     }
     setShowHint(true);
@@ -54,15 +54,13 @@ export function InstallAppDialog() {
 
   if (!open) return null;
 
-
-
   return (
     <Dialog open={open} onOpenChange={(value) => (value ? setOpen(true) : later())}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Acesse o Agendou Pro mais rápido 🚀</DialogTitle>
+          <DialogTitle>Acesse o Agendou mais rápido</DialogTitle>
           <DialogDescription>
-            Quer criar um atalho para abrir o Agendou Pro rapidamente?
+            Quer criar um atalho para abrir o Agendou rapidamente?
           </DialogDescription>
         </DialogHeader>
         {showHint || !canInstall ? (

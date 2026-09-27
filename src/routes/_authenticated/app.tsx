@@ -5,6 +5,7 @@ import {
   BellRing,
   CircleHelp,
   CreditCard,
+  Download,
   FileText,
   KanbanSquare,
   LogOut,
@@ -25,6 +26,7 @@ import { getMyEntitlements } from "@/lib/billing.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
+import { useInstallApp } from "@/lib/use-install-app";
 
 export const panelQuery = queryOptions({ queryKey: ["panel"], queryFn: () => getMyPanel() });
 
@@ -101,6 +103,23 @@ function PanelLayout() {
   const features = (entitlements.data?.features ?? {}) as Record<string, unknown>;
   const nav = NAV.filter((item) => !("feature" in item) || features[item.feature] === true);
   const [theme, setTheme] = useState<PanelTheme>("dark");
+  const { installed, install, manualHint } = useInstallApp();
+  const [installHint, setInstallHint] = useState(false);
+
+  async function handleInstall() {
+    if (installed) return;
+    const outcome = await install();
+    if (outcome === "accepted") {
+      toast.success("Aplicativo instalado com sucesso.");
+      return;
+    }
+    setInstallHint(true);
+    if (outcome === "unsupported")
+      toast.info("A instalação automática não está disponível neste navegador.", {
+        description: manualHint,
+        duration: 8000,
+      });
+  }
 
   useEffect(() => {
     const businessId = data.business?.id;
@@ -208,6 +227,23 @@ function PanelLayout() {
               Administração Master
             </Link>
           ) : null}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="mt-2 w-full justify-start gap-3 text-sidebar-foreground"
+            onClick={() => void handleInstall()}
+            disabled={installed}
+            title={installed ? "Aplicativo já instalado" : "Instalar aplicativo"}
+          >
+            <Download className="size-4" aria-hidden />
+            {installed ? "Aplicativo já instalado" : "Instalar aplicativo"}
+          </Button>
+          {installHint && !installed ? (
+            <p className="mt-2 rounded-md bg-sidebar-accent/50 p-2 text-[11px] leading-relaxed text-sidebar-foreground/70">
+              {manualHint}
+            </p>
+          ) : null}
         </nav>
         <div className="mt-auto rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Plano</p>
@@ -233,6 +269,18 @@ function PanelLayout() {
         <header className="flex items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur md:px-8 md:py-4">
           <span className="min-w-0 truncate font-display font-bold">{data.business.name}</span>
           <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 gap-1.5 px-2.5 sm:hidden"
+              onClick={() => void handleInstall()}
+              disabled={installed}
+              aria-label={installed ? "Aplicativo já instalado" : "Instalar aplicativo"}
+              title={installed ? "Aplicativo já instalado" : "Instalar aplicativo"}
+            >
+              <Download className="size-4" aria-hidden />
+            </Button>
             <Button
               asChild
               size="sm"

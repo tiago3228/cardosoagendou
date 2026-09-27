@@ -12,7 +12,8 @@ export type InstallPlatform = "android" | "ios" | "desktop";
 export function detectPlatform(): InstallPlatform {
   if (typeof navigator === "undefined") return "desktop";
   const ua = navigator.userAgent;
-  if (/iPad|iPhone|iPod/.test(ua) || (ua.includes("Macintosh") && "ontouchend" in document)) return "ios";
+  if (/iPad|iPhone|iPod/.test(ua) || (ua.includes("Macintosh") && "ontouchend" in document))
+    return "ios";
   if (/Android/i.test(ua)) return "android";
   return "desktop";
 }
@@ -22,7 +23,7 @@ export function manualInstallHint(platform: InstallPlatform): string {
     return 'No Safari, toque no botão Compartilhar e escolha "Adicionar à Tela de Início".';
   if (platform === "android")
     return 'No menu do navegador (⋮), toque em "Instalar aplicativo" ou "Adicionar à tela inicial".';
-  return 'No navegador, abra o menu (⋮) e escolha "Instalar Agendou Pro" ou clique no ícone de instalar na barra de endereço.';
+  return 'No navegador, abra o menu (⋮) e escolha "Instalar Agendou" ou clique no ícone de instalar na barra de endereço.';
 }
 
 export function isStandalone(): boolean {
@@ -40,7 +41,9 @@ export function useInstallApp() {
   const platform = typeof window === "undefined" ? "desktop" : detectPlatform();
 
   useEffect(() => {
-    setInstalled(isStandalone());
+    const media = window.matchMedia?.("(display-mode: standalone)");
+    const updateStandalone = () => setInstalled(isStandalone());
+    updateStandalone();
     const onPrompt = (event: Event) => {
       event.preventDefault();
       setPromptEvent(event as BeforeInstallPromptEvent);
@@ -51,9 +54,11 @@ export function useInstallApp() {
     };
     window.addEventListener("beforeinstallprompt", onPrompt);
     window.addEventListener("appinstalled", onInstalled);
+    media?.addEventListener?.("change", updateStandalone);
     return () => {
       window.removeEventListener("beforeinstallprompt", onPrompt);
       window.removeEventListener("appinstalled", onInstalled);
+      media?.removeEventListener?.("change", updateStandalone);
     };
   }, []);
 
@@ -62,7 +67,10 @@ export function useInstallApp() {
     if (!promptEvent) return "unsupported";
     await promptEvent.prompt();
     const { outcome } = await promptEvent.userChoice;
-    if (outcome === "accepted") setPromptEvent(null);
+    if (outcome === "accepted") {
+      setPromptEvent(null);
+      setInstalled(true);
+    }
     return outcome;
   }, [promptEvent]);
 
