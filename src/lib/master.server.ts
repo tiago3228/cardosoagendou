@@ -20,6 +20,7 @@ export type MasterBusinessRow = {
   status: string | null;
   currentPeriodEnd: string | null;
   provider: string | null;
+  diamondAccess: boolean;
 };
 
 /** Every tenant with its current plan — master-only overview. */
@@ -27,7 +28,7 @@ export async function listBusinessesWithPlans(db: Db): Promise<MasterBusinessRow
   const { data, error } = await db
     .from("businesses")
     .select(
-      "id, name, slug, subscriptions (status, billing_interval, current_period_end, provider, plans:plan_id (code, name))",
+      "id, name, slug, diamond_access, subscriptions (status, billing_interval, current_period_end, provider, plans:plan_id (code, name))",
     )
     .order("name");
   if (error) throw new Error(error.message);
@@ -54,6 +55,7 @@ export async function listBusinessesWithPlans(db: Db): Promise<MasterBusinessRow
       status: sub?.status ?? null,
       currentPeriodEnd: sub?.current_period_end ?? null,
       provider: sub?.provider ?? null,
+      diamondAccess: Boolean((row as { diamond_access?: boolean }).diamond_access),
     };
   });
 }

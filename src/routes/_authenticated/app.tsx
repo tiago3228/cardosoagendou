@@ -5,6 +5,7 @@ import {
   BellRing,
   CircleHelp,
   CreditCard,
+  Gem,
   Download,
   FileText,
   KanbanSquare,
@@ -205,6 +206,11 @@ function PanelLayout() {
           Agendou
         </Link>
         <p className="mt-1 truncate text-sm text-muted-foreground">{data.business.name}</p>
+        {data.business.diamond_access ? (
+          <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-amber-400/50 bg-amber-400/10 px-2 py-0.5 text-xs font-semibold text-amber-600 dark:text-amber-300">
+            <Gem className="size-3" aria-hidden /> Diamante
+          </span>
+        ) : null}
         <nav className="mt-7 space-y-1.5">
           {nav.map((item) => (
             <Link
@@ -247,7 +253,12 @@ function PanelLayout() {
         </nav>
         <div className="mt-auto rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Plano</p>
-          <p className="text-sm font-semibold text-sidebar-foreground">{plan?.name ?? "—"}</p>
+          <p className="flex items-center gap-1 text-sm font-semibold text-sidebar-foreground">
+            {data.business.diamond_access ? (
+              <Gem className="size-4 text-amber-500" aria-hidden />
+            ) : null}
+            {data.business.diamond_access ? "Diamante" : (plan?.name ?? "—")}
+          </p>
           <p className="mt-1 text-xs text-muted-foreground">
             {data.usage?.activeProfessionals} profissional(is) ativo(s)
           </p>

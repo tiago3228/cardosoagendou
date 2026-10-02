@@ -45,6 +45,27 @@ export const setMasterTestPlan = createServerFn({ method: "POST" })
     };
   });
 
+export const setMasterDiamondAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => {
+    if (!input || typeof input !== "object") throw new Error("Dados inválidos");
+    const value = input as Record<string, unknown>;
+    if (typeof value["businessId"] !== "string" || typeof value["enabled"] !== "boolean") {
+      throw new Error("Negócio ou status Diamante inválido");
+    }
+    return { businessId: value["businessId"], enabled: value["enabled"] };
+  })
+  .handler(async ({ data, context }) => {
+    const { assertMaster } = await import("./master.server");
+    await assertMaster(context.supabase, context.userId);
+    const { data: result, error } = await context.supabase.rpc("master_set_diamond_access", {
+      _business_id: data.businessId,
+      _enabled: data.enabled,
+    });
+    if (error) throw new Error(error.message);
+    return result as { business_id: string; business_name: string; diamond_access: boolean };
+  });
+
 export const listMasterAdminData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

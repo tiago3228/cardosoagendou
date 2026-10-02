@@ -136,13 +136,26 @@ function SubscriptionPage() {
   const currentPlanId = subscription?.plan_id;
   const ent = entitlements.data;
   const openCharge = charge.data;
+  const diamondAccess = data.data?.diamondAccess === true;
 
   return (
     <div>
       <BackButton />
       <h1 className="font-display text-2xl font-bold text-foreground">Assinatura</h1>
 
-      {subscription ? (
+      {diamondAccess ? (
+        <div className="mt-5 rounded-xl border border-amber-400/50 bg-amber-400/10 p-5 text-foreground">
+          <p className="font-semibold text-amber-700 dark:text-amber-300">
+            ◆ Acesso Diamante ativo
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Sua conta possui acesso permanente equivalente ao Plano Ilimitado. Não é necessário
+            assinar ou renovar; o acesso só termina se for desabilitado pela Administração Master.
+          </p>
+        </div>
+      ) : null}
+
+      {!diamondAccess && subscription ? (
         <div className="mt-5 rounded-xl border border-border bg-card p-5">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Status</p>
           <p className="text-lg font-semibold text-card-foreground">
@@ -180,7 +193,7 @@ function SubscriptionPage() {
         </div>
       ) : null}
 
-      {ent && ent.booking_state !== "OPEN" ? (
+      {!diamondAccess && ent && ent.booking_state !== "OPEN" ? (
         <div
           className={`mt-5 rounded-xl border p-4 text-sm ${
             ent.booking_state === "BLOCKED"
@@ -202,7 +215,7 @@ function SubscriptionPage() {
         </div>
       ) : null}
 
-      {openCharge ? (
+      {!diamondAccess && openCharge ? (
         <div className="mt-5 rounded-xl border border-border bg-card p-5">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Fatura em aberto</p>
           <p className="mt-1 text-lg font-semibold text-card-foreground">
@@ -245,96 +258,102 @@ function SubscriptionPage() {
         </div>
       ) : null}
 
-      <div className="mt-8 flex items-center gap-2">
-        {(["MONTHLY", "ANNUAL"] as BillingInterval[]).map((option) => (
-          <button
-            key={option}
-            onClick={() => setInterval(option)}
-            className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${interval === option ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"}`}
-          >
-            {option === "MONTHLY" ? "Mensal" : "Anual"}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-5 grid gap-4 md:grid-cols-3">
-        {plans.map((plan) => {
-          const isCurrent = plan.id === currentPlanId;
-          return (
-            <article
-              key={plan.id}
-              className={`rounded-2xl border p-5 ${isCurrent ? "border-primary bg-primary/5" : "border-border bg-card"}`}
+      {!diamondAccess ? (
+        <div className="mt-8 flex items-center gap-2">
+          {(["MONTHLY", "ANNUAL"] as BillingInterval[]).map((option) => (
+            <button
+              key={option}
+              onClick={() => setInterval(option)}
+              className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${interval === option ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"}`}
             >
-              {plan.code === "MEDIUM" ? (
-                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-primary">
-                  🔥 MAIS ASSINADO
-                </p>
-              ) : null}
-              {plan.code === "UNLIMITED" ? (
-                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-primary">
-                  👑 MAIS COMPLETO
-                </p>
-              ) : null}
-              <h2 className="font-display text-lg font-bold text-card-foreground">{plan.name}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{planLimitLabel(plan)}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {plan.code === "BASIC"
-                  ? "1 segmento"
-                  : plan.code === "MEDIUM"
-                    ? "Até 2 segmentos"
-                    : "Segmentos ilimitados"}
-                {" · Serviços ilimitados"}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Serviços personalizados ilimitados
-              </p>
-              <p className="mt-4 text-2xl font-bold text-foreground">
-                {formatBRL(
-                  interval === "ANNUAL" ? annualMonthlyEquivalentCents(plan) : planPriceCents(plan, interval),
-                )}
-                <span className="text-sm font-normal text-muted-foreground">/mês</span>
-              </p>
-              {interval === "ANNUAL" ? (
-                <p className="mt-1 text-sm text-primary">
-                  {formatBRL(plan.annual_price_cents)} por ano · {annualFreeMonths(plan)} mês(es) grátis ·
-                  economize {formatBRL(annualSavingsCents(plan))}
-                </p>
-              ) : null}
-              {plan.description ? (
-                <p className="mt-3 text-sm text-muted-foreground">{plan.description}</p>
-              ) : null}
+              {option === "MONTHLY" ? "Mensal" : "Anual"}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
-              <div className="mt-5 space-y-2">
-                {isCurrent && subscription?.billing_interval === interval ? (
-                  <p className="flex items-center gap-2 text-sm font-medium text-primary">
-                    <Check className="size-4" aria-hidden /> Plano atual
+      {!diamondAccess ? (
+        <div className="mt-5 grid gap-4 md:grid-cols-3">
+          {plans.map((plan) => {
+            const isCurrent = plan.id === currentPlanId;
+            return (
+              <article
+                key={plan.id}
+                className={`rounded-2xl border p-5 ${isCurrent ? "border-primary bg-primary/5" : "border-border bg-card"}`}
+              >
+                {plan.code === "MEDIUM" ? (
+                  <p className="mb-2 text-xs font-bold uppercase tracking-wide text-primary">
+                    🔥 MAIS ASSINADO
                   </p>
-                ) : (
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    size="sm"
-                    onClick={() => change.mutate(plan.code)}
-                  >
-                    Agendar troca para {plan.name}
-                  </Button>
-                )}
-                <Button
-                  className="w-full"
-                  onClick={() => {
-                    setSelected({ code: plan.code, name: plan.name });
-                    setPixOpen(false);
-                  }}
-                >
-                  Assinar {plan.name}
-                </Button>
-              </div>
-            </article>
-          );
-        })}
-      </div>
+                ) : null}
+                {plan.code === "UNLIMITED" ? (
+                  <p className="mb-2 text-xs font-bold uppercase tracking-wide text-primary">
+                    👑 MAIS COMPLETO
+                  </p>
+                ) : null}
+                <h2 className="font-display text-lg font-bold text-card-foreground">{plan.name}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{planLimitLabel(plan)}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {plan.code === "BASIC"
+                    ? "1 segmento"
+                    : plan.code === "MEDIUM"
+                      ? "Até 2 segmentos"
+                      : "Segmentos ilimitados"}
+                  {" · Serviços ilimitados"}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Serviços personalizados ilimitados
+                </p>
+                <p className="mt-4 text-2xl font-bold text-foreground">
+                  {formatBRL(
+                    interval === "ANNUAL"
+                      ? annualMonthlyEquivalentCents(plan)
+                      : planPriceCents(plan, interval),
+                  )}
+                  <span className="text-sm font-normal text-muted-foreground">/mês</span>
+                </p>
+                {interval === "ANNUAL" ? (
+                  <p className="mt-1 text-sm text-primary">
+                    {formatBRL(plan.annual_price_cents)} por ano · {annualFreeMonths(plan)} mês(es)
+                    grátis · economize {formatBRL(annualSavingsCents(plan))}
+                  </p>
+                ) : null}
+                {plan.description ? (
+                  <p className="mt-3 text-sm text-muted-foreground">{plan.description}</p>
+                ) : null}
 
-      {selected ? (
+                <div className="mt-5 space-y-2">
+                  {isCurrent && subscription?.billing_interval === interval ? (
+                    <p className="flex items-center gap-2 text-sm font-medium text-primary">
+                      <Check className="size-4" aria-hidden /> Plano atual
+                    </p>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      size="sm"
+                      onClick={() => change.mutate(plan.code)}
+                    >
+                      Agendar troca para {plan.name}
+                    </Button>
+                  )}
+                  <Button
+                    className="w-full"
+                    onClick={() => {
+                      setSelected({ code: plan.code, name: plan.name });
+                      setPixOpen(false);
+                    }}
+                  >
+                    Assinar {plan.name}
+                  </Button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {!diamondAccess && selected ? (
         <div className="mt-6 rounded-2xl border border-border bg-card p-5">
           <h2 className="font-display text-lg font-bold text-card-foreground">
             Escolha a forma de pagamento
@@ -363,11 +382,7 @@ function SubscriptionPage() {
               <p className="mt-1 text-sm text-muted-foreground">
                 Pagamento manual · faça o PIX e aguarde a confirmação da nossa equipe.
               </p>
-              <Button
-                variant="outline"
-                className="mt-4 w-full"
-                onClick={() => setPixOpen(true)}
-              >
+              <Button variant="outline" className="mt-4 w-full" onClick={() => setPixOpen(true)}>
                 Assinar via PIX
               </Button>
             </div>

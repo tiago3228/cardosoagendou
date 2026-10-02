@@ -3,7 +3,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { listBusinessesForMaster, setMasterTestPlan } from "@/lib/master.functions";
+import {
+  listBusinessesForMaster,
+  setMasterDiamondAccess,
+  setMasterTestPlan,
+} from "@/lib/master.functions";
 import { formatBRL } from "@/lib/format";
 import { userFacingError } from "@/lib/user-facing-error";
 import { Button } from "@/components/ui/button";
@@ -42,6 +46,7 @@ function MasterPlansPage() {
   const queryClient = useQueryClient();
   const fetchOverview = useServerFn(listBusinessesForMaster);
   const applyPlan = useServerFn(setMasterTestPlan);
+  const applyDiamond = useServerFn(setMasterDiamondAccess);
   const [interval, setInterval] = useState<"MONTHLY" | "ANNUAL">("MONTHLY");
 
   const overview = useQuery({ queryKey: ["master-plans"], queryFn: () => fetchOverview() });
@@ -51,6 +56,19 @@ function MasterPlansPage() {
       applyPlan({ data: { ...vars, interval } }),
     onSuccess: (result) => {
       toast.success(`Plano alterado para ${result.plan_name}`);
+      queryClient.invalidateQueries({ queryKey: ["master-plans"] });
+      queryClient.invalidateQueries({ queryKey: ["entitlements"] });
+      queryClient.invalidateQueries({ queryKey: ["panel"] });
+    },
+    onError: (error: Error) => toast.error(userFacingError(error)),
+  });
+
+  const switchDiamond = useMutation({
+    mutationFn: (vars: { businessId: string; enabled: boolean }) => applyDiamond({ data: vars }),
+    onSuccess: (result) => {
+      toast.success(
+        result.diamond_access ? "Acesso Diamante habilitado" : "Acesso Diamante desabilitado",
+      );
       queryClient.invalidateQueries({ queryKey: ["master-plans"] });
       queryClient.invalidateQueries({ queryKey: ["entitlements"] });
       queryClient.invalidateQueries({ queryKey: ["panel"] });
@@ -145,9 +163,23 @@ function MasterPlansPage() {
                   /{business.slug} · Plano atual: {business.planName ?? "—"} ·{" "}
                   {business.status ?? "sem assinatura"}
                   {business.provider === "master_test" ? " · modo teste" : ""}
+                  {business.diamondAccess ? " · Diamante permanente" : ""}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant={business.diamondAccess ? "default" : "outline"}
+                  disabled={switchDiamond.isPending || switchPlan.isPending}
+                  onClick={() =>
+                    switchDiamond.mutate({
+                      businessId: business.id,
+                      enabled: !business.diamondAccess,
+                    })
+                  }
+                >
+                  {business.diamondAccess ? "◆ Diamante ativo" : "Habilitar ◆ Diamante"}
+                </Button>
                 {plans.map((plan) => (
                   <Button
                     key={plan.code}

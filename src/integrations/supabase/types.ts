@@ -395,6 +395,7 @@ export type Database = {
           description: string | null;
           description_color: string;
           description_font: string;
+          diamond_access: boolean;
           email: string | null;
           id: string;
           google_review_url: string | null;
@@ -432,6 +433,7 @@ export type Database = {
           cover_url?: string | null;
           created_at?: string;
           description?: string | null;
+          diamond_access?: boolean;
           email?: string | null;
           id?: string;
           instagram_url?: string | null;
@@ -469,6 +471,7 @@ export type Database = {
           cover_url?: string | null;
           created_at?: string;
           description?: string | null;
+          diamond_access?: boolean;
           email?: string | null;
           id?: string;
           instagram_url?: string | null;
@@ -2189,6 +2192,10 @@ export type Database = {
           _interval?: Database["public"]["Enums"]["billing_interval"];
           _plan_code: string;
         };
+        Returns: Json;
+      };
+      master_set_diamond_access: {
+        Args: { _business_id: string; _enabled: boolean };
         Returns: Json;
       };
       my_professional_id: { Args: { _business_id: string }; Returns: string };
