@@ -2856,6 +2856,10 @@ export type Database = {
         Returns: boolean
       }
       is_master: { Args: { _user_id: string }; Returns: boolean }
+      master_set_diamond_access: {
+        Args: { _business_id: string; _enabled: boolean }
+        Returns: Json
+      }
       master_set_test_plan: {
         Args: {
           _business_id: string
