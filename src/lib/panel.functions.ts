@@ -26,7 +26,7 @@ export const getMyPanel = createServerFn({ method: "POST" })
       context.supabase
         .from("businesses")
         .select(
-          "id, slug, name, business_type, description, description_font, description_color, logo_url, cover_url, whatsapp, email, address, instagram_url, google_review_url, show_address, show_instagram, show_whatsapp, booking_policy, slot_interval_minutes, min_notice_minutes, max_advance_days, cancellation_deadline_hours, primary_color, secondary_color, timezone, diamond_access",
+          "id, slug, name, business_type, description, description_font, description_color, logo_url, cover_url, whatsapp, email, address, instagram_url, google_review_url, show_address, show_instagram, show_whatsapp, booking_policy, slot_interval_minutes, min_notice_minutes, max_advance_days, cancellation_deadline_hours, primary_color, secondary_color, timezone, diamond_access, client_recovery_days",
         )
         .eq("id", businessId)
         .maybeSingle(),

@@ -47,9 +47,9 @@ export const setMasterTestPlan = createServerFn({ method: "POST" })
 
 export const setMasterDiamondAccess = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => {
+  .inputValidator((input: any) => {
     if (!input || typeof input !== "object") throw new Error("Dados inválidos");
-    const value = input as Record<string, unknown>;
+    const value = input as any;
     if (typeof value["businessId"] !== "string" || typeof value["enabled"] !== "boolean") {
       throw new Error("Negócio ou status Diamante inválido");
     }
@@ -116,7 +116,7 @@ export const listMasterAdminData = createServerFn({ method: "POST" })
       for (const user of page.data.users) {
         usersById.set(user.id, {
           email: user.email ?? null,
-          name: (user.user_metadata?.full_name as string | undefined) ?? null,
+          name: (user.user_metadata?.["full_name"] as string | undefined) ?? null,
           whatsapp: null,
         });
       }
@@ -142,11 +142,11 @@ export const listMasterAdminData = createServerFn({ method: "POST" })
     >();
     for (const owner of owners ?? []) {
       const user = usersById.get(owner.user_id);
-      if (user) ownerByBusiness.set(owner.business_id, user);
+      if (user && owner.business_id) ownerByBusiness.set(owner.business_id, user);
     }
 
     return {
-      feedback: (feedback ?? []) as unknown as Array<Record<string, unknown>>,
+      feedback: (feedback ?? []) as any[],
       businesses: (businesses ?? []).map((business: any) => ({
         ...business,
         owner: ownerByBusiness.get(business.id) ?? null,
@@ -156,9 +156,9 @@ export const listMasterAdminData = createServerFn({ method: "POST" })
 
 export const updateMasterFeedback = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => {
+  .inputValidator((input: any) => {
     if (!input || typeof input !== "object") throw new Error("Dados inválidos");
-    const value = input as Record<string, unknown>;
+    const value = input as any;
     if (typeof value.feedbackId !== "string") throw new Error("Feedback inválido");
     if (!["PENDING", "REVIEWED", "ARCHIVED"].includes(String(value.status)))
       throw new Error("Status inválido");

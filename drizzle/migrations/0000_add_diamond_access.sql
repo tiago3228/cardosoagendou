@@ -1,0 +1,1 @@
+ALTER TABLE public.businesses ADD COLUMN IF NOT EXISTS diamond_access boolean NOT NULL DEFAULT false;
