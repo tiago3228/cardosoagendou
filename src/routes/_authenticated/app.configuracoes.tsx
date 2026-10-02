@@ -27,7 +27,7 @@ function normalizeInstagram(value: string) {
     .replace(/^@/, "")
     .replace(/^https?:\/\/(?:www\.)?instagram\.com\//i, "")
     .replace(/^instagram\.com\//i, "")
-    .split(/[/?#]/)[0];
+    .split(/[/?#]/)[0] ?? "";
   if (/^[A-Za-z0-9._]{1,30}$/.test(handle)) {
     return `https://www.instagram.com/${handle}`;
   }
