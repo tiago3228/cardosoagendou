@@ -99,7 +99,10 @@ function PanelLayout() {
   const navigate = useNavigate();
   const master = useQuery({ queryKey: ["master-status"], queryFn: () => getMasterStatus() });
   const entitlements = useQuery(entitlementsQuery);
-  const scheduled = useQuery(scheduledAppointmentsQuery(data.business!.id));
+  const scheduled = useQuery({
+    ...scheduledAppointmentsQuery(data.business?.id ?? ""),
+    enabled: !!data.business?.id,
+  });
   const queryClient = useQueryClient();
   const features = (entitlements.data?.features ?? {}) as Record<string, unknown>;
   const nav = NAV.filter((item) => !("feature" in item) || features[item.feature] === true);
