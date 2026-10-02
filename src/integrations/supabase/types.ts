@@ -401,6 +401,7 @@ export type Database = {
           description: string | null
           description_color: string
           description_font: string
+          diamond_access: boolean
           email: string | null
           google_review_url: string | null
           id: string
@@ -440,6 +441,7 @@ export type Database = {
           description?: string | null
           description_color?: string
           description_font?: string
+          diamond_access?: boolean
           email?: string | null
           google_review_url?: string | null
           id?: string
@@ -479,6 +481,7 @@ export type Database = {
           description?: string | null
           description_color?: string
           description_font?: string
+          diamond_access?: boolean
           email?: string | null
           google_review_url?: string | null
           id?: string
