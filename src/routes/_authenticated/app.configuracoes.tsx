@@ -254,7 +254,7 @@ function SettingsPage() {
       closed: boolean;
       lunch_starts_at: string;
       lunch_ends_at: string;
-      extra_windows: { starts_at: string; ends_at: string; mode: "free" | "blocked" }[];
+      extra_windows?: { starts_at: string; ends_at: string; mode: "free" | "blocked" }[];
     }) => {
       const { error } = await supabase
         .from("business_hours")
@@ -264,7 +264,7 @@ function SettingsPage() {
           closed: input.closed,
           lunch_starts_at: input.lunch_starts_at,
           lunch_ends_at: input.lunch_ends_at,
-          extra_windows: input.extra_windows,
+          ...(input.extra_windows ? { extra_windows: input.extra_windows } : {}),
         })
         .eq("id", input.id);
       if (error) throw new Error(error.message);
