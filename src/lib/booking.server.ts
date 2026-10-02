@@ -418,7 +418,7 @@ export async function availabilityForDay(
         businessBreakWindow,
         ...businessBlockedWindows,
         ...professionalBlockedWindows,
-      ].filter(Boolean),
+      ].filter((w): w is NonNullable<typeof w> => Boolean(w)),
       professionalWindow,
       breakWindow,
       durationMinutes: selection.durationMinutes,

@@ -321,7 +321,10 @@ function AdvancedCrm({ businessId }: { businessId: string }) {
   };
   const openWhatsApp = (client: RetentionClient) => {
     const digits = client.whatsapp?.replace(/\D/g, "");
-    if (!digits || digits.length < 10) return toast.error("Cliente sem WhatsApp válido");
+    if (!digits || digits.length < 10) {
+      toast.error("Cliente sem WhatsApp válido");
+      return;
+    }
     const text = `Olá, ${client.name}! Sentimos sua falta. Gostaria de verificar nossos horários disponíveis?`;
     window.open(
       `https://wa.me/${digits}?text=${encodeURIComponent(text)}`,
