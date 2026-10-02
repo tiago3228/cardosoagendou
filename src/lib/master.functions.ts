@@ -142,7 +142,7 @@ export const listMasterAdminData = createServerFn({ method: "POST" })
     >();
     for (const owner of owners ?? []) {
       const user = usersById.get(owner.user_id);
-      if (user) ownerByBusiness.set(owner.business_id, user);
+      if (user && owner.business_id) ownerByBusiness.set(owner.business_id, user);
     }
 
     return {
