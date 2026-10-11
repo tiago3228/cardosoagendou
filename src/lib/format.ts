@@ -96,7 +96,7 @@ export function normalizeInstagramUrl(input: string | null | undefined): string 
   ) {
     return null;
   }
-  return `https://instagram.com/${username}`;
+  return `https://www.instagram.com/${username}`;
 }
 
 export function instagramHandle(url: string | null | undefined): string | null {
