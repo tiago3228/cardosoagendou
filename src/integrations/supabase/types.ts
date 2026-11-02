@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
   }
   public: {
     Tables: {
@@ -133,6 +133,7 @@ export type Database = {
           client_name: string
           client_whatsapp: string
           created_at: string
+          deposit_cents: number
           duration_minutes: number
           ends_at: string
           id: string
@@ -160,6 +161,7 @@ export type Database = {
           client_name: string
           client_whatsapp: string
           created_at?: string
+          deposit_cents?: number
           duration_minutes: number
           ends_at: string
           id?: string
@@ -187,6 +189,7 @@ export type Database = {
           client_name?: string
           client_whatsapp?: string
           created_at?: string
+          deposit_cents?: number
           duration_minutes?: number
           ends_at?: string
           id?: string
@@ -410,6 +413,7 @@ export type Database = {
           max_advance_days: number
           min_notice_minutes: number
           name: string
+          pix_key: string | null
           primary_color: string
           reminder_enabled: boolean
           reminder_minutes: number
@@ -450,6 +454,7 @@ export type Database = {
           max_advance_days?: number
           min_notice_minutes?: number
           name: string
+          pix_key?: string | null
           primary_color?: string
           reminder_enabled?: boolean
           reminder_minutes?: number
@@ -490,6 +495,7 @@ export type Database = {
           max_advance_days?: number
           min_notice_minutes?: number
           name?: string
+          pix_key?: string | null
           primary_color?: string
           reminder_enabled?: boolean
           reminder_minutes?: number
@@ -2393,6 +2399,7 @@ export type Database = {
           is_composite: boolean
           name: string
           price_cents: number
+          requires_deposit: boolean
           segment_id: string | null
           updated_at: string
         }
@@ -2410,6 +2417,7 @@ export type Database = {
           is_composite?: boolean
           name: string
           price_cents?: number
+          requires_deposit?: boolean
           segment_id?: string | null
           updated_at?: string
         }
@@ -2427,6 +2435,7 @@ export type Database = {
           is_composite?: boolean
           name?: string
           price_cents?: number
+          requires_deposit?: boolean
           segment_id?: string | null
           updated_at?: string
         }

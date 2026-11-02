@@ -19,6 +19,7 @@ import {
   getPublicBusiness,
 } from "@/lib/booking.functions";
 import { rescheduleAppointmentByManageToken } from "@/lib/appointment-manage.functions";
+import { depositCentsFor, DEPOSIT_PERCENT } from "@/lib/deposit";
 import { formatBRL, formatDuration, normalizeInstagramUrl, whatsappLink } from "@/lib/format";
 import { businessTypeConfig } from "@/lib/business-types";
 import { isTechnicalError, userFacingError } from "@/lib/user-facing-error";
@@ -150,6 +151,8 @@ function BookingPage() {
     startsAt: string;
     totalPriceCents: number;
     manageToken: string;
+    depositCents: number;
+    pixKey: string | null;
   } | null>(null);
   const idempotencyKey = useRef<string | null>(null);
 
@@ -194,6 +197,9 @@ function BookingPage() {
     (sum, product) => sum + product.price_cents * (productQuantities[product.id] ?? 1),
     0,
   );
+  const depositServiceIds = (data as { depositServiceIds?: string[] }).depositServiceIds ?? [];
+  const depositRequired = !rescheduleToken && selected.some((id) => depositServiceIds.includes(id));
+  const depositPreviewCents = depositCentsFor(totalCents + productsTotalCents, depositRequired);
   const chosenProfessionalName =
     data!.professionals.find((professional) => professional.id === chosen?.professionalId)?.name ??
     "Profissional disponível";
@@ -212,6 +218,13 @@ function BookingPage() {
           dateStyle: "full",
           timeStyle: "short",
         })}`,
+        `Total: ${formatBRL(confirmed.totalPriceCents)}`,
+        ...(confirmed.depositCents > 0
+          ? [
+              `Sinal de ${DEPOSIT_PERCENT}% via PIX: ${formatBRL(confirmed.depositCents)}${confirmed.pixKey ? ` (chave: ${confirmed.pixKey})` : ""}`,
+              "Envio o comprovante do PIX por aqui para garantir minha vaga.",
+            ]
+          : []),
         `Gerenciar agendamento: ${manageUrl}`,
       ].join("\n")
     : "";
@@ -365,6 +378,8 @@ function BookingPage() {
         startsAt: result.startsAt,
         totalPriceCents: Number(result.totalPriceCents),
         manageToken: result.manageToken,
+        depositCents: Number((result as { depositCents?: number }).depositCents ?? 0),
+        pixKey: (result as { pixKey?: string | null }).pixKey ?? null,
       });
       setCouponInvalid(false);
       setStep(4);
@@ -930,8 +945,27 @@ function BookingPage() {
                     </span>
                   </label>
                 ) : null}
+                {depositRequired ? (
+                  <div className="rounded-lg border border-[var(--public-primary)] bg-[var(--public-card)] p-3 text-sm">
+                    <p className="font-semibold text-[var(--public-accent)]">
+                      Pagamento antecipado de {DEPOSIT_PERCENT}% via PIX
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-[var(--public-muted)]">
+                      Por conta da alta demanda, para assegurar sua vaga é necessário pagar{" "}
+                      {DEPOSIT_PERCENT}% do valor total antecipado.
+                    </p>
+                    <p className="mt-2 flex justify-between text-[var(--public-text)]">
+                      <span>Total</span>
+                      <span>{formatBRL(totalCents + productsTotalCents)}</span>
+                    </p>
+                    <p className="flex justify-between font-bold text-[var(--public-accent)]">
+                      <span>A pagar agora via PIX</span>
+                      <span>{formatBRL(depositPreviewCents)}</span>
+                    </p>
+                  </div>
+                ) : null}
                 <Button type="submit" className="w-full" disabled={busy}>
-                  {busy ? "Confirmando..." : "Confirmar agendamento"}
+                  {busy ? "Confirmando..." : depositRequired ? "Fazer reserva" : "Confirmar agendamento"}
                 </Button>
               </form>
             </section>
@@ -951,6 +985,37 @@ function BookingPage() {
                 <br />
                 Total: {formatBRL(confirmed.totalPriceCents)}
               </p>
+              {confirmed.depositCents > 0 ? (
+                <div className="mt-4 rounded-lg border border-[var(--public-primary)] bg-[var(--public-card)] p-4 text-left text-sm">
+                  <p className="font-semibold text-[var(--public-accent)]">
+                    Pague {formatBRL(confirmed.depositCents)} via PIX para garantir sua vaga
+                  </p>
+                  {confirmed.pixKey ? (
+                    <>
+                      <p className="mt-2 text-xs text-[var(--public-muted)]">Chave PIX:</p>
+                      <p className="break-all font-mono text-[var(--public-text)]">{confirmed.pixKey}</p>
+                      <Button
+                        type="button"
+                        className="mt-3 w-full"
+                        onClick={() => {
+                          void navigator.clipboard
+                            ?.writeText(confirmed.pixKey ?? "")
+                            .then(() => toast.success("Chave PIX copiada"));
+                        }}
+                      >
+                        Copiar chave PIX
+                      </Button>
+                    </>
+                  ) : (
+                    <p className="mt-2 text-xs text-[var(--public-muted)]">
+                      Fale com o estabelecimento pelo WhatsApp para receber a chave PIX.
+                    </p>
+                  )}
+                  <p className="mt-3 text-xs text-[var(--public-muted)]">
+                    Depois de pagar, envie o comprovante pelo WhatsApp abaixo.
+                  </p>
+                </div>
+              ) : null}
               {chosenProducts.length > 0 ? (
                 <p className="mt-3 text-sm text-[var(--public-accent)]">
                   Produtos solicitados: {chosenProducts.map((product) => product.name).join(", ")}
@@ -974,7 +1039,7 @@ function BookingPage() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Conversar pelo WhatsApp
+                    {confirmed.depositCents > 0 ? "Enviar reserva e comprovante pelo WhatsApp" : "Conversar pelo WhatsApp"}
                   </a>
                 </Button>
               ) : null}

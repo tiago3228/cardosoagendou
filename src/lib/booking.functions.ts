@@ -56,8 +56,19 @@ export const getPublicBusiness = createServerFn({ method: "GET" })
       .from("service_compositions")
       .select("composite_service_id, component_service_id")
       .eq("business_id", found.id);
+    const [{ data: depositRows }, { data: pixRow }] = await Promise.all([
+      supabaseAdmin
+        .from("services")
+        .select("id")
+        .eq("business_id", found.id)
+        .eq("requires_deposit", true)
+        .is("deleted_at", null),
+      supabaseAdmin.from("businesses").select("pix_key").eq("id", found.id).maybeSingle(),
+    ]);
     return {
       business,
+      depositServiceIds: (depositRows ?? []).map((row) => row.id),
+      pixKey: pixRow?.pix_key ?? null,
       ...catalog,
       serviceCompositions: serviceCompositions ?? [],
       acceptsBookings: true as const,
@@ -264,6 +275,25 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
       if (usage.error) throw new Error(`COUPON_FAILED: ${usage.error.message}`);
       result.total_price_cents = finalAmount;
     }
+    // 50% advance PIX deposit, computed on the server from the final total.
+    const { depositCentsFor } = await import("./deposit");
+    const { data: depositServices } = await supabaseAdmin
+      .from("services")
+      .select("id")
+      .eq("business_id", business.id)
+      .eq("requires_deposit", true)
+      .in("id", data.serviceIds);
+    const depositCents = depositCentsFor(result.total_price_cents, (depositServices ?? []).length > 0);
+    let pixKey: string | null = null;
+    if (depositCents > 0) {
+      await supabaseAdmin.from("appointments").update({ deposit_cents: depositCents }).eq("id", result.id);
+      const { data: pixRow } = await supabaseAdmin
+        .from("businesses")
+        .select("pix_key")
+        .eq("id", business.id)
+        .maybeSingle();
+      pixKey = pixRow?.pix_key ?? null;
+    }
     // Keep the server-side calculation explicit so future callers cannot mistake client totals for authority.
     void selection;
     return {
@@ -274,5 +304,7 @@ export const createPublicAppointment = createServerFn({ method: "POST" })
       totalPriceCents: result.total_price_cents,
       manageToken,
       productIds: data.productIds,
+      depositCents,
+      pixKey,
     };
   });
