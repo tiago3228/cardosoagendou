@@ -152,7 +152,7 @@ function ServicesPage() {
       const { data, error } = await db
         .from("services")
         .select(
-          "id, name, category, price_cents, duration_minutes, active, segment_id, allows_parallel, is_composite",
+          "id, name, category, price_cents, duration_minutes, active, segment_id, allows_parallel, is_composite, requires_deposit",
         )
         .eq("business_id", businessId)
         .is("deleted_at", null)
@@ -458,10 +458,80 @@ function ServicesPage() {
       toast.error("Não foi possível atualizar", { description: userFacingError(error) }),
   });
 
+  const [pixKey, setPixKey] = useState<string | null>(null);
+  const pixQuery = useQuery({
+    queryKey: ["business-pix", businessId],
+    queryFn: async () => {
+      const { data, error } = await db.from("businesses").select("pix_key").eq("id", businessId).maybeSingle();
+      if (error) throw new Error(error.message);
+      return (data?.pix_key as string | null) ?? "";
+    },
+  });
+  const savePix = useMutation({
+    mutationFn: async (value: string) => {
+      const { error } = await db.from("businesses").update({ pix_key: value.trim() || null }).eq("id", businessId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Chave PIX salva");
+      queryClient.invalidateQueries({ queryKey: ["business-pix", businessId] });
+    },
+    onError: (error) => toast.error("Não foi possível salvar", { description: userFacingError(error) }),
+  });
+  const setDeposit = useMutation({
+    mutationFn: async (input: { ids: string[] | "all"; enabled: boolean }) => {
+      let query = db.from("services").update({ requires_deposit: input.enabled }).eq("business_id", businessId);
+      if (input.ids !== "all") query = query.in("id", input.ids);
+      const { error } = await query;
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["services", businessId] }),
+    onError: (error) => toast.error("Não foi possível atualizar", { description: userFacingError(error) }),
+  });
+  const allDeposit =
+    (services.data ?? []).length > 0 &&
+    (services.data ?? []).every((service: { requires_deposit: boolean }) => service.requires_deposit);
+
   return (
     <div>
       <BackButton />
       <h1 className="font-display text-2xl font-bold text-foreground">Serviços</h1>
+      <section className="mt-4 rounded-xl border border-border bg-card p-4">
+        <h2 className="font-semibold text-card-foreground">Pagamento antecipado 50% via PIX</h2>
+        <p className="text-sm text-muted-foreground">
+          Quando ativado, o cliente vê o total somado e paga 50% via PIX para garantir a vaga.
+        </p>
+        <form
+          className="mt-3 flex flex-wrap items-end gap-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            savePix.mutate(pixKey ?? pixQuery.data ?? "");
+          }}
+        >
+          <div className="min-w-[220px] flex-1 space-y-1">
+            <Label htmlFor="pix-key">Sua chave PIX</Label>
+            <Input
+              id="pix-key"
+              placeholder="CPF, CNPJ, e-mail, telefone ou chave aleatória"
+              value={pixKey ?? pixQuery.data ?? ""}
+              onChange={(event) => setPixKey(event.target.value)}
+            />
+          </div>
+          <Button type="submit" size="sm" disabled={savePix.isPending}>Salvar chave</Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={allDeposit ? "outline" : "default"}
+            disabled={setDeposit.isPending || (services.data ?? []).length === 0}
+            onClick={() => {
+              if (!allDeposit && !(pixKey ?? pixQuery.data)) toast.warning("Cadastre sua chave PIX para os clientes pagarem.");
+              setDeposit.mutate({ ids: "all", enabled: !allDeposit });
+            }}
+          >
+            {allDeposit ? "Desabilitar 50% em todos" : "Habilitar pagamento antecipado 50% em todos"}
+          </Button>
+        </form>
+      </section>
       <p className="text-sm text-muted-foreground">
         Categorias sugeridas para {config.label.toLowerCase()}: {config.categories.join(", ")}
       </p>
@@ -972,6 +1042,16 @@ function ServicesPage() {
                       {formatDuration(service.duration_minutes)} · {formatBRL(service.price_cents)}
                       {service.allows_parallel ? " · Simultâneo" : ""}
                     </p>
+                    <label className="mt-2 flex items-center gap-1.5 text-xs font-medium text-card-foreground">
+                      <input
+                        type="checkbox"
+                        checked={Boolean((service as { requires_deposit?: boolean }).requires_deposit)}
+                        onChange={(event) =>
+                          setDeposit.mutate({ ids: [service.id], enabled: event.target.checked })
+                        }
+                      />
+                      Pagamento antecipado 50% via PIX
+                    </label>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {(professionals.data ?? []).map(
                         (professional: { id: string; name: string }) => {
