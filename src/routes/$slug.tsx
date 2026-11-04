@@ -500,6 +500,12 @@ function BookingPage() {
             </button>
           ) : null}
 
+          {(data as { acceptsBookings?: boolean }).acceptsBookings === false ? (
+            <p className="mb-4 rounded-lg border border-[var(--public-primary)] bg-[var(--public-card)] p-3 text-sm text-[var(--public-text)]">
+              A agenda online está temporariamente indisponível. Fale com o estabelecimento pelo
+              WhatsApp para agendar.
+            </p>
+          ) : null}
           {step === 0 ? (
             <section>
               <div className="mb-5 rounded-xl border border-[var(--public-border)] bg-[var(--public-surface)] p-4">
