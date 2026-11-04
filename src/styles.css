@@ -281,3 +281,41 @@
     ),
     radial-gradient(ellipse 70% 60% at 95% 0%, oklch(0.46 0.096 183 / 0.2), transparent 65%);
 }
+
+/* Destaque piscante para o botão de compartilhar/indicar o Agendou */
+@keyframes share-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 oklch(0.72 0.145 52 / 0.45);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 12px oklch(0.72 0.145 52 / 0);
+    transform: scale(1.04);
+  }
+}
+
+@keyframes share-dot-blink {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+}
+
+@utility share-highlight {
+  animation: share-glow 1.6s ease-in-out infinite;
+}
+
+@utility share-dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background-color: var(--color-primary-foreground);
+  animation: share-dot-blink 1.6s ease-in-out infinite;
+}

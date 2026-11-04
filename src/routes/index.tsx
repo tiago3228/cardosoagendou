@@ -530,8 +530,9 @@ function Landing() {
                 }
               }
             }}
-            className="inline-flex items-center gap-2 rounded-full border border-primary bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary hover:text-primary-foreground"
+            className="share-highlight inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-lg transition hover:brightness-110"
           >
+            <span className="share-dot" aria-hidden />
             <Share2 className="size-4" aria-hidden /> Indicar o Agendou
           </button>
           <p className="mt-6 text-sm text-muted-foreground">
