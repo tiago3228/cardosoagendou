@@ -311,6 +311,20 @@
   animation: share-glow 1.6s ease-in-out infinite;
 }
 
+@keyframes share-glow-soft {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 oklch(0.72 0.145 52 / 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 10px oklch(0.72 0.145 52 / 0);
+  }
+}
+
+@utility share-glow-soft {
+  animation: share-glow-soft 1.6s ease-in-out infinite;
+}
+
 @utility share-dot {
   display: inline-block;
   width: 0.5rem;
