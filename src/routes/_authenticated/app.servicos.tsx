@@ -35,6 +35,14 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/app/servicos")({
+  head: () => ({ meta: [
+    { title: "Serviços e catálogo — Agendou" },
+    { name: "description", content: "Gerencie serviços, preços e o catálogo de segmentos." },
+    { property: "og:title", content: "Serviços e catálogo — Agendou" },
+    { property: "og:description", content: "Gerencie serviços, preços e o catálogo de segmentos." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: ServicesPage,
 });
 
@@ -508,7 +516,7 @@ function ServicesPage() {
             savePix.mutate(pixKey ?? pixQuery.data ?? "");
           }}
         >
-          <div className="min-w-[220px] flex-1 space-y-1">
+          <div className="w-full min-w-0 flex-1 space-y-1 sm:min-w-[220px]">
             <Label htmlFor="pix-key">Sua chave PIX</Label>
             <Input
               id="pix-key"
@@ -521,6 +529,7 @@ function ServicesPage() {
           <Button
             type="button"
             size="sm"
+            className="h-auto min-h-11 max-w-full whitespace-normal text-left"
             variant={allDeposit ? "outline" : "default"}
             disabled={setDeposit.isPending || (services.data ?? []).length === 0}
             onClick={() => {
@@ -545,9 +554,9 @@ function ServicesPage() {
               ilimitados em todos os planos.
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2 sm:w-auto">
             <Select value={catalogSegmentId} onValueChange={setCatalogSegmentId}>
-              <SelectTrigger className="h-10 w-[240px]" aria-label="Segmento do catálogo">
+              <SelectTrigger className="h-11 w-full min-w-0 sm:w-[240px] [&>span]:truncate" aria-label="Segmento do catálogo">
                 <SelectValue
                   placeholder={
                     catalogSegments.isLoading ? "Carregando segmentos..." : "Selecionar segmento"
@@ -1034,8 +1043,8 @@ function ServicesPage() {
                   </div>
                 </form>
               ) : (
-                <div className="flex items-center justify-between gap-3">
-                  <div>
+                <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                  <div className="min-w-0 break-words">
                     <p className="font-medium text-card-foreground">{service.name}</p>
                     <p className="text-sm text-muted-foreground">
                       {service.category ? `${service.category} · ` : ""}

@@ -44,7 +44,12 @@ export const Route = createFileRoute("/$slug")({
     if (!loaderData) {
       return {
         meta: [
+          { property: "og:type", content: "website" },
+          { name: "twitter:card", content: "summary" },
           { title: "Página não encontrada — Agendou" },
+          { name: "description", content: "Esta página de agendamento não foi encontrada." },
+          { property: "og:title", content: "Página não encontrada — Agendou" },
+          { property: "og:description", content: "Esta página de agendamento não foi encontrada." },
           { name: "robots", content: "noindex" },
         ],
       };
@@ -55,6 +60,8 @@ export const Route = createFileRoute("/$slug")({
       `Escolha o serviço, o profissional e o horário em ${loaderData.business.name}.`;
     return {
       meta: [
+          { property: "og:type", content: "website" },
+          { name: "twitter:card", content: "summary" },
         { title },
         { name: "description", content: description },
         { property: "og:title", content: title },

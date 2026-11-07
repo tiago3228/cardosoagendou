@@ -1,5 +1,7 @@
 
 ## Ajustes atuais
+- [ ] Otimizar painel e agenda para celular e tablet; validar navegação, compartilhamento e ausência de cortes
+- [ ] Adicionar botão para recolher e expandir o menu lateral
 - [x] Corrigir agendamento de troca entre planos Básico, Médio e Ilimitado
 - [x] Remover Benefícios da sua assinatura somente da agenda
 - [x] Concluir e validar modernização da agenda

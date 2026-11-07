@@ -18,6 +18,8 @@ export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
+          { property: "og:type", content: "website" },
+          { name: "twitter:card", content: "summary" },
       { title: "Entrar — Agendou" },
       { name: "description", content: "Acesse o painel do seu negócio no Agendou." },
       { property: "og:title", content: "Entrar — Agendou" },

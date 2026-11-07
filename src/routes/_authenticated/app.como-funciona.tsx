@@ -23,6 +23,14 @@ import { BackButton } from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/app/como-funciona")({
+  head: () => ({ meta: [
+    { title: "Guia do painel — Agendou" },
+    { name: "description", content: "Consulte o guia de uso do Agendou." },
+    { property: "og:title", content: "Guia do painel — Agendou" },
+    { property: "og:description", content: "Consulte o guia de uso do Agendou." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: HowItWorksPage,
 });
 

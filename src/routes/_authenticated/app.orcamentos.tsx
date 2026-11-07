@@ -12,7 +12,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatBRL } from "@/lib/format";
 
-export const Route = createFileRoute("/_authenticated/app/orcamentos")({ component: QuotesPage });
+export const Route = createFileRoute("/_authenticated/app/orcamentos")({
+  head: () => ({ meta: [
+    { title: "Orçamentos — Agendou" },
+    { name: "description", content: "Organize propostas e orçamentos de atendimento." },
+    { property: "og:title", content: "Orçamentos — Agendou" },
+    { property: "og:description", content: "Organize propostas e orçamentos de atendimento." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }), component: QuotesPage });
 
 type Db = SupabaseClient;
 type Inclusion = { id?: string | undefined; label: string; is_custom: boolean; sort_order: number };

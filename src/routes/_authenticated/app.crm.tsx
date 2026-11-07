@@ -19,7 +19,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-export const Route = createFileRoute("/_authenticated/app/crm")({ component: CrmPage });
+export const Route = createFileRoute("/_authenticated/app/crm")({
+  head: () => ({ meta: [
+    { title: "Relacionamento com clientes — Agendou" },
+    { name: "description", content: "Acompanhe o relacionamento e o retorno dos seus clientes." },
+    { property: "og:title", content: "Relacionamento com clientes — Agendou" },
+    { property: "og:description", content: "Acompanhe o relacionamento e o retorno dos seus clientes." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }), component: CrmPage });
 
 // As tabelas novas ainda não estão no arquivo gerado pelo Supabase; o adaptador fica isolado aqui.
 const db = supabase as unknown as {

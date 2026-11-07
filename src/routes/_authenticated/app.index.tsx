@@ -272,11 +272,11 @@ function AgendaPage() {
       <section className="overflow-hidden rounded-lg border border-border bg-card shadow-soft">
         <div className="border-b border-border p-4 md:p-5">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex size-11 items-center justify-center rounded-md border border-primary/35 bg-primary/10 text-primary">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-md border border-primary/35 bg-primary/10 text-primary">
                 <CalendarDays className="size-5" aria-hidden />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h1 className="text-2xl font-bold text-foreground">Agenda</h1>
                 <p className="mt-0.5 text-sm capitalize text-muted-foreground">{rangeLabel}</p>
               </div>
@@ -368,11 +368,11 @@ function AgendaPage() {
               </p>
               <p className="mt-1 truncate text-sm text-muted-foreground">{bookingUrl}</p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:flex-wrap">
               <Button
                 size="sm"
                 variant="outline"
-                className="share-highlight font-semibold"
+                className="share-highlight col-span-2 font-semibold sm:min-w-32"
                 onClick={async () => {
                   await navigator.clipboard.writeText(bookingUrl);
                   toast.success("Link copiado!");
@@ -395,7 +395,7 @@ function AgendaPage() {
         </section>
       ) : null}
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-4">
         <Metric
           label="Total de clientes"
           value={String(recovery.data?.total ?? 0)}
@@ -440,7 +440,7 @@ function AgendaPage() {
 
       <section className="rounded-lg border border-border bg-card px-4 py-3">
         <p className="text-xs font-semibold uppercase text-muted-foreground">Legenda</p>
-        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
+        <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 sm:flex sm:flex-wrap sm:gap-x-4">
           {Object.entries(STATUS).map(([key, meta]) => (
             <span
               key={key}
@@ -454,7 +454,7 @@ function AgendaPage() {
       </section>
 
       <section className="rounded-lg border border-border bg-card p-3 md:p-4">
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="grid grid-cols-2 gap-2 pb-1 sm:flex">
           {FILTERS.map((item) => (
             <Button
               key={item.key}
@@ -511,13 +511,13 @@ function Metric({
   accent?: boolean;
 }) {
   return (
-    <div className="bg-card px-5 py-4">
+    <div className="min-w-0 bg-card px-3 py-3 sm:px-5 sm:py-4">
       <p className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground">
         {accent ? <TrendingUp className="size-3.5" aria-hidden /> : null}
         {label}
       </p>
       <p
-        className={`mt-1 font-display text-2xl font-bold ${accent ? "text-primary" : "text-foreground"}`}
+        className={`mt-1 break-words font-display text-xl font-bold sm:text-2xl ${accent ? "text-primary" : "text-foreground"}`}
       >
         {value}
       </p>
@@ -539,7 +539,7 @@ function DayView({
 }) {
   return (
     <div className="mt-4 space-y-2">
-      <div className="hidden grid-cols-[92px_minmax(220px,1.4fr)_minmax(150px,1fr)_100px_130px] gap-4 px-4 pb-2 text-xs font-semibold uppercase text-muted-foreground lg:grid">
+      <div className="hidden grid-cols-[92px_minmax(220px,1.4fr)_minmax(150px,1fr)_100px_130px] gap-4 px-4 pb-2 text-xs font-semibold uppercase text-muted-foreground xl:grid">
         <span>Horário</span>
         <span>Cliente / serviço</span>
         <span>Profissional</span>
@@ -569,7 +569,7 @@ function AppointmentRow({
     <article
       className={`relative overflow-hidden rounded-lg border border-border border-l-[6px] bg-background/45 p-4 transition-colors hover:bg-secondary/45 ${meta.stripe}`}
     >
-      <div className="grid gap-4 lg:grid-cols-[92px_minmax(220px,1.4fr)_minmax(150px,1fr)_100px_130px] lg:items-center">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] gap-3 xl:grid-cols-[92px_minmax(220px,1.4fr)_minmax(150px,1fr)_100px_130px] xl:items-center">
         <div>
           <p className="font-display text-xl font-bold text-foreground">{time}</p>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -578,12 +578,12 @@ function AppointmentRow({
         </div>
         <div className="min-w-0">
           <p className="truncate font-semibold text-card-foreground">{appointment.client_name}</p>
-          <p className="mt-1 truncate text-sm text-muted-foreground">{serviceNames(appointment)}</p>
+          <p className="mt-1 break-words text-sm text-muted-foreground xl:truncate">{serviceNames(appointment)}</p>
           <p className="mt-1 text-xs text-muted-foreground">
             {formatWhatsapp(appointment.client_whatsapp)}
           </p>
         </div>
-        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+        <p className="flex min-w-0 items-center gap-2 break-words text-sm text-muted-foreground">
           <UserRound className="size-4" aria-hidden /> {professionalName(appointment)}
         </p>
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -603,7 +603,7 @@ function AppointmentRow({
         </p>
       ) : null}
 
-      <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-3">
+      <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border pt-3 sm:flex sm:flex-wrap">
         {e164 ? (
           <Button size="sm" variant="outline" asChild>
             <a
@@ -670,8 +670,8 @@ function WeekView({
   onSelectDate: (day: string) => void;
 }) {
   return (
-    <div className="mt-4 overflow-x-auto">
-      <div className="grid min-w-[980px] grid-cols-7 gap-2">
+    <div className="mt-4 xl:overflow-x-auto">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:min-w-[980px] xl:grid-cols-7 xl:gap-2">
         {days.map((day) => {
           const dayItems = appointments.filter(
             (appointment) => appointment.starts_at.slice(0, 10) === day,
@@ -680,7 +680,7 @@ function WeekView({
           return (
             <section
               key={day}
-              className={`min-h-80 rounded-lg border p-2 ${day === selectedDate ? "border-primary bg-primary/5" : "border-border bg-background/35"}`}
+              className={`min-w-0 rounded-lg border p-2 xl:min-h-80 ${day === selectedDate ? "border-primary bg-primary/5" : "border-border bg-background/35"}`}
             >
               <Button
                 variant="ghost"

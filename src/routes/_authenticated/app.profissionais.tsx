@@ -23,6 +23,14 @@ import {
 import { saveProfessionalCredentials } from "@/lib/professional-credentials.functions";
 
 export const Route = createFileRoute("/_authenticated/app/profissionais")({
+  head: () => ({ meta: [
+    { title: "Equipe e horários — Agendou" },
+    { name: "description", content: "Organize os profissionais e seus horários de atendimento." },
+    { property: "og:title", content: "Equipe e horários — Agendou" },
+    { property: "og:description", content: "Organize os profissionais e seus horários de atendimento." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: ProfessionalsPage,
 });
 

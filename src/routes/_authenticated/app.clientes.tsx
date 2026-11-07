@@ -9,7 +9,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/BackButton";
 
-export const Route = createFileRoute("/_authenticated/app/clientes")({ component: ClientsPage });
+export const Route = createFileRoute("/_authenticated/app/clientes")({
+  head: () => ({ meta: [
+    { title: "Clientes — Agendou" },
+    { name: "description", content: "Consulte os clientes e o histórico de atendimentos." },
+    { property: "og:title", content: "Clientes — Agendou" },
+    { property: "og:description", content: "Consulte os clientes e o histórico de atendimentos." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }), component: ClientsPage });
 
 type Client = {
   id: string;

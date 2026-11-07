@@ -22,6 +22,14 @@ import { Label } from "@/components/ui/label";
 import { PhotoField } from "@/components/ui/photo-field";
 
 export const Route = createFileRoute("/_authenticated/app/produtos")({
+  head: () => ({ meta: [
+    { title: "Produtos e estoque — Agendou" },
+    { name: "description", content: "Gerencie os produtos e o estoque do seu negócio." },
+    { property: "og:title", content: "Produtos e estoque — Agendou" },
+    { property: "og:description", content: "Gerencie os produtos e o estoque do seu negócio." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: ProductsPage,
 });
 

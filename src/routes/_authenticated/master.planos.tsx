@@ -16,6 +16,10 @@ import { BackButton } from "@/components/BackButton";
 export const Route = createFileRoute("/_authenticated/master/planos")({
   head: () => ({
     meta: [
+      { property: "og:title", content: "Modo de teste de planos — Master · Agendou Pro" },
+      { property: "og:description", content: "Teste os limites e recursos dos planos do Agendou." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Modo de teste de planos — Master · Agendou Pro" },
       {
         name: "description",

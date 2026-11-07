@@ -17,6 +17,14 @@ import { BackButton } from "@/components/BackButton";
 import { uploadBusinessMedia } from "@/lib/media";
 
 export const Route = createFileRoute("/_authenticated/app/configuracoes")({
+  head: () => ({ meta: [
+    { title: "Ajustes do negócio — Agendou" },
+    { name: "description", content: "Gerencie as configurações da sua agenda online." },
+    { property: "og:title", content: "Ajustes do negócio — Agendou" },
+    { property: "og:description", content: "Gerencie as configurações da sua agenda online." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: SettingsPage,
 });
 

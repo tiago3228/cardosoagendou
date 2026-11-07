@@ -28,6 +28,14 @@ import { PixCheckout } from "@/components/billing/PixCheckout";
 import { BackButton } from "@/components/BackButton";
 
 export const Route = createFileRoute("/_authenticated/app/assinatura")({
+  head: () => ({ meta: [
+    { title: "Assinatura — Agendou" },
+    { name: "description", content: "Gerencie o plano e os pagamentos do seu negócio." },
+    { property: "og:title", content: "Assinatura — Agendou" },
+    { property: "og:description", content: "Gerencie o plano e os pagamentos do seu negócio." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: SubscriptionPage,
 });
 

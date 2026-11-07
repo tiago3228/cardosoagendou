@@ -6,7 +6,15 @@ import { BackButton } from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_authenticated/app/agendados")({ component: ScheduledPage });
+export const Route = createFileRoute("/_authenticated/app/agendados")({
+  head: () => ({ meta: [
+    { title: "Clientes agendados — Agendou" },
+    { name: "description", content: "Acompanhe os próximos atendimentos do seu negócio." },
+    { property: "og:title", content: "Clientes agendados — Agendou" },
+    { property: "og:description", content: "Acompanhe os próximos atendimentos do seu negócio." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }), component: ScheduledPage });
 
 const statusLabel: Record<string, string> = {
   PENDING: "Agendado",

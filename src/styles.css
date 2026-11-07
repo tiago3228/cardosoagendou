@@ -240,6 +240,31 @@
   letter-spacing: 0;
 }
 
+.panel-layout {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
+.panel-header {
+  padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+}
+.panel-bottom-nav {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 1024px) {
+  .panel-layout { padding-bottom: 0; }
+}
+@media (max-width: 1023px) {
+  .agenda-theme :is(button, a.inline-flex, [role="combobox"]) { min-height: 44px; }
+  .agenda-theme :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    min-height: 44px;
+    min-width: 0;
+    max-width: 100%;
+    font-size: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .share-highlight, .share-glow-soft, .share-dot, .agenda-theme .animate-pulse { animation: none; }
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
@@ -287,11 +312,9 @@
   0%,
   100% {
     box-shadow: 0 0 0 0 oklch(0.72 0.145 52 / 0.45);
-    transform: scale(1);
   }
   50% {
     box-shadow: 0 0 0 12px oklch(0.72 0.145 52 / 0);
-    transform: scale(1.04);
   }
 }
 

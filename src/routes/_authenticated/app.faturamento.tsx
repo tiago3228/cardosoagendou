@@ -24,6 +24,10 @@ export const Route = createFileRoute("/_authenticated/app/faturamento")({
   component: FinancePage,
   head: () => ({
     meta: [
+      { property: "og:title", content: "Faturamento — Agendou" },
+      { property: "og:description", content: "Controle entradas, despesas e o resultado diário e semanal do seu negócio." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Faturamento — Agendou" },
       {
         name: "description",

@@ -18,6 +18,10 @@ import { BackButton } from "@/components/BackButton";
 export const Route = createFileRoute("/_authenticated/master/pagamentos")({
   head: () => ({
     meta: [
+      { property: "og:title", content: "Pagamentos PIX — Master · Agendou Pro" },
+      { property: "og:description", content: "Análise e liberação de pagamentos PIX manuais das assinaturas." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Pagamentos PIX — Master · Agendou Pro" },
       {
         name: "description",

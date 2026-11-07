@@ -12,6 +12,14 @@ import { BackButton } from "@/components/BackButton";
 import { userFacingError } from "@/lib/user-facing-error";
 
 export const Route = createFileRoute("/_authenticated/app/feedback")({
+  head: () => ({ meta: [
+    { title: "Feedback — Agendou" },
+    { name: "description", content: "Envie sugestões e acompanhe as respostas do Agendou." },
+    { property: "og:title", content: "Feedback — Agendou" },
+    { property: "og:description", content: "Envie sugestões e acompanhe as respostas do Agendou." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: FeedbackPage,
 });
 

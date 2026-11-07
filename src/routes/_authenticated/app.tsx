@@ -11,6 +11,9 @@ import {
   KanbanSquare,
   LogOut,
   MessageSquare,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   Moon,
   Package,
   Scissors,
@@ -25,6 +28,7 @@ import { getMyPanel } from "@/lib/panel.functions";
 import { getMasterStatus } from "@/lib/manual-pix.functions";
 import { getMyEntitlements } from "@/lib/billing.functions";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useInstallApp } from "@/lib/use-install-app";
@@ -109,6 +113,8 @@ function PanelLayout() {
   const [theme, setTheme] = useState<PanelTheme>("dark");
   const { installed, install, manualHint } = useInstallApp();
   const [installHint, setInstallHint] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   async function handleInstall() {
     if (installed) return;
@@ -171,6 +177,7 @@ function PanelLayout() {
   useEffect(() => {
     const savedTheme = window.localStorage.getItem(PANEL_THEME_KEY);
     if (savedTheme === "clean" || savedTheme === "dark") setTheme(savedTheme);
+    setSidebarCollapsed(window.localStorage.getItem("agendou-sidebar-collapsed") === "true");
   }, []);
 
   function selectTheme(nextTheme: PanelTheme) {
@@ -198,18 +205,23 @@ function PanelLayout() {
 
   return (
     <div
-      className={`agenda-theme ${theme === "clean" ? "agenda-theme-clean" : ""} min-h-screen bg-background pb-20 text-foreground md:flex md:pb-0`}
+      className={`agenda-theme panel-layout ${theme === "clean" ? "agenda-theme-clean" : ""} min-h-dvh bg-background text-foreground lg:flex`}
     >
-      <aside className="hidden w-60 shrink-0 border-r border-sidebar-border bg-sidebar p-5 md:flex md:flex-col">
+      <aside className={`sticky top-0 hidden h-dvh shrink-0 overflow-y-auto border-r border-sidebar-border bg-sidebar transition-[width] motion-reduce:transition-none lg:flex lg:flex-col ${sidebarCollapsed ? "w-20 p-3" : "w-60 p-5"}`}>
+        <Button variant="ghost" size="icon" className="mb-3 self-end text-sidebar-foreground" aria-label={sidebarCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"} title={sidebarCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"} aria-expanded={!sidebarCollapsed} onClick={() => {
+          const next = !sidebarCollapsed;
+          setSidebarCollapsed(next);
+          window.localStorage.setItem("agendou-sidebar-collapsed", String(next));
+        }}>{sidebarCollapsed ? <PanelLeftOpen aria-hidden /> : <PanelLeftClose aria-hidden />}</Button>
         <Link
           to="/"
           className="font-display text-xl font-bold text-sidebar-foreground transition-opacity hover:opacity-75"
           aria-label="Ir para a tela principal do Agendou"
         >
-          Agendou
+          {sidebarCollapsed ? "A" : "Agendou"}
         </Link>
-        <p className="mt-1 truncate text-sm text-muted-foreground">{data.business.name}</p>
-        {data.business.diamond_access ? (
+        <p className={`${sidebarCollapsed ? "hidden" : ""} mt-1 truncate text-sm text-muted-foreground`}>{data.business.name}</p>
+        {data.business.diamond_access && !sidebarCollapsed ? (
           <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-amber-400/50 bg-amber-400/10 px-2 py-0.5 text-xs font-semibold text-amber-600 dark:text-amber-300">
             <Gem className="size-3" aria-hidden /> Diamante
           </span>
@@ -219,12 +231,14 @@ function PanelLayout() {
             <Link
               key={item.to}
               to={item.to}
+              title={sidebarCollapsed ? item.label : undefined}
+              aria-label={item.label}
               activeOptions={{ exact: "exact" in item }}
               activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
-              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+              className={`flex items-center gap-3 rounded-md py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent ${sidebarCollapsed ? "justify-center px-2" : "px-3"}`}
             >
               <item.icon className="size-4" aria-hidden />
-              {item.label}
+              <span className={sidebarCollapsed ? "sr-only" : ""}>{item.label}</span>
             </Link>
           ))}
           {master.data?.isMaster ? (
@@ -233,7 +247,7 @@ function PanelLayout() {
               activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
             >
-              Administração Master
+              <Gem className="size-4 shrink-0" aria-hidden /><span className={sidebarCollapsed ? "sr-only" : ""}>Administração Master</span>
             </Link>
           ) : null}
           <Button
@@ -246,7 +260,7 @@ function PanelLayout() {
             title={installed ? "Aplicativo já instalado" : "Instalar aplicativo"}
           >
             <Download className="size-4" aria-hidden />
-            {installed ? "Aplicativo já instalado" : "Instalar aplicativo"}
+            <span className={sidebarCollapsed ? "sr-only" : ""}>{installed ? "Aplicativo já instalado" : "Instalar aplicativo"}</span>
           </Button>
           {installHint && !installed ? (
             <p className="mt-2 rounded-md bg-sidebar-accent/50 p-2 text-[11px] leading-relaxed text-sidebar-foreground/70">
@@ -254,7 +268,7 @@ function PanelLayout() {
             </p>
           ) : null}
         </nav>
-        <div className="mt-auto rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3">
+        <div className={`${sidebarCollapsed ? "hidden" : ""} mt-auto rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3`}>
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Plano</p>
           <p className="flex items-center gap-1 text-sm font-semibold text-sidebar-foreground">
             {data.business.diamond_access ? (
@@ -275,14 +289,37 @@ function PanelLayout() {
             navigate({ to: "/auth" });
           }}
         >
-          <LogOut className="size-4" aria-hidden /> Sair
+          <LogOut className="size-4" aria-hidden /> <span className={sidebarCollapsed ? "sr-only" : ""}>Sair</span>
         </Button>
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="flex items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur md:px-8 md:py-4">
-          <span className="min-w-0 truncate font-display font-bold">{data.business.name}</span>
-          <div className="flex items-center gap-2">
+        <header className="panel-header grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-border bg-background/95 px-4 py-3 backdrop-blur sm:gap-3 lg:px-8 lg:py-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="shrink-0 lg:hidden" aria-label="Abrir menu"><Menu aria-hidden /></Button>
+              </SheetTrigger>
+              <SheetContent side="left" className={`agenda-theme ${theme === "clean" ? "agenda-theme-clean" : ""} w-[min(88vw,360px)] overflow-y-auto px-4 pb-8`}>
+                <SheetHeader className="pr-10 text-left">
+                  <SheetTitle>Agendou</SheetTitle>
+                  <SheetDescription className="break-words">{data.business.name}</SheetDescription>
+                </SheetHeader>
+                <nav className="mt-5 grid gap-1" aria-label="Menu completo">
+                  {nav.map((item) => (
+                    <Link key={item.to} to={item.to} onClick={() => setMenuOpen(false)} activeOptions={{ exact: "exact" in item }} activeProps={{ className: "bg-secondary text-primary" }} className="flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium">
+                      <item.icon className="size-5 shrink-0" aria-hidden />{item.label}
+                    </Link>
+                  ))}
+                  {master.data?.isMaster ? <Link to="/master/feedback" onClick={() => setMenuOpen(false)} className="flex min-h-11 items-center rounded-md px-3 text-sm">Administração Master</Link> : null}
+                  <Button variant="ghost" className="mt-3 justify-start" onClick={() => void handleInstall()} disabled={installed}><Download aria-hidden />{installed ? "Aplicativo já instalado" : "Instalar aplicativo"}</Button>
+                  {installHint && !installed ? <p className="px-3 text-sm text-muted-foreground">{manualHint}</p> : null}
+                </nav>
+              </SheetContent>
+            </Sheet>
+            <span className="min-w-0 truncate font-display font-bold">{data.business.name}</span>
+          </div>
+          <div className="col-span-2 flex shrink-0 items-center justify-between gap-1 sm:col-span-1 sm:justify-end sm:gap-2">
             <Button
               type="button"
               variant="outline"
@@ -324,6 +361,7 @@ function PanelLayout() {
                 size="sm"
                 className="h-8 gap-1.5 px-2.5"
                 aria-pressed={theme === "dark"}
+                aria-label="Usar modo escuro"
                 onClick={() => selectTheme("dark")}
               >
                 <Moon className="size-3.5" aria-hidden />
@@ -335,6 +373,7 @@ function PanelLayout() {
                 size="sm"
                 className="h-8 gap-1.5 px-2.5"
                 aria-pressed={theme === "clean"}
+                aria-label="Usar modo claro"
                 onClick={() => selectTheme("clean")}
               >
                 <Sun className="size-3.5" aria-hidden />
@@ -355,24 +394,25 @@ function PanelLayout() {
             </Button>
           </div>
         </header>
-        <div className="mx-auto max-w-[1440px] px-4 py-5 md:px-7 md:py-7">
+        <div className="mx-auto max-w-[1440px] px-3 py-4 sm:px-5 sm:py-5 lg:px-7 lg:py-7">
           <Outlet />
         </div>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-10 flex justify-between border-t border-border bg-card px-2 py-2 md:hidden">
-        {nav.slice(0, 5).map((item) => (
+      <nav aria-label="Navegação rápida" className="panel-bottom-nav fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-border bg-card px-2 pt-2 lg:hidden">
+        {nav.slice(0, 4).map((item) => (
           <Link
             key={item.to}
             to={item.to}
             activeOptions={{ exact: "exact" in item }}
             activeProps={{ className: "text-primary" }}
-            className="flex flex-1 flex-col items-center gap-1 py-1 text-[11px] font-medium text-muted-foreground"
+            className="flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-md text-[11px] font-medium text-muted-foreground"
           >
             <item.icon className="size-5" aria-hidden />
             {item.label}
           </Link>
         ))}
+        <Button variant="ghost" className="h-auto min-h-12 flex-col gap-1 px-1 text-[11px] text-muted-foreground" onClick={() => setMenuOpen(true)}><Menu className="size-5" aria-hidden />Mais</Button>
       </nav>
     </div>
   );

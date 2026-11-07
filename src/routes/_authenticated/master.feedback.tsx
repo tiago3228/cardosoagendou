@@ -15,7 +15,12 @@ import { formatWhatsapp, whatsappLink } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/master/feedback")({
   head: () => ({
-    meta: [{ title: "Administração Master — Agendou" }, { name: "robots", content: "noindex" }],
+    meta: [
+      { property: "og:title", content: "Administração Master — Agendou" },
+      { property: "og:description", content: "Gerencie negócios e acompanhe os feedbacks do Agendou." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "description", content: "Gerencie negócios e acompanhe os feedbacks do Agendou." },{ title: "Administração Master — Agendou" }, { name: "robots", content: "noindex" }],
   }),
   component: MasterFeedbackPage,
 });

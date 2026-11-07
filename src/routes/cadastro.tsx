@@ -18,6 +18,8 @@ export const Route = createFileRoute("/cadastro")({
   validateSearch: z.object({ plano: z.string().optional() }),
   head: () => ({
     meta: [
+          { property: "og:type", content: "website" },
+          { name: "twitter:card", content: "summary" },
       { title: "Criar conta — Agendou" },
       {
         name: "description",
