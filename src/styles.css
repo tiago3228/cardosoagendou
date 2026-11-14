@@ -254,6 +254,13 @@
 }
 @media (max-width: 1023px) {
   .agenda-theme :is(button, a.inline-flex, [role="combobox"]) { min-height: 44px; }
+  .agenda-theme button {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    height: auto;
+  }
+  .agenda-theme button > span { min-width: 0; }
   .agenda-theme :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
     min-height: 44px;
     min-width: 0;

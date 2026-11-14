@@ -12,3 +12,4 @@
 - Keep panel tablet/mobile navigation below the lg breakpoint in the shared shell, with a full Sheet menu and safe-area-aware bottom shortcuts, so every module remains reachable without squeezing the content.
 - Scope touch-target and mobile input sizing to the panel theme; render weekly agenda days as stacked tiles below xl to avoid forcing a desktop calendar onto small screens.
 - Persist desktop sidebar collapse only in browser storage after hydration; keep icon links labelled when collapsed so navigation remains accessible.
+- Keep professional cards shrinkable and group work/lunch time inputs in labelled two-column rows; avoid intrinsic button widths expanding mobile grids.

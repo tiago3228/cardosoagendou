@@ -320,7 +320,7 @@ function ProfessionalsPage() {
       ) : null}
 
       <form
-        className="mt-6 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-4"
+        className="mt-6 grid min-w-0 gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2 xl:grid-cols-4"
         onSubmit={(e) => {
           e.preventDefault();
           create.mutate();
@@ -360,7 +360,7 @@ function ProfessionalsPage() {
             </p>
           ) : null}
         </div>
-        <div className="sm:col-span-4">
+        <div className="sm:col-span-2 xl:col-span-4">
           <Button type="submit" disabled={create.isPending}>
             <Plus className="size-4" aria-hidden /> Adicionar profissional
           </Button>
@@ -371,11 +371,12 @@ function ProfessionalsPage() {
         {(professionals.data ?? []).map((professional) => (
           <article
             key={professional.id}
-            className="rounded-xl border border-border bg-card p-4 shadow-sm"
+            className="min-w-0 rounded-xl border border-border bg-card p-4 shadow-sm"
           >
-            <button
+            <Button
               type="button"
-              className="flex w-full items-center justify-between gap-3 text-left"
+              variant="ghost"
+              className="h-auto w-full min-w-0 justify-between gap-3 p-0 text-left hover:bg-transparent"
               onClick={() =>
                 setExpandedProfessionalId((current) =>
                   current === professional.id ? null : professional.id,
@@ -392,24 +393,24 @@ function ProfessionalsPage() {
                 </span>
               </span>
               <span
-                className={`rounded-full px-2 py-1 text-[10px] font-semibold ${professional.active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}
+                className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ${professional.active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}
               >
                 {professional.active ? "ativo" : "inativo"}
               </span>
               <ChevronDown
-                className={`size-5 text-muted-foreground transition-transform ${expandedProfessionalId === professional.id ? "rotate-180" : ""}`}
+                className={`size-5 shrink-0 text-muted-foreground transition-transform ${expandedProfessionalId === professional.id ? "rotate-180" : ""}`}
                 aria-hidden
               />
-            </button>
+            </Button>
 
-            <p className="mt-3 text-xs text-muted-foreground">
+            <p className="mt-3 break-words text-xs text-muted-foreground">
               Comissão {Number(professional.commission_percent)}% ·{" "}
               {professional.login_username
                 ? `usuário ${professional.login_username}`
                 : "acesso não configurado"}
             </p>
             <div className="mt-3 grid gap-2">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid min-w-0 grid-cols-1 gap-2 min-[380px]:grid-cols-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -431,8 +432,8 @@ function ProfessionalsPage() {
 
             {expandedProfessionalId === professional.id ? (
               <div className="mt-4 border-t border-border pt-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+                  <div className="min-w-0 break-words">
                     <p className="text-sm text-muted-foreground">
                       Comissão de {Number(professional.commission_percent)}% ·{" "}
                       {professional.login_username
@@ -490,8 +491,9 @@ function ProfessionalsPage() {
                       (l) => l.professional_id === professional.id && l.service_id === service.id,
                     );
                     return (
-                      <button
+                      <Button
                         key={service.id}
+                        variant="outline"
                         onClick={() =>
                           toggleService.mutate({
                             professionalId: professional.id,
@@ -499,10 +501,10 @@ function ProfessionalsPage() {
                             linked,
                           })
                         }
-                        className={`rounded-full border px-3 py-1.5 text-sm transition ${linked ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"}`}
+                        className={`h-auto max-w-full whitespace-normal break-words rounded-full border px-3 py-1.5 text-left text-sm transition ${linked ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"}`}
                       >
                         {service.name}
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -562,7 +564,7 @@ function ProfessionalAccess({
         </p>
       ) : pendingInvite ? (
         <div className="mt-1 flex flex-wrap items-center gap-3">
-          <p className="text-sm text-muted-foreground">
+          <p className="min-w-0 break-words text-sm text-muted-foreground">
             Convite pendente para {pendingInvite.email} · expira em{" "}
             {new Date(pendingInvite.expires_at).toLocaleDateString("pt-BR")}
           </p>
@@ -577,7 +579,7 @@ function ProfessionalAccess({
         </div>
       ) : (
         <div className="mt-2 flex flex-wrap items-end gap-2">
-          <div className="min-w-[220px] flex-1 space-y-1.5">
+          <div className="w-full min-w-0 flex-1 space-y-1.5">
             <Label>E-mail do profissional</Label>
             <Input
               type="email"
@@ -686,36 +688,46 @@ function ProfessionalHours({
             extra_windows: extraWindows,
           };
           return (
-            <div key={weekday} className="flex flex-wrap items-center gap-2 text-sm">
-              <button
+            <div key={weekday} className="panel-hours-row grid min-w-0 grid-cols-2 items-end gap-2 border-b border-border pb-3 text-sm">
+              <Button
+                variant="outline"
                 onClick={() => upsert.mutate({ ...base, enabled: !enabled })}
-                className={`w-14 rounded-md border px-2 py-1 ${enabled ? "border-primary bg-primary/10" : "border-border text-muted-foreground"}`}
+                aria-label={`${WEEKDAY_SHORT[weekday]}: ${enabled ? "ativo" : "inativo"}`}
+                aria-pressed={enabled}
+                className={`rounded-md border px-2 py-1 ${enabled ? "border-primary bg-primary/10" : "border-border text-muted-foreground"}`}
               >
                 {WEEKDAY_SHORT[weekday]}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="ghost"
                 className="text-xs text-primary"
+                aria-expanded={expandedWeekday === weekday}
                 onClick={() => setExpandedWeekday(expandedWeekday === weekday ? null : weekday)}
               >
                 {expandedWeekday === weekday
                   ? "Fechar"
                   : `Janelas extras${extraWindows.length ? ` (${extraWindows.length})` : ""}`}
-              </button>
+              </Button>
+              <label className="grid min-w-0 gap-1 text-xs text-muted-foreground">Início
               <input
                 type="time"
+                aria-label={`Início de trabalho de ${WEEKDAY_SHORT[weekday]}`}
                 value={starts}
                 onChange={(e) => upsert.mutate({ ...base, starts_at: e.target.value })}
-                className="h-8 rounded-md border border-input bg-background px-2"
+                className="h-8 w-full min-w-0 rounded-md border border-input bg-background px-2"
               />
-              <span className="text-muted-foreground">até</span>
+              </label>
+              <label className="grid min-w-0 gap-1 text-xs text-muted-foreground">Fim
               <input
                 type="time"
+                aria-label={`Fim de trabalho de ${WEEKDAY_SHORT[weekday]}`}
                 value={ends}
                 onChange={(e) => upsert.mutate({ ...base, ends_at: e.target.value })}
-                className="h-8 rounded-md border border-input bg-background px-2"
+                className="h-8 w-full min-w-0 rounded-md border border-input bg-background px-2"
               />
-              <span className="text-muted-foreground">· almoço</span>
+              </label>
+              <label className="grid min-w-0 gap-1 text-xs text-muted-foreground">Início do almoço
               <input
                 type="time"
                 value={lunchStarts}
@@ -723,16 +735,18 @@ function ProfessionalHours({
                 onChange={(e) =>
                   upsert.mutate({ ...base, lunch_starts_at: e.target.value || null })
                 }
-                className="h-8 rounded-md border border-input bg-background px-2"
+                className="h-8 w-full min-w-0 rounded-md border border-input bg-background px-2"
               />
-              <span className="text-muted-foreground">às</span>
+              </label>
+              <label className="grid min-w-0 gap-1 text-xs text-muted-foreground">Fim do almoço
               <input
                 type="time"
                 value={lunchEnds}
                 aria-label="Fim do almoço"
                 onChange={(e) => upsert.mutate({ ...base, lunch_ends_at: e.target.value || null })}
-                className="h-8 rounded-md border border-input bg-background px-2"
+                className="h-8 w-full min-w-0 rounded-md border border-input bg-background px-2"
               />
+              </label>
               {expandedWeekday === weekday ? (
                 <ExtraWindowsEditor
                   value={extraWindows}
@@ -757,9 +771,9 @@ function ExtraWindowsEditor({
   const update = (index: number, patch: Partial<(typeof value)[number]>) =>
     onChange(value.map((item, current) => (current === index ? { ...item, ...patch } : item)));
   return (
-    <div className="mt-2 w-full rounded-lg border border-primary/20 bg-primary/5 p-3">
-      <div className="flex items-center justify-between gap-2">
-        <div>
+    <div className="col-span-2 mt-2 w-full min-w-0 rounded-lg border border-primary/20 bg-primary/5 p-3">
+      <div className="grid min-w-0 gap-2">
+        <div className="min-w-0">
           <p className="text-sm font-medium">Janelas extras</p>
           <p className="text-xs text-muted-foreground">
             Períodos livres ou bloqueados fora da jornada padrão.
@@ -796,7 +810,7 @@ function ExtraWindowsEditor({
               onChange={(e) => update(index, { ends_at: e.target.value })}
             />
             <select
-              className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+              className="h-8 w-full min-w-0 rounded-md border border-input bg-background px-2 text-xs"
               value={window.mode}
               onChange={(e) => update(index, { mode: e.target.value as "free" | "blocked" })}
             >
