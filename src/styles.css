@@ -318,10 +318,10 @@
 @keyframes share-glow {
   0%,
   100% {
-    box-shadow: 0 0 0 0 oklch(0.72 0.145 52 / 0.45);
+    box-shadow: 0 0 0 0 oklch(0.72 0.145 52 / 0.6);
   }
   50% {
-    box-shadow: 0 0 0 12px oklch(0.72 0.145 52 / 0);
+    box-shadow: 0 0 0 14px oklch(0.72 0.145 52 / 0);
   }
 }
 
@@ -344,10 +344,10 @@
 @keyframes share-glow-soft {
   0%,
   100% {
-    box-shadow: 0 0 0 0 oklch(0.72 0.145 52 / 0.35);
+    box-shadow: 0 0 0 0 oklch(0.72 0.145 52 / 0.5);
   }
   50% {
-    box-shadow: 0 0 0 10px oklch(0.72 0.145 52 / 0);
+    box-shadow: 0 0 0 12px oklch(0.72 0.145 52 / 0);
   }
 }
 

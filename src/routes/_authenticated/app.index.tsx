@@ -357,11 +357,14 @@ function AgendaPage() {
       </section>
 
       {bookingUrl ? (
-        <section className="share-glow-soft rounded-lg border border-border bg-primary/5 px-4 py-4 md:px-5">
+        <section className="share-glow-soft rounded-lg border-2 border-primary/60 bg-primary/10 px-4 py-4 md:px-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
-              <p className="flex items-center gap-2 text-xs font-semibold uppercase text-primary">
+              <p className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase text-primary">
                 <span className="share-dot" aria-hidden /> Agendamento online
+                <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary-foreground">
+                  Destaque
+                </span>
               </p>
               <p className="mt-1 font-medium text-foreground">
                 Envie este link para seus clientes agendarem sozinhos
@@ -371,7 +374,6 @@ function AgendaPage() {
             <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:flex-wrap">
               <Button
                 size="sm"
-                variant="outline"
                 className="share-highlight col-span-2 font-semibold sm:min-w-32"
                 onClick={async () => {
                   await navigator.clipboard.writeText(bookingUrl);
