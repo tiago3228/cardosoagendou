@@ -13,3 +13,5 @@
 - Scope touch-target and mobile input sizing to the panel theme; render weekly agenda days as stacked tiles below xl to avoid forcing a desktop calendar onto small screens.
 - Persist desktop sidebar collapse only in browser storage after hydration; keep icon links labelled when collapsed so navigation remains accessible.
 - Keep professional cards shrinkable and group work/lunch time inputs in labelled two-column rows; avoid intrinsic button widths expanding mobile grids.
+- Weekly insights aggregate creation-date bookings in the business timezone with paginated authenticated tenant-scoped reads; send only aggregate data to AI and cache narratives by fingerprint to avoid duplicate charges.
+- Gateway providers and prompts live in server-only helpers behind authenticated server functions; generate weekly AI analyses only on explicit clicks and persist terminal access blocks, never auto-retry them.

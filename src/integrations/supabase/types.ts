@@ -2706,6 +2706,41 @@ export type Database = {
           },
         ]
       }
+      weekly_booking_insights: {
+        Row: {
+          blocked_type: string | null
+          business_id: string
+          error_message: string | null
+          fingerprint: string | null
+          generated_at: string | null
+          narrative: string | null
+        }
+        Insert: {
+          blocked_type?: string | null
+          business_id: string
+          error_message?: string | null
+          fingerprint?: string | null
+          generated_at?: string | null
+          narrative?: string | null
+        }
+        Update: {
+          blocked_type?: string | null
+          business_id?: string
+          error_message?: string | null
+          fingerprint?: string | null
+          generated_at?: string | null
+          narrative?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_booking_insights_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

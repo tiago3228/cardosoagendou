@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   CalendarDays,
@@ -31,8 +31,13 @@ import {
   whatsappLink,
 } from "@/lib/format";
 import { Button } from "@/components/ui/button";
+import { WeeklyInsights, weeklyInsightsQuery } from "@/components/weekly-insights";
 
 export const Route = createFileRoute("/_authenticated/app/")({
+  loader: async ({ context }) => {
+    const panel = await context.queryClient.ensureQueryData(panelQuery);
+    if (panel.business) await context.queryClient.ensureQueryData(weeklyInsightsQuery(panel.business.id));
+  },
   head: () => ({
     meta: [
       { title: "Agenda profissional — Agendou" },
@@ -355,6 +360,12 @@ function AgendaPage() {
           />
         </div>
       </section>
+
+      {panel.business ? (
+        <Suspense fallback={<p className="py-5 text-sm text-muted-foreground">Carregando resumo semanal...</p>}>
+          <WeeklyInsights businessId={panel.business.id} />
+        </Suspense>
+      ) : null}
 
       {bookingUrl ? (
         <section className="share-glow-soft rounded-lg border-2 border-primary/60 bg-primary/10 px-4 py-4 md:px-5">

@@ -1,5 +1,6 @@
 
 ## Ajustes atuais
+- [ ] Adicionar e validar resumo semanal com IA, novas reservas, horários de pico e serviços mais agendados
 - [x] Revisar telas e formulários do painel no celular e tablet e corrigir cortes e controles apertados
 - [x] Otimizar painel e agenda para celular e tablet; validar navegação, compartilhamento e ausência de cortes
 - [x] Adicionar botão para recolher e expandir o menu lateral
