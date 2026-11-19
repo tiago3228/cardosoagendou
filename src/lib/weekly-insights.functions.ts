@@ -9,5 +9,5 @@ export const getWeeklyInsights = createServerFn({ method: "POST" })
   .inputValidator((data: z.input<typeof input>) => input.parse(data))
   .handler(async ({ data, context }) => {
     const { readWeeklyInsights } = await import("./weekly-insights.server");
-    return readWeeklyInsights(context.supabase, context.userId, data);
+    return readWeeklyInsights(context.supabase, context.userId, { weekOffset: data.weekOffset, generate: data.generate ?? false });
   });

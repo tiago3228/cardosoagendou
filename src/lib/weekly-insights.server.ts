@@ -50,9 +50,9 @@ export async function readWeeklyInsights(supabase: SupabaseClient<Database>, use
   if (cached.error) throw new Error("Não foi possível consultar a análise salva.");
   let narrative = cached.data?.fingerprint === fingerprint ? cached.data.narrative : null;
   let generatedAt = narrative ? cached.data?.generated_at ?? null : null;
-  let error = cached.data?.blocked_type ? cached.data.error_message : null;
-  let blocked = cached.data?.blocked_type ?? null;
-  if (input.generate && stats.total > 0 && !narrative && blocked !== "provider_denied" && blocked !== "refusal") {
+  let blocked = cached.data?.blocked_type === "refusal" && cached.data.fingerprint !== fingerprint ? null : cached.data?.blocked_type ?? null;
+  let error = blocked ? cached.data?.error_message ?? null : null;
+  if (input.generate && !narrative && blocked !== "provider_denied" && blocked !== "refusal") {
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) {
       error = "A IA precisa ser configurada para gerar o resumo.";

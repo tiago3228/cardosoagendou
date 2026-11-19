@@ -60,13 +60,13 @@ export function WeeklyInsights({ businessId }: { businessId: string }) {
       <div className="mt-4 border-t border-border pt-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="text-sm font-semibold text-primary">Análise da semana · Lovable AI</h3>
-          {data.total > 0 && !data.narrative && !terminal && <Button size="sm" variant="outline" onClick={() => mutation.mutate()} disabled={mutation.isPending}><span>{mutation.isPending ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <Sparkles className="size-4" aria-hidden />}</span>{mutation.isPending ? "Analisando..." : data.blocked ? "Retomar análise" : "Gerar análise"}</Button>}
+          {!data.narrative && !terminal && <Button size="sm" variant="outline" onClick={() => mutation.mutate()} disabled={mutation.isPending}><span>{mutation.isPending ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <Sparkles className="size-4" aria-hidden />}</span>{mutation.isPending ? "Analisando..." : data.blocked ? "Retomar análise" : "Gerar análise"}</Button>}
         </div>
         <div aria-live="polite" className="mt-2 min-w-0 text-sm leading-relaxed">
           {data.narrative && <p className="whitespace-pre-wrap break-words">{data.narrative}</p>}
           {data.generatedAt && <p className="mt-2 text-xs text-muted-foreground">Gerado em {new Date(data.generatedAt).toLocaleString("pt-BR", { timeZone: data.timezone })}</p>}
           {error && <p role="alert" className="text-destructive">{error}</p>}
-          {data.total === 0 && <p className="text-muted-foreground">Nenhuma nova reserva recebida nesta semana.</p>}
+          {data.total === 0 && !data.narrative && <p className="text-muted-foreground">Nenhuma nova reserva recebida nesta semana.</p>}
         </div>
       </div>
     </section>
